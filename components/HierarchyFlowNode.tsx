@@ -11,6 +11,11 @@ export interface HierarchyNodeData extends Record<string, unknown> {
   role: "focus" | "child";
   isLeaf: boolean;
   childCount: number;
+  // Base font size in px for this node, precomputed in radial-layout.ts as a
+  // function of how many siblings are in the current view — fewer nodes on
+  // screen means more room, so text scales up; more nodes scale it back
+  // down toward a floor that stays readable.
+  fontSize: number;
 }
 
 interface LevelStyle {
@@ -64,7 +69,7 @@ function LeafMarker() {
     <svg
       aria-hidden="true"
       viewBox="0 0 10 10"
-      className="h-2.5 w-2.5 shrink-0 opacity-70"
+      className="h-[0.9em] w-[0.9em] shrink-0 opacity-70"
     >
       <circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
@@ -76,26 +81,29 @@ export default function HierarchyFlowNode({
 }: {
   data: HierarchyNodeData;
 }) {
-  const { node, role, isLeaf, childCount } = data;
-  const clickable = role === "child" && !isLeaf;
+  const { node, role, isLeaf, childCount, fontSize } = data;
   const isCircle = role === "focus";
-  const isRootFocus = isCircle && node.level === "capacity";
+  // The hub steps back to its parent on click — root has no parent, so it's
+  // the one focus node that isn't clickable.
+  const clickable = isCircle ? node.parentId !== null : !isLeaf;
   const style = LEVEL_STYLES[node.level];
   const variant = isCircle ? style.focus : isLeaf ? style.leaf : style.child;
 
   return (
     <div
-      title={node.description}
+      title={
+        isCircle && clickable ? "Back to previous level" : node.description
+      }
+      style={{ fontSize }}
       className={[
         // h-full/w-full fill the fixed width/height xyflow sets on the node
         // wrapper (from radial-layout.ts) — without them the box only takes
         // its content's natural height, leaving a mismatched gap below.
-        "flex h-full w-full border shadow-sm transition-colors",
-        isCircle
-          ? "flex-col items-center justify-center gap-1 rounded-full px-5 py-4 text-center"
-          : "flex-col gap-1 rounded-lg px-3 py-2",
+        "relative flex h-full w-full flex-col items-center justify-center gap-1 border text-center shadow-sm transition-colors",
+        isCircle ? "rounded-full px-5 py-4" : "rounded-lg px-3 py-2",
         variant,
         clickable ? "cursor-pointer" : "cursor-default",
+        isCircle && clickable ? "hover:brightness-110" : "",
       ].join(" ")}
     >
       <Handle
@@ -104,39 +112,26 @@ export default function HierarchyFlowNode({
         isConnectable={false}
         className="opacity-0"
       />
-      {isCircle ? (
-        <>
-          <span
-            className={
-              isRootFocus
-                ? "text-base font-semibold leading-snug"
-                : "text-sm font-semibold leading-snug"
-            }
-          >
-            {node.label}
+      {role === "child" &&
+        (isLeaf ? (
+          <span className="absolute right-2 top-2">
+            <LeafMarker />
           </span>
-          {node.meta && (
-            <span className="text-[11px] opacity-70">{node.meta}</span>
-          )}
-        </>
-      ) : (
-        <>
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm font-medium leading-snug">
-              {node.label}
-            </span>
-            {isLeaf ? (
-              <LeafMarker />
-            ) : (
-              <span className="shrink-0 rounded-full bg-current/10 px-1.5 py-0.5 text-[10px] font-semibold">
-                {childCount}
-              </span>
-            )}
-          </div>
-          {node.meta && (
-            <span className="text-[11px] opacity-70">{node.meta}</span>
-          )}
-        </>
+        ) : (
+          <span className="absolute right-2 top-2 rounded-full bg-current/10 px-[0.5em] py-[0.15em] text-[0.6em] font-semibold leading-none">
+            {childCount}
+          </span>
+        ))}
+      <span
+        className={[
+          "font-semibold leading-snug",
+          isCircle ? "text-[1.05em]" : "text-[1em] font-medium",
+        ].join(" ")}
+      >
+        {node.label}
+      </span>
+      {node.meta && (
+        <span className="text-[0.68em] opacity-70">{node.meta}</span>
       )}
       <Handle
         type="source"

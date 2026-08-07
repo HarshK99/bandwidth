@@ -3,13 +3,40 @@ import { getChildren, type HierarchyNode } from "@/lib/hierarchy-data";
 import type { HierarchyNodeData } from "@/components/HierarchyFlowNode";
 import type { RadialEdgeData } from "@/components/RadialEdge";
 
-export const FOCUS_DIAMETER = 150;
-export const ROOT_FOCUS_DIAMETER = 190;
-export const CHILD_WIDTH = 200;
-export const CHILD_HEIGHT = 90;
+// Every size below is a function of how many children are in the current
+// view (i.e. how many nodes are on screen at once): fewer items means more
+// room, so nodes and text scale up toward the "_MAX" figures; more items
+// scale down toward the "_MIN" floor, which stays readable rather than
+// shrinking indefinitely. Linear interpolation over count, clamped to
+// [1, MANY_ITEMS_COUNT] children.
+const MANY_ITEMS_COUNT = 8;
 
-const FOCUS_TO_CHILD_GAP = 56;
-const CHILD_TO_CHILD_GAP = 28;
+const FONT_SIZE_MAX = 34;
+const FONT_SIZE_MIN = 16;
+const CHILD_WIDTH_MAX = 240;
+const CHILD_WIDTH_MIN = 190;
+const CHILD_HEIGHT_MAX = 130;
+const CHILD_HEIGHT_MIN = 88;
+const FOCUS_DIAMETER_MAX = 210;
+const FOCUS_DIAMETER_MIN = 150;
+const ROOT_FOCUS_DIAMETER_MAX = 250;
+const ROOT_FOCUS_DIAMETER_MIN = 180;
+
+// Gap between the focus circle and the ring of children, and between
+// adjacent children on that ring. Kept tight so the fitted view is mostly
+// nodes, not empty canvas.
+const FOCUS_TO_CHILD_GAP = 40;
+const CHILD_TO_CHILD_GAP = 20;
+
+function lerp(max: number, min: number, t: number): number {
+  return max - t * (max - min);
+}
+
+// t=0 → few items on screen (biggest), t=1 → many items (smallest-but-floor)
+function sizeFactor(childCount: number): number {
+  const clamped = Math.min(Math.max(childCount, 1), MANY_ITEMS_COUNT);
+  return (clamped - 1) / (MANY_ITEMS_COUNT - 1);
+}
 
 function circleBoundaryPoint(
   cx: number,
@@ -49,9 +76,18 @@ function rectBoundaryPoint(
 export function buildRadialGraph(focus: HierarchyNode) {
   const children = getChildren(focus.id);
   const isRootFocus = focus.level === "capacity";
-  const focusDiameter = isRootFocus ? ROOT_FOCUS_DIAMETER : FOCUS_DIAMETER;
+
+  const t = sizeFactor(children.length);
+  const fontSize = lerp(FONT_SIZE_MAX, FONT_SIZE_MIN, t);
+  const childWidth = lerp(CHILD_WIDTH_MAX, CHILD_WIDTH_MIN, t);
+  const childHeight = lerp(CHILD_HEIGHT_MAX, CHILD_HEIGHT_MIN, t);
+  const focusDiameter = isRootFocus
+    ? lerp(ROOT_FOCUS_DIAMETER_MAX, ROOT_FOCUS_DIAMETER_MIN, t)
+    : lerp(FOCUS_DIAMETER_MAX, FOCUS_DIAMETER_MIN, t);
   const focusRadius = focusDiameter / 2;
-  const childHalfDiagonal = Math.hypot(CHILD_WIDTH / 2, CHILD_HEIGHT / 2);
+  const focusFontSize = isRootFocus ? fontSize * 1.15 : fontSize;
+
+  const childHalfDiagonal = Math.hypot(childWidth / 2, childHeight / 2);
 
   // Far enough that the ring of children clears the focus circle...
   let radius = focusRadius + FOCUS_TO_CHILD_GAP + childHalfDiagonal;
@@ -76,6 +112,7 @@ export function buildRadialGraph(focus: HierarchyNode) {
       role: "focus",
       isLeaf: children.length === 0,
       childCount: children.length,
+      fontSize: focusFontSize,
     },
   };
 
@@ -94,9 +131,9 @@ export function buildRadialGraph(focus: HierarchyNode) {
     childNodes.push({
       id: child.id,
       type: "hierarchy",
-      position: { x: cx - CHILD_WIDTH / 2, y: cy - CHILD_HEIGHT / 2 },
-      width: CHILD_WIDTH,
-      height: CHILD_HEIGHT,
+      position: { x: cx - childWidth / 2, y: cy - childHeight / 2 },
+      width: childWidth,
+      height: childHeight,
       draggable: false,
       selectable: false,
       data: {
@@ -104,18 +141,12 @@ export function buildRadialGraph(focus: HierarchyNode) {
         role: "child",
         isLeaf: childCount === 0,
         childCount,
+        fontSize,
       },
     });
 
     const sourcePoint = circleBoundaryPoint(0, 0, focusRadius, cx, cy);
-    const targetPoint = rectBoundaryPoint(
-      cx,
-      cy,
-      CHILD_WIDTH,
-      CHILD_HEIGHT,
-      0,
-      0
-    );
+    const targetPoint = rectBoundaryPoint(cx, cy, childWidth, childHeight, 0, 0);
 
     edges.push({
       id: `${focus.id}->${child.id}`,

@@ -33,7 +33,7 @@ function MindMapCanvas() {
   // Re-frame the camera every time the focus changes, including the
   // initial mount (redundant with the `fitView` prop below, but harmless).
   useEffect(() => {
-    fitView({ duration: 500, padding: 0.35 });
+    fitView({ duration: 500, padding: 0.15 });
   }, [currentNodeId, fitView]);
 
   const navigateTo = useCallback((id: string) => {
@@ -43,7 +43,13 @@ function MindMapCanvas() {
   const handleNodeClick = useCallback<NodeMouseHandler>(
     (_event, node) => {
       const data = node.data as HierarchyNodeData;
-      if (data.role !== "child" || data.isLeaf) return;
+      if (data.role === "focus") {
+        // Clicking the hub steps back up one level, same as the breadcrumb's
+        // previous segment. Root has no parent, so it's a no-op there.
+        if (data.node.parentId) navigateTo(data.node.parentId);
+        return;
+      }
+      if (data.isLeaf) return;
       navigateTo(data.node.id);
     },
     [navigateTo]
@@ -63,9 +69,9 @@ function MindMapCanvas() {
           nodesConnectable={false}
           elementsSelectable={false}
           fitView
-          fitViewOptions={{ padding: 0.35 }}
+          fitViewOptions={{ padding: 0.15 }}
           minZoom={0.4}
-          maxZoom={1.5}
+          maxZoom={1.8}
           proOptions={{ hideAttribution: true }}
         >
           <Background gap={24} />
