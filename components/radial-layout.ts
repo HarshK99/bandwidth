@@ -32,10 +32,13 @@ function lerp(max: number, min: number, t: number): number {
   return max - t * (max - min);
 }
 
-// t=0 → few items on screen (biggest), t=1 → many items (smallest-but-floor)
+// t=0 → few items on screen (biggest), t=1 → many items (smallest-but-floor).
+// Floored at 2, not 1: a single child otherwise interpolated all the way to
+// the top of the scale and looked oversized — 2 items already reads as
+// "plenty of room," so 1 item uses that same size rather than going bigger.
 function sizeFactor(childCount: number): number {
-  const clamped = Math.min(Math.max(childCount, 1), MANY_ITEMS_COUNT);
-  return (clamped - 1) / (MANY_ITEMS_COUNT - 1);
+  const clamped = Math.min(Math.max(childCount, 2), MANY_ITEMS_COUNT);
+  return (clamped - 2) / (MANY_ITEMS_COUNT - 2);
 }
 
 function circleBoundaryPoint(

@@ -62,20 +62,6 @@ const LEVEL_STYLES: Record<NodeLevel, LevelStyle> = {
   mode: BASE_LEVEL_STYLES.masterFunction,
 };
 
-// Endpoint marker: a plain ring, deliberately a different shape from the
-// child-count pill, so leaf-vs-branch reads without relying on color.
-function LeafMarker() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 10 10"
-      className="h-[0.9em] w-[0.9em] shrink-0 opacity-70"
-    >
-      <circle cx="5" cy="5" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
 export default function HierarchyFlowNode({
   data,
 }: {
@@ -89,6 +75,24 @@ export default function HierarchyFlowNode({
   const style = LEVEL_STYLES[node.level];
   const variant = isCircle ? style.focus : isLeaf ? style.leaf : style.child;
 
+  const text = (
+    <>
+      <span
+        className={[
+          "break-words font-semibold leading-snug",
+          isCircle ? "text-[1.05em]" : "text-[1em] font-medium",
+        ].join(" ")}
+      >
+        {node.label}
+      </span>
+      {node.meta && (
+        <span className="break-words text-[0.68em] opacity-70">
+          {node.meta}
+        </span>
+      )}
+    </>
+  );
+
   return (
     <div
       title={
@@ -96,11 +100,13 @@ export default function HierarchyFlowNode({
       }
       style={{ fontSize }}
       className={[
-        // h-full/w-full fill the fixed width/height xyflow sets on the node
-        // wrapper (from radial-layout.ts) — without them the box only takes
-        // its content's natural height, leaving a mismatched gap below.
-        "relative flex h-full w-full flex-col items-center justify-center gap-1 border text-center shadow-sm transition-colors",
-        isCircle ? "rounded-full px-5 py-4" : "rounded-lg px-3 py-2",
+        // min-h-full (not h-full): the box always fills at least the size
+        // radial-layout.ts estimated, but can grow taller for a longer
+        // label instead of clipping/spilling past a fixed-height border.
+        "relative flex min-h-full w-full flex-col items-center justify-center gap-1 border text-center shadow-sm transition-colors",
+        isCircle
+          ? "rounded-full px-[1em] py-[0.85em]"
+          : "rounded-lg px-[0.75em] pb-[0.65em] pt-[1.5em]",
         variant,
         clickable ? "cursor-pointer" : "cursor-default",
         isCircle && clickable ? "hover:brightness-110" : "",
@@ -112,26 +118,21 @@ export default function HierarchyFlowNode({
         isConnectable={false}
         className="opacity-0"
       />
-      {role === "child" &&
-        (isLeaf ? (
-          <span className="absolute right-2 top-2">
-            <LeafMarker />
-          </span>
-        ) : (
-          <span className="absolute right-2 top-2 rounded-full bg-current/10 px-[0.5em] py-[0.15em] text-[0.6em] font-semibold leading-none">
-            {childCount}
-          </span>
-        ))}
-      <span
-        className={[
-          "font-semibold leading-snug",
-          isCircle ? "text-[1.05em]" : "text-[1em] font-medium",
-        ].join(" ")}
-      >
-        {node.label}
-      </span>
-      {node.meta && (
-        <span className="text-[0.68em] opacity-70">{node.meta}</span>
+      {role === "child" && !isLeaf && (
+        <span className="absolute right-2 top-2 rounded-full bg-current/10 px-[0.5em] py-[0.15em] text-[0.6em] font-semibold leading-none">
+          {childCount}
+        </span>
+      )}
+      {isCircle ? (
+        // Text lays out in the full square box regardless of the rounded
+        // border, so an off-center wrapped line can run past the circle's
+        // curve into its corners. Capping the text block's width keeps
+        // every line within the circle at any vertical offset.
+        <div className="flex max-w-[70%] flex-col items-center gap-1">
+          {text}
+        </div>
+      ) : (
+        text
       )}
       <Handle
         type="source"

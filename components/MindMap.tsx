@@ -67,6 +67,7 @@ function MindMapCanvas() {
           onNodeClick={handleNodeClick}
           nodesDraggable={false}
           nodesConnectable={false}
+          nodesFocusable={false}
           elementsSelectable={false}
           fitView
           fitViewOptions={{ padding: 0.15 }}
