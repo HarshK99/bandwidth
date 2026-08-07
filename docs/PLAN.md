@@ -71,8 +71,9 @@ back, camera animates rather than jump-cuts.
 
 - Apply the per-level color table from
   [PRODUCT_SPEC.md](./PRODUCT_SPEC.md) to the custom node component from
-  Phase 2, keyed off `node.level` (remember: `masterFunction` and `mode`
-  share a visual tier).
+  Phase 2, keyed off `node.level` via a `Record<NodeLevel, ...>` — adding a
+  level to the data (as `valueCategory` was, v1 → v2) is a compile error
+  until it gets a color, not a silent gap.
 - Leaf (`task`) nodes get a distinct treatment — different fill *and* a
   non-color cue (icon/border) — decided from `getChildren(id).length === 0`
   rather than a hardcoded `level === "task"` check, so the visual rule

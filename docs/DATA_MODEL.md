@@ -12,7 +12,7 @@ of the data/domain layer, separate from `app/` (routing/UI).
 export type NodeLevel =
   | "capacity"
   | "masterFunction"
-  | "mode"
+  | "valueCategory"
   | "domain"
   | "subFunction"
   | "task";
@@ -24,6 +24,7 @@ export interface HierarchyNode {
   parentId: string | null;
   description?: string;
   meta?: string; // e.g. calendar slot this task lives in
+  temporary?: boolean; // true for situational/non-permanent nodes
 }
 
 export const hierarchyData: HierarchyNode[] = [ /* ... */ ];
@@ -31,22 +32,32 @@ export const hierarchyData: HierarchyNode[] = [ /* ... */ ];
 
 This already matches the flat-array-plus-`parentId` shape from the
 original spec (`Node { id, label, level, parentId, description?, meta? }`),
-with two intentional differences worth recording:
+with differences worth recording:
 
 - **Type name is `HierarchyNode`, not `Node`** — `Node` collides with
   React Flow's own `Node<T>` type and the DOM `Node` global; every file
   that imports both would need an alias. Keep `HierarchyNode` as the
   canonical name; if a future refactor wants `Node`, import it aliased
   (`import type { Node as HierarchyNode }`) rather than the reverse.
-- **`mode` is its own `NodeLevel`, not folded into `masterFunction`** —
-  the seed data has "Mode: Career Transition" hanging directly off the
-  root as a sibling of Build/Sustain, with its own tasks as direct
-  children (no domain/sub-function layer under it). Modeling it as a
-  distinct level (rather than mislabeling it `masterFunction`) keeps the
-  level→color mapping and the "what depth am I at" breadcrumb logic
-  honest. UI code should treat `masterFunction` and `mode` as the same
-  visual tier (see [PRODUCT_SPEC.md](./PRODUCT_SPEC.md)'s color table)
-  even though they're different enum values.
+- **Branches don't all pass through the same levels, and that's fine.**
+  Build goes `masterFunction → valueCategory → domain → subFunction →
+  task`; Sustain skips `valueCategory` entirely (`masterFunction →
+  domain → ...`). `NodeLevel` is a label for *what a node is called*, not
+  a position in a fixed sequence — nothing in the data model or the UI
+  assumes every path has the same length. Depth is always derived by
+  walking `parentId` (see `getAncestors`/`getPath` below), never by
+  counting or ordering `NodeLevel` values. Adding, removing, or
+  reordering a level for one branch (as happened going from v1 → v2 of
+  this data) requires no changes to `lib/` or `components/` beyond
+  `LEVEL_STYLES` in `HierarchyFlowNode.tsx` needing a color for any new
+  level name — TypeScript's `Record<NodeLevel, ...>` enforces that at
+  compile time.
+- **`temporary` is a flag, not a level** — a node like "Career
+  Transition" is structurally a normal `domain` (has the same kind of
+  children a domain has); what's different is that it's situational.
+  Modeling that as a boolean on any node rather than a `NodeLevel` value
+  or a separate node type keeps traversal/depth logic untouched — a
+  temporary node's children work exactly like any other node's.
 
 ## Why flat array + `parentId` (not nested objects)
 
@@ -61,18 +72,21 @@ with two intentional differences worth recording:
   schema (`id PK, label, level, parent_id FK, description, meta`) — a
   Prisma/Drizzle model drops in with no transformation step.
 
-## Derived helpers (to live in `lib/`, not in components)
-
-None of these exist yet; call this out so implementation doesn't scatter
-tree-walking logic across UI components:
+## Derived helpers (live in `lib/hierarchy-data.ts`, not in components)
 
 - `getChildren(id: string | null): HierarchyNode[]` — filter by `parentId`.
+  `getChildren(null)` returns the root. A node's leaf-ness is
+  `getChildren(id).length === 0` — computed from actual children present,
+  never from `level`, so a leaf works the same whether it's 3 levels deep
+  (Sustain's tasks) or 5 (Build's).
+- `getRoot(): HierarchyNode` — the one node with `parentId === null`.
 - `getNode(id: string): HierarchyNode | undefined` — lookup by id.
 - `getAncestors(id: string): HierarchyNode[]` — walk `parentId` up to the
-  root; this is what feeds the breadcrumb.
-- `getPath(id: string): HierarchyNode[]` — root-to-node inclusive
-  (`[...getAncestors(id).reverse(), getNode(id)]`), what the breadcrumb
-  renders directly.
+  root (nearest parent first); this is what feeds the breadcrumb.
+- `getPath(id: string): HierarchyNode[]` — root-to-node inclusive,
+  what the breadcrumb renders directly. Its length is whatever the actual
+  ancestor chain is — 4 entries for a Sustain leaf, 6 for a Build one —
+  `Breadcrumb.tsx` just `.map()`s over it.
 
 Keeping these as pure functions over `hierarchyData` (not React state)
 means swapping the data source later (DB fetch, edit UI writing back) only

@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Handle, Position } from "@xyflow/react";
 import type { HierarchyNode, NodeLevel } from "@/lib/hierarchy-data";
 
@@ -16,6 +17,10 @@ export interface HierarchyNodeData extends Record<string, unknown> {
   // screen means more room, so text scales up; more nodes scale it back
   // down toward a floor that stays readable.
   fontSize: number;
+  // The width radial-layout.ts used for this node's ring-spacing math (px).
+  // Rectangles treat it as a floor, not a fixed value — see the width
+  // handling below for why.
+  width: number;
 }
 
 interface LevelStyle {
@@ -27,10 +32,14 @@ interface LevelStyle {
   leaf: string;
 }
 
-// One accent hue per level (masterFunction and mode share a tier — see
-// docs/PRODUCT_SPEC.md — "Career Transition" is a root-level sibling of
-// Build/Sustain, not a deeper level, so it reads the same depth visually).
-const BASE_LEVEL_STYLES: Record<Exclude<NodeLevel, "mode">, LevelStyle> = {
+// One accent hue per level. This is a lookup keyed by level *name*, not a
+// position in a sequence — it has no opinion on how deep a level sits or
+// whether every branch passes through it, so branches of different depth
+// (e.g. Build's masterFunction → valueCategory → domain vs. Sustain's
+// masterFunction → domain) each just look up their own node's level here.
+// `Record<NodeLevel, ...>` means TypeScript won't compile if a level from
+// lib/hierarchy-data.ts is missing an entry here.
+const LEVEL_STYLES: Record<NodeLevel, LevelStyle> = {
   capacity: {
     focus: "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900",
     child: "border-zinc-400 bg-zinc-100 text-zinc-900 hover:border-zinc-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:border-zinc-400",
@@ -40,6 +49,11 @@ const BASE_LEVEL_STYLES: Record<Exclude<NodeLevel, "mode">, LevelStyle> = {
     focus: "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-400 dark:bg-indigo-500",
     child: "border-indigo-300 bg-indigo-50 text-indigo-900 hover:border-indigo-500 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-100 dark:hover:border-indigo-500",
     leaf: "border-indigo-200 border-dashed bg-indigo-50/60 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-200",
+  },
+  valueCategory: {
+    focus: "border-sky-600 bg-sky-600 text-white dark:border-sky-400 dark:bg-sky-500",
+    child: "border-sky-300 bg-sky-50 text-sky-900 hover:border-sky-500 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-100 dark:hover:border-sky-500",
+    leaf: "border-sky-200 border-dashed bg-sky-50/60 text-sky-800 dark:border-sky-900 dark:bg-sky-950/30 dark:text-sky-200",
   },
   domain: {
     focus: "border-teal-600 bg-teal-600 text-white dark:border-teal-400 dark:bg-teal-500",
@@ -57,17 +71,69 @@ const BASE_LEVEL_STYLES: Record<Exclude<NodeLevel, "mode">, LevelStyle> = {
     leaf: "border-zinc-300 border-dashed bg-zinc-50 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400",
   },
 };
-const LEVEL_STYLES: Record<NodeLevel, LevelStyle> = {
-  ...BASE_LEVEL_STYLES,
-  mode: BASE_LEVEL_STYLES.masterFunction,
-};
+
+const MIN_SHRINK_SCALE = 0.55;
+const SHRINK_STEP = 0.08;
+
+// Hourglass: marks a node as situational/non-permanent (HierarchyNode.temporary).
+// Sits opposite the child-count badge (top-left, not top-right) so the two
+// never collide, and doesn't reuse the leaf's dashed border since a
+// temporary branch node still needs to look clickable/non-dashed.
+function TemporaryBadge() {
+  return (
+    <span
+      title="Temporary — situational, not a permanent part of the hierarchy"
+      className="absolute left-2 top-2 opacity-80"
+    >
+      <svg aria-hidden="true" viewBox="0 0 16 16" className="h-[1em] w-[1em]">
+        <path
+          fill="currentColor"
+          d="M4 1.5A.5.5 0 0 1 4.5 1h7a.5.5 0 0 1 0 1h-.6c-.15 1.9-1 3.55-2.25 4.5 1.25.95 2.1 2.6 2.25 4.5h.6a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h.6c.15-1.9 1-3.55 2.25-4.5C6.15 5.55 5.3 3.9 5.15 2H4.5a.5.5 0 0 1-.5-.5Z"
+        />
+      </svg>
+    </span>
+  );
+}
+
+// A circle can't grow taller without becoming a pill (its width has to grow
+// right along with it to stay a circle, which radial-layout.ts doesn't
+// account for). So instead of growing the box, shrink the *text* to fit the
+// fixed circle — the classic "fit text" trick: after layout, check whether
+// the content overflows its allotted box and step the font down until it
+// doesn't. `key={node.id}` on the caller resets this back to 1 whenever the
+// focus node changes.
+function CircleText({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const overflows =
+      el.scrollHeight > el.clientHeight + 1 ||
+      el.scrollWidth > el.clientWidth + 1;
+    if (overflows && scale > MIN_SHRINK_SCALE) {
+      setScale((s) => Math.max(MIN_SHRINK_SCALE, s - SHRINK_STEP));
+    }
+  }, [scale]);
+
+  return (
+    <div
+      ref={ref}
+      style={{ fontSize: `${scale}em` }}
+      className="flex max-h-[70%] max-w-[70%] flex-col items-center gap-1 overflow-hidden"
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function HierarchyFlowNode({
   data,
 }: {
   data: HierarchyNodeData;
 }) {
-  const { node, role, isLeaf, childCount, fontSize } = data;
+  const { node, role, isLeaf, childCount, fontSize, width } = data;
   const isCircle = role === "focus";
   // The hub steps back to its parent on click — root has no parent, so it's
   // the one focus node that isn't clickable.
@@ -98,15 +164,32 @@ export default function HierarchyFlowNode({
       title={
         isCircle && clickable ? "Back to previous level" : node.description
       }
-      style={{ fontSize }}
+      style={{
+        fontSize,
+        // Rectangles: radial-layout.ts's width is a floor, not a fixed
+        // value — a long label widens the box (up to 1.5x) before it
+        // resorts to wrapping into a tall, narrow column. Capped so one
+        // long label doesn't grow into its ring neighbors.
+        ...(isCircle ? {} : { minWidth: width, maxWidth: width * 1.5 }),
+      }}
       className={[
-        // min-h-full (not h-full): the box always fills at least the size
-        // radial-layout.ts estimated, but can grow taller for a longer
-        // label instead of clipping/spilling past a fixed-height border.
-        "relative flex min-h-full w-full flex-col items-center justify-center gap-1 border text-center shadow-sm transition-colors",
+        "flex flex-col items-center justify-center gap-1 border text-center shadow-sm transition-colors",
         isCircle
-          ? "rounded-full px-[1em] py-[0.85em]"
-          : "rounded-lg px-[0.75em] pb-[0.65em] pt-[1.5em]",
+          ? // Fixed h-full/w-full: a circle has to keep width === height, so
+            // unlike the rectangle below it can't grow to fit longer text —
+            // the text shrinks instead (see CircleText).
+            "relative h-full w-full rounded-full px-[1em] py-[0.85em]"
+          : // min-h-full + w-max (+ the min/max-width style above): fills at
+            // least the size radial-layout.ts estimated in both dimensions,
+            // but can grow — taller for a wrapped line, wider for a long
+            // label — instead of clipping/spilling past a fixed border.
+            // absolute + centered transform (not "relative", normal flow):
+            // a plain block child only grows rightward/downward from its
+            // top-left corner, which both pulls it off its connector line
+            // and grows past bounds fitView already computed. Anchoring on
+            // the node's true center and growing outward symmetrically in
+            // every direction keeps both correct regardless of size.
+            "absolute left-1/2 top-1/2 w-max -translate-x-1/2 -translate-y-1/2 min-h-full rounded-lg px-[0.75em] pb-[0.65em] pt-[1.5em]",
         variant,
         clickable ? "cursor-pointer" : "cursor-default",
         isCircle && clickable ? "hover:brightness-110" : "",
@@ -118,19 +201,14 @@ export default function HierarchyFlowNode({
         isConnectable={false}
         className="opacity-0"
       />
+      {node.temporary && <TemporaryBadge />}
       {role === "child" && !isLeaf && (
         <span className="absolute right-2 top-2 rounded-full bg-current/10 px-[0.5em] py-[0.15em] text-[0.6em] font-semibold leading-none">
           {childCount}
         </span>
       )}
       {isCircle ? (
-        // Text lays out in the full square box regardless of the rounded
-        // border, so an off-center wrapped line can run past the circle's
-        // curve into its corners. Capping the text block's width keeps
-        // every line within the circle at any vertical offset.
-        <div className="flex max-w-[70%] flex-col items-center gap-1">
-          {text}
-        </div>
+        <CircleText key={node.id}>{text}</CircleText>
       ) : (
         text
       )}

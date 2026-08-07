@@ -23,10 +23,15 @@ const ROOT_FOCUS_DIAMETER_MAX = 250;
 const ROOT_FOCUS_DIAMETER_MIN = 180;
 
 // Gap between the focus circle and the ring of children, and between
-// adjacent children on that ring. Kept tight so the fitted view is mostly
-// nodes, not empty canvas.
-const FOCUS_TO_CHILD_GAP = 40;
-const CHILD_TO_CHILD_GAP = 20;
+// adjacent children on that ring. Rectangles can grow beyond CHILD_WIDTH_*
+// / CHILD_HEIGHT_* for a long label (see HierarchyFlowNode's min-h-full and
+// w-max/max-width) — both gaps need enough slack that a grown child doesn't
+// visually crowd the hub or its ring neighbors, since the radius math below
+// only sizes off these base figures, not whatever a node grows to at
+// render time. CHILD_TO_CHILD_GAP in particular accounts for width now
+// being able to grow up to 1.5x (see HierarchyFlowNode's maxWidth).
+const FOCUS_TO_CHILD_GAP = 56;
+const CHILD_TO_CHILD_GAP = 34;
 
 function lerp(max: number, min: number, t: number): number {
   return max - t * (max - min);
@@ -116,6 +121,7 @@ export function buildRadialGraph(focus: HierarchyNode) {
       isLeaf: children.length === 0,
       childCount: children.length,
       fontSize: focusFontSize,
+      width: focusDiameter,
     },
   };
 
@@ -145,6 +151,7 @@ export function buildRadialGraph(focus: HierarchyNode) {
         isLeaf: childCount === 0,
         childCount,
         fontSize,
+        width: childWidth,
       },
     });
 

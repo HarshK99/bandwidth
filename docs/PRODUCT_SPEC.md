@@ -12,16 +12,18 @@ display everything at once.
 The intended usage session looks like this:
 
 1. Open the app. See the root — **Total Capacity** — with its top-level
-   split visible (**Build** vs **Sustain**, plus the current **Mode**, e.g.
-   "Career Transition").
+   split visible (**Build** vs **Sustain**).
 2. Based on current energy/context, pick a branch — say **Build**.
-3. The view zooms into Build and reveals its **Domains** (Income Work,
-   Company Building, Future Bet, Personal Brand...).
-4. Pick a domain — say Income Work. Zoom again, reveal its **Sub-Functions**
+3. The view zooms into Build and reveals its **Value Categories** (Income,
+   Equity, Audience, Career Options) — Build's branch has this extra layer;
+   Sustain doesn't (see "Hierarchy levels" below).
+4. Pick a value category — say Income. Zoom again, reveal its **Domains**
+   (currently just Income Work under Income; other categories have more).
+5. Pick a domain — say Income Work. Zoom again, reveal its **Sub-Functions**
    (Sales/Pipeline, Delivery, Client Relationship, Business Operations).
-5. Pick a sub-function. Zoom again, reveal its **Recurring Tasks** — the
+6. Pick a sub-function. Zoom again, reveal its **Recurring Tasks** — the
    leaves. These are the actual, concrete things that can be done right now.
-6. Pick one. Done — that's the answer to "what do I work on."
+7. Pick one. Done — that's the answer to "what do I work on."
 
 Every step is a narrowing decision, not a menu to scan exhaustively. The
 breadcrumb exists so the person never loses track of *why* a task is in
@@ -41,24 +43,39 @@ one monolithic component).
 
 ## Hierarchy levels
 
+Branches are **not** all the same depth, and the app doesn't assume they
+are — see [DATA_MODEL.md](./DATA_MODEL.md) for why that's safe (depth is
+always derived by walking `parentId`, never assumed from `level`):
+
 ```
 Total Capacity (root, 1 node)
-  └─ Master Function / Mode  (Build, Sustain, Mode: Career Transition)
-       └─ Domain              (Income Work, Company Building, Health, ...)
-            └─ Sub-Function    (Sales/Pipeline, Delivery, ...)
-                 └─ Task        (leaf — "Cold outreach to prospects", ...)
+  └─ Master Function     (Build, Sustain)
+       │
+       ├─ Build ──── Value Category  (Income, Equity, Audience, Career Options)
+       │                  └─ Domain           (Income Work, Company Building, ...)
+       │                       └─ Sub-Function   (Sales/Pipeline, Delivery, ...)
+       │                            └─ Task         (leaf)
+       │
+       └─ Sustain ── Domain          (Physical Health, Relationships, ...)
+                          └─ Sub-Function   (General, ...)
+                               └─ Task         (leaf)
 ```
 
-Five levels total: `capacity`, `masterFunction`, `mode`, `domain`,
-`subFunction`, `task` (see [DATA_MODEL.md](./DATA_MODEL.md) — `mode` is a
-sibling of `masterFunction`, not a separate depth, since "Career
-Transition" hangs directly off the root alongside Build/Sustain and has
-tasks as direct children).
+Build's branch is 5 levels deep (it passes through `valueCategory`);
+Sustain's is 4 (it skips straight from `masterFunction` to `domain`). Six
+level names total: `capacity`, `masterFunction`, `valueCategory`, `domain`,
+`subFunction`, `task`.
+
+A node can also be flagged `temporary: true` (e.g. "Career Transition," a
+`domain` under Career Options) — situational rather than a permanent part
+of the structure. This is a flag on the node, not a level or a different
+node shape: it renders with a small hourglass badge, on top of whatever
+its actual level's color/leaf status already is.
 
 ## Interaction requirements
 
-- **Start state**: zoomed on the root, with Build / Sustain / Mode visible
-  as connected boxes. Nothing deeper is rendered yet.
+- **Start state**: zoomed on the root, with Build / Sustain visible as
+  connected boxes. Nothing deeper is rendered yet.
 - **Click a node with children**: pan/zoom the camera to frame that node
   and its (newly revealed) children. Siblings not on the active path dim
   or collapse out of view — the canvas stays focused, not a full expanding
@@ -82,15 +99,19 @@ depth is readable at a glance without reading labels:
 | Level | Role | Suggested treatment |
 |---|---|---|
 | `capacity` | root | dark/neutral, largest, anchors the canvas |
-| `masterFunction` / `mode` | first branch | one strong accent (e.g. indigo) |
-| `domain` | second branch | a second accent (e.g. teal) |
-| `subFunction` | third branch | a third, lighter accent (e.g. amber) |
+| `masterFunction` | first branch | one strong accent (e.g. indigo) |
+| `valueCategory` | Build-only layer | a distinct accent between masterFunction and domain (e.g. sky blue) |
+| `domain` | branch | another accent (e.g. teal) |
+| `subFunction` | branch | a third, lighter accent (e.g. amber) |
 | `task` | leaf | neutral/light fill, distinct icon or border style marking "this is an endpoint" |
 
 Leaf vs. non-leaf must be distinguishable **before** interacting — color
 alone is acceptable but pairing it with a shape/icon cue (e.g. non-leaf
 nodes show a child-count badge or expand affordance) is preferred so it
-still reads for a colorblind user.
+still reads for a colorblind user. Leaf-ness is about whether a node
+*has children right now*, not its level — a `domain` with no children
+would render as a leaf too, since Sustain's shallower branch means a
+`domain` can be a leaf's parent directly.
 
 ## Explicit MVP scope
 

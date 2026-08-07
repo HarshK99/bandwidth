@@ -1,11 +1,22 @@
 // lib/hierarchy-data.ts
 // Flat array + parentId model — makes it trivial to add an edit UI or swap in a DB later
 // without restructuring. Every node's children are simply nodes whose parentId === this node's id.
+//
+// v2 change: Build now branches into 4 Value Categories (Income, Equity, Audience, Career Options)
+// before reaching Domains — matching Build's actual definition. The standalone "Mode" node is gone;
+// Career Transition is now a real domain under Career Options, flagged temporary: true instead.
+//
+// v3 change: removed the single-child "General" subFunction placeholder wherever a domain had
+// exactly one (it added a level without adding any real categorization) — those tasks now sit
+// directly on their domain. Career Options collapses even further: its three situational tasks sit
+// directly on the valueCategory itself, no domain/sub-function layer at all (temporary: true moved
+// from the old "Career Transition" domain onto each task). Income Work renamed to Income, now
+// covering two domains: Websites (the renamed original) and Digital Products (new).
 
 export type NodeLevel =
   | "capacity"
   | "masterFunction"
-  | "mode"
+  | "valueCategory"
   | "domain"
   | "subFunction"
   | "task";
@@ -17,6 +28,7 @@ export interface HierarchyNode {
   parentId: string | null;
   description?: string;
   meta?: string; // e.g. calendar slot this task lives in
+  temporary?: boolean; // true for situational/non-permanent nodes (e.g. Career Transition tasks)
 }
 
 export const hierarchyData: HierarchyNode[] = [
@@ -30,7 +42,7 @@ export const hierarchyData: HierarchyNode[] = [
       "Time + Energy — the only finite inputs everything downstream converts.",
   },
 
-  // ---------- MASTER FUNCTIONS + MODE ----------
+  // ---------- MASTER FUNCTIONS ----------
   {
     id: "mf-build",
     label: "Build",
@@ -47,46 +59,77 @@ export const hierarchyData: HierarchyNode[] = [
     description:
       "Protects and replenishes the capacity to keep Building. Ongoing, protective.",
   },
+
+  // ---------- VALUE CATEGORIES under Build ----------
   {
-    id: "mode-transition",
-    label: "Mode: Career Transition (ACTIVE)",
-    level: "mode",
-    parentId: "capacity-root",
+    id: "vc-income",
+    label: "Income Work",
+    level: "valueCategory",
+    parentId: "mf-build",
     description:
-      "Temporary state reallocating capacity — currently pulling the Morning slot toward job search. Reverts to Normal once resolved.",
+      "Cash now — work that pays today. Two streams: client website work, and product sales.",
+  },
+  {
+    id: "vc-equity",
+    label: "Equity",
+    level: "valueCategory",
+    parentId: "mf-build",
+    description: "Ownership stakes in a growing venture — long-horizon, compounding bets.",
+  },
+  {
+    id: "vc-audience",
+    label: "Audience",
+    level: "valueCategory",
+    parentId: "mf-build",
+    description: "Attention/platform you own — reach independent of any single venture.",
+  },
+  {
+    id: "vc-career",
+    label: "Career Options",
+    level: "valueCategory",
+    parentId: "mf-build",
+    description: "Alternative paths — employment, optionality outside self-employment.",
   },
 
-  // ---------- DOMAINS under Build ----------
+  // ---------- DOMAINS under Value Categories (Build side) ----------
   {
     id: "dom-income",
-    label: "Income Work",
+    label: "Websites",
     level: "domain",
-    parentId: "mf-build",
-    description: "Client website business — current primary income source.",
+    parentId: "vc-income",
+    description: "Freelance website design/build for clients — current primary income source.",
+  },
+  {
+    id: "dom-digitalproducts",
+    label: "Digital Products",
+    level: "domain",
+    parentId: "vc-income",
+    description:
+      "Stickers/paintings and similar products to sell — new, early-stage income stream.",
   },
   {
     id: "dom-wave",
     label: "Company Building (Wave)",
     level: "domain",
-    parentId: "mf-build",
+    parentId: "vc-equity",
     description: "Main long-term company bet — currently acquisition-focused.",
   },
   {
     id: "dom-sideproject",
     label: "Future Bet (Side-project)",
     level: "domain",
-    parentId: "mf-build",
+    parentId: "vc-equity",
     description: "Next potential startup — apps/tools, early stage.",
   },
   {
     id: "dom-brand",
     label: "Personal Brand (Content)",
     level: "domain",
-    parentId: "mf-build",
+    parentId: "vc-audience",
     description: "Skits/content — separate audience-building asset, not tied to Wave.",
   },
 
-  // ---------- DOMAINS under Sustain ----------
+  // ---------- DOMAINS under Sustain (no Value Category layer — direct children) ----------
   {
     id: "dom-health",
     label: "Physical Health",
@@ -130,7 +173,7 @@ export const hierarchyData: HierarchyNode[] = [
     description: "Non-domain-specific reading/learning — buffer rotation.",
   },
 
-  // ---------- SUB-FUNCTIONS: Income Work ----------
+  // ---------- SUB-FUNCTIONS: Websites ----------
   {
     id: "sub-sales",
     label: "Sales / Pipeline",
@@ -248,6 +291,15 @@ export const hierarchyData: HierarchyNode[] = [
     meta: "Admin",
   },
 
+  // ---------- TASKS: Digital Products (direct — no sub-function layer yet) ----------
+  {
+    id: "task-digitalproducts-sell",
+    label: "Design + list stickers/paintings for sale",
+    level: "task",
+    parentId: "dom-digitalproducts",
+    meta: "Ad-hoc",
+  },
+
   // ---------- SUB-FUNCTIONS: Company Building (Wave) ----------
   {
     id: "sub-wave-acquisition",
@@ -289,172 +341,170 @@ export const hierarchyData: HierarchyNode[] = [
     meta: "Tue/Thu Morning (compressed)",
   },
 
-  // ---------- Future Bet (not yet broken into sub-functions) ----------
+  // ---------- SUB-FUNCTIONS: Future Bet (build steps, not parallel categories —
+  // see the UI note in docs/PRODUCT_SPEC.md about sequential vs. categorical children) ----------
   {
-    id: "sub-sideproject-general",
-    label: "General",
+    id: "sub-sideproject-ideation",
+    label: "Ideation",
     level: "subFunction",
     parentId: "dom-sideproject",
-    description: "Not yet broken down into sub-functions.",
+    description: "Validate and refine the concept before building anything.",
   },
   {
-    id: "task-sideproject-build",
-    label: "Side-project building",
-    level: "task",
-    parentId: "sub-sideproject-general",
-    meta: "Sunday Morning 9:00-12:00 (optional)",
+    id: "sub-sideproject-dev",
+    label: "Development",
+    level: "subFunction",
+    parentId: "dom-sideproject",
+    description: "Actually building the thing.",
+  },
+  {
+    id: "sub-sideproject-content",
+    label: "Content (Distribution)",
+    level: "subFunction",
+    parentId: "dom-sideproject",
+    description: "Content/marketing lined up so launch has somewhere to land.",
   },
 
-  // ---------- Personal Brand (not yet broken into sub-functions) ----------
+  // ---------- TASKS: Future Bet build steps ----------
   {
-    id: "sub-brand-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-brand",
-    description: "Not yet broken down into sub-functions.",
+    id: "task-sideproject-brainstorm",
+    label: "Brainstorm + validate concept",
+    level: "task",
+    parentId: "sub-sideproject-ideation",
+    meta: "Sunday Morning 9:00-12:00 (optional)",
   },
+  {
+    id: "task-sideproject-mvp",
+    label: "Build MVP",
+    level: "task",
+    parentId: "sub-sideproject-dev",
+    meta: "Ad-hoc",
+  },
+  {
+    id: "task-sideproject-launchcontent",
+    label: "Create launch content/marketing",
+    level: "task",
+    parentId: "sub-sideproject-content",
+    meta: "Ad-hoc",
+  },
+
+  // ---------- Personal Brand: tasks sit directly on the domain (no sub-function layer) ----------
   {
     id: "task-brand-scripting",
     label: "Skit scripting/ideas",
     level: "task",
-    parentId: "sub-brand-general",
+    parentId: "dom-brand",
     meta: "Mon/Thu CTP",
   },
   {
     id: "task-brand-filming",
     label: "Skit filming",
     level: "task",
-    parentId: "sub-brand-general",
+    parentId: "dom-brand",
     meta: "Saturday 9:00-11:00 (daylight)",
   },
   {
     id: "task-brand-editing",
     label: "Skit editing/planning",
     level: "task",
-    parentId: "sub-brand-general",
+    parentId: "dom-brand",
     meta: "Hobbies 8:00-10:00",
   },
 
-  // ---------- Sustain domains — light sub-function + task each ----------
+  // ---------- Career Options: three situational tasks sit directly on the value
+  // category itself — no domain, no sub-function. temporary: true marks them as
+  // active-but-not-permanent; once resolved these get removed or promoted to a
+  // real domain, not folded back into a placeholder layer. ----------
   {
-    id: "sub-health-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-health",
+    id: "task-career-techprep",
+    label: "Interview technical prep (DSA/system design)",
+    level: "task",
+    parentId: "vc-career",
+    meta: "Daily 8:00-9:00am",
+    temporary: true,
   },
+  {
+    id: "task-career-behavioral",
+    label: "Resume tailoring / STAR stories / mock interviews",
+    level: "task",
+    parentId: "vc-career",
+    meta: "Mon/Wed/Fri 6:00-7:00pm",
+    temporary: true,
+  },
+  {
+    id: "task-career-applications",
+    label: "Job applications + company research",
+    level: "task",
+    parentId: "vc-career",
+    meta: "Mon/Thu Admin 1:00-2:30pm",
+    temporary: true,
+  },
+
+  // ---------- Sustain domains — task(s) sit directly on the domain (no sub-function layer) ----------
   {
     id: "task-health-workout",
     label: "Daily workout",
     level: "task",
-    parentId: "sub-health-general",
+    parentId: "dom-health",
     meta: "Daily 7:30-8:00am",
   },
 
   {
-    id: "sub-relationships-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-relationships",
-  },
-  {
     id: "task-relationships-time",
     label: "Protected family/friends time",
     level: "task",
-    parentId: "sub-relationships-general",
+    parentId: "dom-relationships",
     meta: "Sunday 6:00-9:00pm",
   },
 
   {
-    id: "sub-rest-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-rest",
-  },
-  {
     id: "task-rest-hobbies",
     label: "Painting / Netflix / hobbies",
     level: "task",
-    parentId: "sub-rest-general",
+    parentId: "dom-rest",
     meta: "Daily 8:00-10:00pm",
   },
   {
     id: "task-rest-review",
     label: "Weekly review + next week planning",
     level: "task",
-    parentId: "sub-rest-general",
+    parentId: "dom-rest",
     meta: "Sunday CTP",
   },
 
   {
-    id: "sub-financial-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-financial",
-  },
-  {
     id: "task-financial-trading",
     label: "Trading research + portfolio review + execute trades",
     level: "task",
-    parentId: "sub-financial-general",
+    parentId: "dom-financial",
     meta: "Sunday 5:00-5:45pm",
   },
 
   {
-    id: "sub-lifeadmin-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-lifeadmin",
-  },
-  {
     id: "task-lifeadmin-errands",
     label: "Errands / bills / home maintenance",
     level: "task",
-    parentId: "sub-lifeadmin-general",
+    parentId: "dom-lifeadmin",
     meta: "Saturday 1:00-2:00pm",
   },
 
   {
-    id: "sub-learning-general",
-    label: "General",
-    level: "subFunction",
-    parentId: "dom-learning",
-  },
-  {
     id: "task-learning-reading",
     label: "Reading rotation (day-themed)",
     level: "task",
-    parentId: "sub-learning-general",
+    parentId: "dom-learning",
     meta: "Daily Buffer 2:50-3:20pm",
-  },
-
-  // ---------- Mode: Career Transition — tasks directly under the mode ----------
-  {
-    id: "task-mode-techprep",
-    label: "Interview technical prep (DSA/system design)",
-    level: "task",
-    parentId: "mode-transition",
-    meta: "Daily 8:00-9:00am",
-  },
-  {
-    id: "task-mode-behavioral",
-    label: "Resume tailoring / STAR stories / mock interviews",
-    level: "task",
-    parentId: "mode-transition",
-    meta: "Mon/Wed/Fri 6:00-7:00pm",
-  },
-  {
-    id: "task-mode-applications",
-    label: "Job applications + company research",
-    level: "task",
-    parentId: "mode-transition",
-    meta: "Mon/Thu Admin 1:00-2:30pm",
   },
 ];
 
 // ---------- Query helpers ----------
 // Pure functions over hierarchyData so navigation/UI code never walks
 // parentId links directly. Swapping the data source later (DB, edit UI)
-// only changes hierarchyData's origin, not these signatures.
+// only changes hierarchyData's origin, not these signatures. Purely
+// parentId-driven — no assumption about level order or a fixed depth, so
+// branches of uneven depth (e.g. some paths passing through valueCategory,
+// others skipping straight from masterFunction to domain, or straight from
+// valueCategory to task) work the same.
 
 export function getChildren(id: string | null): HierarchyNode[] {
   return hierarchyData.filter((node) => node.parentId === id);
