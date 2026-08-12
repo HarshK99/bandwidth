@@ -172,6 +172,14 @@ export const hierarchyData: HierarchyNode[] = [
     parentId: "mf-sustain",
     description: "Non-domain-specific reading/learning — buffer rotation.",
   },
+  {
+    id: "dom-psychfitness",
+    label: "Psychological Fitness",
+    level: "domain",
+    parentId: "mf-sustain",
+    description:
+      "Confidence, communication, and emotional resilience — the internal capacity Build execution actually runs on.",
+  },
 
   // ---------- SUB-FUNCTIONS: Websites ----------
   {
@@ -494,6 +502,87 @@ export const hierarchyData: HierarchyNode[] = [
     level: "task",
     parentId: "dom-learning",
     meta: "Daily Buffer 2:50-3:20pm",
+  },
+
+  // ---------- SUB-FUNCTIONS: Psychological Fitness ----------
+  // Milestone challenges, not recurring tasks — no meta (it's calendar-slot-
+  // shaped everywhere else in this data); the challenge itself lives in
+  // description. Graduated/one-off, done when done, not on a schedule.
+  {
+    id: "sub-psych-confidence",
+    label: "Confidence / Public Speaking",
+    level: "subFunction",
+    parentId: "dom-psychfitness",
+    description: "Comfort taking up space and speaking without needing permission.",
+  },
+  {
+    id: "sub-psych-fluency",
+    label: "Fluency",
+    level: "subFunction",
+    parentId: "dom-psychfitness",
+    description:
+      "Speaking smoothly (no stumbling/filler words) and articulating thoughts clearly — delivery and clarity together.",
+  },
+  {
+    id: "sub-psych-fearofjudgment",
+    label: "Fear of Being Judged",
+    level: "subFunction",
+    parentId: "dom-psychfitness",
+    description: "Building tolerance for visibility and imperfection in front of others.",
+  },
+
+  // ---------- CHALLENGES: Confidence / Public Speaking ----------
+  {
+    id: "task-psych-confidence-speakup",
+    label: "Speak up unprompted in a group of 5+",
+    level: "task",
+    parentId: "sub-psych-confidence",
+  },
+  {
+    id: "task-psych-confidence-toast",
+    label: "Give a short toast or impromptu speech",
+    level: "task",
+    parentId: "sub-psych-confidence",
+  },
+  {
+    id: "task-psych-confidence-recordwatch",
+    label: "Record yourself giving a talk and watch it back",
+    level: "task",
+    parentId: "sub-psych-confidence",
+  },
+
+  // ---------- CHALLENGES: Fluency ----------
+  {
+    id: "task-psych-fluency-impromptu",
+    label: "Do a 2-minute impromptu talk on a random topic, no filler words",
+    level: "task",
+    parentId: "sub-psych-fluency",
+  },
+  {
+    id: "task-psych-fluency-explainsimple",
+    label: "Explain a complex idea simply, out loud, to someone else",
+    level: "task",
+    parentId: "sub-psych-fluency",
+  },
+
+  // ---------- CHALLENGES: Fear of Being Judged ----------
+  {
+    id: "task-psych-fearofjudgment-postpublic",
+    label: "Post something publicly without over-editing it first",
+    level: "task",
+    parentId: "sub-psych-fearofjudgment",
+  },
+  {
+    id: "task-psych-fearofjudgment-askquestion",
+    label: "Ask a question in a group you'd normally hold back on",
+    level: "task",
+    parentId: "sub-psych-fearofjudgment",
+  },
+  {
+    id: "task-psych-fearofjudgment-sharework",
+    label: "Share an unfinished/imperfect piece of work with someone",
+    level: "task",
+    parentId: "sub-psych-fearofjudgment",
   },
 ];
 
