@@ -29,6 +29,7 @@ export interface HierarchyNode {
   description?: string;
   meta?: string; // e.g. calendar slot this task lives in
   temporary?: boolean; // true for situational/non-permanent nodes (e.g. Career Transition tasks)
+  url?: string; // leaf-only: clicking opens this in a new tab instead of no-op
 }
 
 export const hierarchyData: HierarchyNode[] = [
@@ -502,6 +503,7 @@ export const hierarchyData: HierarchyNode[] = [
     level: "task",
     parentId: "dom-learning",
     meta: "Daily Buffer 2:50-3:20pm",
+    url: "https://linkshelf-three.vercel.app/",
   },
 
   // ---------- SUB-FUNCTIONS: Psychological Fitness ----------

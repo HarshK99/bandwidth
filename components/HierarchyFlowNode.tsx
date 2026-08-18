@@ -75,6 +75,29 @@ const LEVEL_STYLES: Record<NodeLevel, LevelStyle> = {
 const MIN_SHRINK_SCALE = 0.55;
 const SHRINK_STEP = 0.08;
 
+// External-link glyph: marks a leaf that opens a URL instead of no-op'ing.
+// Shares the child-count badge's top-right corner — the two never collide
+// since only non-leaf children get a count and only leaves get this.
+function ExternalLinkBadge() {
+  return (
+    <span
+      title="Opens an external link"
+      className="absolute right-2 top-2 opacity-70"
+    >
+      <svg aria-hidden="true" viewBox="0 0 16 16" className="h-[1em] w-[1em]">
+        <path
+          fill="currentColor"
+          d="M6.22 8.72a.75.75 0 0 0 1.06 1.06l5.22-5.22v1.69a.75.75 0 0 0 1.5 0v-3.5a.75.75 0 0 0-.75-.75h-3.5a.75.75 0 0 0 0 1.5h1.69L6.22 8.72Z"
+        />
+        <path
+          fill="currentColor"
+          d="M3.5 4A1.5 1.5 0 0 0 2 5.5v7A1.5 1.5 0 0 0 3.5 14h7a1.5 1.5 0 0 0 1.5-1.5v-3a.75.75 0 0 0-1.5 0v3a.5.5 0 0 1-.5.5h-7a.5.5 0 0 1-.5-.5v-7a.5.5 0 0 1 .5-.5h3a.75.75 0 0 0 0-1.5h-3Z"
+        />
+      </svg>
+    </span>
+  );
+}
+
 // Hourglass: marks a node as situational/non-permanent (HierarchyNode.temporary).
 // Sits opposite the child-count badge (top-left, not top-right) so the two
 // never collide, and doesn't reuse the leaf's dashed border since a
@@ -137,7 +160,7 @@ export default function HierarchyFlowNode({
   const isCircle = role === "focus";
   // The hub steps back to its parent on click — root has no parent, so it's
   // the one focus node that isn't clickable.
-  const clickable = isCircle ? node.parentId !== null : !isLeaf;
+  const clickable = isCircle ? node.parentId !== null : !isLeaf || !!node.url;
   const style = LEVEL_STYLES[node.level];
   const variant = isCircle ? style.focus : isLeaf ? style.leaf : style.child;
 
@@ -193,6 +216,7 @@ export default function HierarchyFlowNode({
         variant,
         clickable ? "cursor-pointer" : "cursor-default",
         isCircle && clickable ? "hover:brightness-110" : "",
+        !isCircle && isLeaf && node.url ? "hover:brightness-105" : "",
       ].join(" ")}
     >
       <Handle
@@ -202,6 +226,7 @@ export default function HierarchyFlowNode({
         className="opacity-0"
       />
       {node.temporary && <TemporaryBadge />}
+      {role === "child" && isLeaf && node.url && <ExternalLinkBadge />}
       {role === "child" && !isLeaf && (
         <span className="absolute right-2 top-2 rounded-full bg-current/10 px-[0.5em] py-[0.15em] text-[0.6em] font-semibold leading-none">
           {childCount}

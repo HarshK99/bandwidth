@@ -49,7 +49,12 @@ function MindMapCanvas() {
         if (data.node.parentId) navigateTo(data.node.parentId);
         return;
       }
-      if (data.isLeaf) return;
+      if (data.isLeaf) {
+        if (data.node.url) {
+          window.open(data.node.url, "_blank", "noopener,noreferrer");
+        }
+        return;
+      }
       navigateTo(data.node.id);
     },
     [navigateTo]
