@@ -1,7 +1,6 @@
 // lib/milestones.ts
-// Data prep for milestone dots — no real dates yet. Populate this array once
-// milestone data is available; index mapping (which dot a date lands on, per
-// scope) already lives in lib/time-dots.ts and needs no changes to pick these up.
+// Milestone dots — index mapping (which dot a date lands on, per scope)
+// lives in lib/time-dots.ts and picks up new entries here automatically.
 
 export interface Milestone {
   id: string;
@@ -9,4 +8,15 @@ export interface Milestone {
   date: string; // ISO "YYYY-MM-DD"
 }
 
-export const milestones: Milestone[] = [];
+export const milestones: Milestone[] = [
+  // Day is a placeholder (mid-month) — only "April 2028" was given.
+  { id: "milestone-wedding", label: "Get Married", date: "2028-04-15" },
+];
+
+export function formatMilestoneDate(iso: string): string {
+  return new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}

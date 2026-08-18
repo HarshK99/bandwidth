@@ -110,15 +110,24 @@ function getMilestoneIndex(scope: DotScope, now: Date, date: Date): number | nul
   }
 }
 
-export function getMilestoneIndices(
+export interface MilestoneMarker {
+  index: number;
+  milestone: Milestone;
+}
+
+// Which milestones fall inside the given scope's current window, and which
+// dot each one lands on. A milestone whose date isn't visible in this scope
+// right now (e.g. a 2028 date on This Year while it's 2026) is simply
+// omitted — it reappears here on its own once the scope's window reaches it.
+export function getMilestoneMarkers(
   items: Milestone[],
   scope: DotScope,
   now: Date
-): number[] {
-  const indices: number[] = [];
+): MilestoneMarker[] {
+  const markers: MilestoneMarker[] = [];
   for (const item of items) {
     const index = getMilestoneIndex(scope, now, new Date(item.date));
-    if (index !== null) indices.push(index);
+    if (index !== null) markers.push({ index, milestone: item });
   }
-  return indices;
+  return markers;
 }

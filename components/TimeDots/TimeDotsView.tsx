@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import DotGrid from "./DotGrid";
+import MilestonesPanel from "./MilestonesPanel";
 import Segmented from "./Segmented";
 import {
   getLifeWeeksDots,
   getLifeYearsDots,
-  getMilestoneIndices,
+  getMilestoneMarkers,
   getThisMonthDots,
   getThisYearDots,
   LIFE_EXPECTANCY_YEARS,
@@ -79,7 +80,9 @@ export default function TimeDotsView() {
 
   const remaining = total - elapsed;
   const percent = Math.round((elapsed / total) * 100);
-  const highlightIndices = new Set(getMilestoneIndices(milestones, scope, now));
+  const milestoneMarkers = new Map(
+    getMilestoneMarkers(milestones, scope, now).map((m) => [m.index, m.milestone])
+  );
 
   return (
     <div className="flex h-full flex-col px-4 py-3 sm:px-6 sm:py-4">
@@ -110,12 +113,15 @@ export default function TimeDotsView() {
 
       <div className="min-h-0 flex-1 pt-2">
         <DotGrid
+          key={`${scopeKind}-${scopeKind === "year" ? yearUnit : scopeKind === "life" ? lifeUnit : ""}`}
           total={total}
           elapsed={elapsed}
           columns={columns}
-          highlightIndices={highlightIndices}
+          milestones={milestoneMarkers}
         />
       </div>
+
+      <MilestonesPanel milestones={milestones} />
     </div>
   );
 }
