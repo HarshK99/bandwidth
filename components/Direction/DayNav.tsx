@@ -10,9 +10,8 @@ interface DayNavProps {
 }
 
 const STEP =
-  "flex min-h-8 w-8 items-center justify-center text-zinc-500 transition-colors " +
-  "hover:bg-black/[0.04] hover:text-zinc-900 dark:text-zinc-400 " +
-  "dark:hover:bg-white/[0.06] dark:hover:text-zinc-100";
+  "flex min-h-8 w-8 items-center justify-center text-[15px] text-zinc-500 transition-colors " +
+  "hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100";
 
 /**
  * Date stepper. Present but understated — the app is about today; other days
@@ -22,12 +21,12 @@ export default function DayNav({ date, today, onChange }: DayNavProps) {
   const isToday = isSameDate(date, today);
 
   return (
-    <div className="inline-flex items-stretch divide-x divide-black/10 overflow-hidden rounded-md border border-black/10 dark:divide-white/15 dark:border-white/15">
+    <div className="inline-flex items-stretch rounded-full border border-black/[0.09] px-1 dark:border-white/[0.14]">
       <button
         type="button"
         onClick={() => onChange(addDays(date, -1))}
         aria-label="Previous day"
-        className={STEP}
+        className={cx(STEP, "rounded-full")}
       >
         ‹
       </button>
@@ -37,10 +36,10 @@ export default function DayNav({ date, today, onChange }: DayNavProps) {
         disabled={isToday}
         className={cx(
           LABEL_XS,
-          "px-3 transition-colors",
+          "rounded-full px-2.5 transition-colors",
           isToday
             ? "cursor-default text-zinc-300 dark:text-zinc-600"
-            : "text-zinc-600 hover:bg-black/[0.04] hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/[0.06] dark:hover:text-zinc-100"
+            : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
         )}
       >
         Today
@@ -49,7 +48,7 @@ export default function DayNav({ date, today, onChange }: DayNavProps) {
         type="button"
         onClick={() => onChange(addDays(date, 1))}
         aria-label="Next day"
-        className={STEP}
+        className={cx(STEP, "rounded-full")}
       >
         ›
       </button>

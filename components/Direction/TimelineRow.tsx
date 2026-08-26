@@ -7,28 +7,45 @@ import {
   formatRangeParts,
 } from "@/lib/direction/schedule";
 import type { DayEntry } from "@/lib/direction/schedule";
-import { cx, FAINT, LABEL, LABEL_XS, MUTED, STRONG } from "./ui";
+import { cx, FAINT, LABEL, LABEL_XS, MUTED, NUM } from "./ui";
 
 interface TimelineRowProps {
   entry: DayEntry;
   isNext: boolean;
   isLast: boolean;
+  /** The block before this one ends exactly when it starts. */
+  attachedAbove: boolean;
+  /** The block after this one starts exactly when it ends. */
+  attachedBelow: boolean;
 }
 
 /**
  * A block's box height, in px, from its duration.
  *
- * Deliberately *not* proportional: a square-root curve means 3h reads
- * clearly taller than 30m (≈1.6×, not 6×) so the whole day still fits on
- * one screen and the page never turns into a calendar grid. It's a
- * min-height, so a block whose content needs more room — the live one, at
- * display type size — simply takes it.
+ * Linear enough to actually feel — 3h is roughly double 1h — but capped, so
+ * the 8-hour sleep block doesn't turn the page into a scroll marathon. It's
+ * a min-height: a block whose content needs more room, like the live one at
+ * display type size, simply takes it.
  */
 function boxHeight(minutes: number): number {
-  return Math.round(40 + 6 * Math.sqrt(Math.max(0, minutes)));
+  return Math.round(Math.min(190, 40 + 0.58 * Math.max(0, minutes)));
 }
 
-export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps) {
+/** Corners are rounded only where a run of touching blocks begins and ends. */
+function radiusClass(attachedAbove: boolean, attachedBelow: boolean): string {
+  if (attachedAbove && attachedBelow) return "rounded-none";
+  if (attachedAbove) return "rounded-b-2xl";
+  if (attachedBelow) return "rounded-t-2xl";
+  return "rounded-2xl";
+}
+
+export default function TimelineRow({
+  entry,
+  isNext,
+  isLast,
+  attachedAbove,
+  attachedBelow,
+}: TimelineRowProps) {
   const { block, name, focus, note, status, minutesRemaining, progress, isOverride } =
     entry;
   const meta = BLOCK_TYPE_META[block.type];
@@ -38,11 +55,17 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
   const time = formatRangeParts(block);
 
   return (
-    <li className="grid grid-cols-[3rem_1rem_minmax(0,1fr)] pb-3 sm:grid-cols-[3.25rem_1.25rem_minmax(0,1fr)]">
+    <li
+      className={cx(
+        "grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_1.25rem_minmax(0,1fr)]",
+        attachedBelow ? "pb-0" : "pb-3"
+      )}
+    >
       {/* Time — stacked, so the column stays out of the way */}
       <div
         className={cx(
-          "pt-3.5 pr-2 text-right font-mono text-[10px] leading-[1.5] tracking-tight whitespace-nowrap sm:pr-2.5 sm:text-[11px]",
+          NUM,
+          "pt-3.5 pr-2 text-right text-[11px] leading-[1.45] font-medium whitespace-nowrap sm:pr-2.5",
           isCurrent ? "text-accent" : FAINT
         )}
       >
@@ -61,7 +84,12 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
         {isCurrent ? (
           // The rail beside the live block doubles as the clock: it fills as
           // the block runs out. No calendar grid, no numbers.
-          <div className="absolute top-0 bottom-3 w-[3px] overflow-hidden rounded-full bg-accent/20">
+          <div
+            className={cx(
+              "absolute top-0 w-[3px] overflow-hidden rounded-full bg-accent/20",
+              attachedBelow ? "bottom-0" : "bottom-3"
+            )}
+          >
             <div
               className="w-full bg-accent transition-[height] duration-500"
               style={{ height: `${Math.max(2, Math.min(100, progress * 100))}%` }}
@@ -79,15 +107,27 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
         )}
       </div>
 
-      {/* The block itself */}
+      {/* The block itself. Touching blocks overlap by a pixel so their
+          borders collapse into one hairline and the run reads as continuous
+          time — a visible gap then means there really is one. */}
       <div
         className={cx(
-          "flex flex-col rounded-md border px-4 py-3.5 transition-colors",
+          "relative flex flex-col border transition-colors",
+          // The live block is lifted out of the run — fully rounded and
+          // raised — so it reads as a card sitting on the stack rather than
+          // a mid-run segment with square corners.
+          isCurrent ? "rounded-2xl" : radiusClass(attachedAbove, attachedBelow),
+          attachedAbove && "-mt-px",
           isCurrent
-            ? "border-accent/35 bg-accent/[0.045]"
-            : isPast
-              ? "border-black/[0.05] dark:border-white/[0.07]"
-              : "border-black/[0.09] dark:border-white/[0.12]"
+            ? // The one filled surface in the app: the block you're in.
+              "grain z-10 overflow-hidden border-transparent bg-linear-to-br " +
+              "from-hero-from to-hero-to px-4 py-4 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]"
+            : cx(
+                "bg-surface px-3.5 py-3",
+                isPast
+                  ? "border-black/[0.04] dark:border-white/[0.06]"
+                  : "border-black/[0.07] dark:border-white/[0.08]"
+              )
         )}
         style={{ minHeight: boxHeight(blockDurationMinutes(block)) }}
       >
@@ -95,9 +135,9 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
           <h3
             className={cx(
               LABEL,
-              relaxed && "font-normal tracking-[0.13em]",
+              relaxed && !isCurrent && "font-medium tracking-[0.09em]",
               isCurrent
-                ? STRONG
+                ? "text-white/75"
                 : isPast
                   ? FAINT
                   : meta.emphasis === "strong"
@@ -109,8 +149,8 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
           </h3>
           {isCurrent && (
             <>
-              <span className={cx(LABEL_XS, "text-accent")}>Now</span>
-              <span className="font-mono text-[10px] tracking-tight text-accent/70">
+              <span className={cx(LABEL_XS, "text-white")}>Now</span>
+              <span className={cx(NUM, "text-[11px] font-medium text-white/60")}>
                 {formatDuration(minutesRemaining)} left
               </span>
             </>
@@ -131,16 +171,16 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
         {focus && (
           <p
             className={cx(
-              "mt-1.5",
+              "mt-1",
               isCurrent
-                ? "text-[1.75rem] leading-[1.15] tracking-[-0.02em] sm:text-4xl"
+                ? "text-[1.9rem] leading-[1.1] tracking-[-0.025em] text-balance sm:text-[2.6rem]"
                 : relaxed
                   ? "text-[15px] leading-relaxed sm:text-base"
                   : "text-[15px] leading-snug sm:text-base",
               // Relaxed blocks never take extra weight — thinking and hobby
               // time shouldn't shout, even when it's the live block.
-              isCurrent && !relaxed ? "font-medium" : "font-normal",
-              isCurrent ? STRONG : isPast ? MUTED : "text-zinc-700 dark:text-zinc-300"
+              isCurrent && !relaxed ? "font-extrabold" : "font-medium",
+              isCurrent ? "text-white" : isPast ? MUTED : "text-zinc-800 dark:text-zinc-200"
             )}
           >
             {focus}
@@ -152,8 +192,8 @@ export default function TimelineRow({ entry, isNext, isLast }: TimelineRowProps)
         {note && (
           <p
             className={cx(
-              "mt-1.5 max-w-prose text-[13px] leading-relaxed",
-              focus ? FAINT : MUTED
+              "mt-1.5 max-w-prose text-xs leading-relaxed",
+              isCurrent ? "text-white/70" : focus ? FAINT : MUTED
             )}
           >
             {note}

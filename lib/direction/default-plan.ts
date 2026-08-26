@@ -27,12 +27,28 @@ import type { DirectionPlan, TimeBlock, WeekAssignment } from "./types";
  */
 const DEFAULT_BLOCKS: TimeBlock[] = [
   {
+    id: "blk-morning",
+    name: "Morning Routine",
+    start: "07:00",
+    end: "07:30",
+    type: "custom",
+    order: 0,
+  },
+  {
+    id: "blk-exercise",
+    name: "Exercise",
+    start: "07:30",
+    end: "08:00",
+    type: "custom",
+    order: 1,
+  },
+  {
     id: "blk-prep",
     name: "Complex Problem Solving",
     start: "08:00",
     end: "09:00",
     type: "focus",
-    order: 0,
+    order: 2,
   },
   {
     id: "blk-deep",
@@ -40,7 +56,15 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "09:00",
     end: "12:00",
     type: "focus",
-    order: 1,
+    order: 3,
+  },
+  {
+    id: "blk-lunch",
+    name: "Lunch",
+    start: "12:00",
+    end: "13:00",
+    type: "buffer",
+    order: 4,
   },
   {
     id: "blk-admin",
@@ -48,7 +72,7 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "13:00",
     end: "14:30",
     type: "admin",
-    order: 2,
+    order: 5,
   },
   {
     id: "blk-buffer",
@@ -56,7 +80,7 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "14:30",
     end: "17:00",
     type: "buffer",
-    order: 3,
+    order: 6,
   },
   {
     id: "blk-ctp",
@@ -64,7 +88,7 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "17:00",
     end: "18:00",
     type: "thinking",
-    order: 4,
+    order: 7,
   },
   {
     id: "blk-interview",
@@ -72,7 +96,15 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "18:00",
     end: "19:00",
     type: "focus",
-    order: 5,
+    order: 8,
+  },
+  {
+    id: "blk-dinner",
+    name: "Dinner",
+    start: "19:00",
+    end: "20:00",
+    type: "buffer",
+    order: 9,
   },
   {
     id: "blk-hobbies",
@@ -80,7 +112,23 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     start: "20:00",
     end: "22:00",
     type: "hobby",
-    order: 6,
+    order: 10,
+  },
+  {
+    id: "blk-winddown",
+    name: "Wind-down",
+    start: "22:00",
+    end: "23:00",
+    type: "hobby",
+    order: 11,
+  },
+  {
+    id: "blk-sleep",
+    name: "Sleep",
+    start: "23:00",
+    end: "07:00",
+    type: "custom",
+    order: 12,
   },
 ];
 
@@ -90,6 +138,15 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
  * differently (Saturday morning is filming, Sunday evening is family time).
  */
 const DEFAULT_ASSIGNMENTS: WeekAssignment[] = [
+  // Exercise · 07:30–08:00
+  { day: 1, blockId: "blk-exercise", focus: "Physical Health" }, // Mon
+  { day: 2, blockId: "blk-exercise", focus: "Physical Health" }, // Tue
+  { day: 3, blockId: "blk-exercise", focus: "Physical Health" }, // Wed
+  { day: 4, blockId: "blk-exercise", focus: "Physical Health" }, // Thu
+  { day: 5, blockId: "blk-exercise", focus: "Physical Health" }, // Fri
+  { day: 6, blockId: "blk-exercise", focus: "Physical Health" }, // Sat
+  { day: 0, blockId: "blk-exercise", focus: "Physical Health" }, // Sun
+
   // Complex Problem Solving · 08:00–09:00
   { day: 1, blockId: "blk-prep", focus: "Career Transition", note: "Interview technical prep (DSA/system design)" }, // Mon
   { day: 2, blockId: "blk-prep", focus: "Career Transition", note: "Interview technical prep (DSA/system design)" }, // Tue
@@ -107,6 +164,9 @@ const DEFAULT_ASSIGNMENTS: WeekAssignment[] = [
   { day: 5, blockId: "blk-deep", focus: "Income Work", note: "Client wrap-up" }, // Fri
   { day: 6, blockId: "blk-deep", focus: "Personal Brand", note: "Skit filming (needs daylight)", label: "Hobbies (Ad-hoc)" }, // Sat
   { day: 0, blockId: "blk-deep", focus: "Future Bet", note: "Optional Wave/side-project if energized (else rest)" }, // Sun
+
+  // Lunch · 12:00–13:00 — no area anywhere else: it's lunch
+  { day: 6, blockId: "blk-lunch", focus: "", label: "Free/Flex" }, // Sat
 
   // Routine Admin · 13:00–14:30
   { day: 1, blockId: "blk-admin", focus: "Career Transition", note: "Job applications + company research" }, // Mon
@@ -144,6 +204,10 @@ const DEFAULT_ASSIGNMENTS: WeekAssignment[] = [
   { day: 6, blockId: "blk-interview", focus: "Personal", note: "Dinner", label: "Dinner/Break" }, // Sat
   { day: 0, blockId: "blk-interview", focus: "", note: "Protected family/friends time (no work talk)", label: "Relationships" }, // Sun
 
+  // Dinner · 19:00–20:00
+  { day: 6, blockId: "blk-dinner", focus: "Rest", note: "Painting / Netflix", label: "Hobbies" }, // Sat
+  { day: 0, blockId: "blk-dinner", focus: "", note: "Protected family/friends time (no work talk)", label: "Relationships" }, // Sun
+
   // Hobbies · 20:00–22:00
   { day: 1, blockId: "blk-hobbies", focus: "Rest", note: "Painting / Netflix / skit editing" }, // Mon
   { day: 2, blockId: "blk-hobbies", focus: "Rest", note: "Painting / Netflix / skit editing" }, // Tue
@@ -152,6 +216,14 @@ const DEFAULT_ASSIGNMENTS: WeekAssignment[] = [
   { day: 5, blockId: "blk-hobbies", focus: "Rest", note: "Painting / Netflix / skit editing" }, // Fri
   { day: 6, blockId: "blk-hobbies", focus: "Rest", note: "Painting / Netflix" }, // Sat
   { day: 0, blockId: "blk-hobbies", focus: "", note: "Protected family/friends time (no work talk)", label: "Relationships" }, // Sun
+  // Wind-down · 22:00–23:00
+  { day: 1, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Mon
+  { day: 2, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Tue
+  { day: 3, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Wed
+  { day: 4, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Thu
+  { day: 5, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Fri
+  { day: 6, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Sat
+  { day: 0, blockId: "blk-winddown", focus: "", note: "Book reading" }, // Sun
 ];
 
 export function createDefaultPlan(): DirectionPlan {

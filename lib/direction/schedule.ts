@@ -3,6 +3,7 @@
 // Everything the views show about "what am I in / what's next" is computed
 // here from a DirectionPlan plus a Date.
 
+import { BLOCK_TYPE_META } from "./block-types";
 import type {
   DateOverride,
   DayOfWeek,
@@ -42,14 +43,20 @@ export function toMinutes(time: string): number {
 }
 
 /**
- * A block's end in minutes. An end at or before the start means "runs to
- * midnight" (so 20:00–00:00 works); blocks are never allowed to wrap into
- * the next day — that would make "which block am I in" ambiguous.
+ * A block's end in minutes from *this day's* midnight, so a block that runs
+ * past midnight returns more than 1440. An end at or before the start means
+ * it wraps into the next day: 23:00–07:00 is 1380 → 1860 (8h), and the
+ * common 20:00–00:00 case still lands exactly on 1440.
  */
 function blockEndMinutes(block: TimeBlock): number {
   const start = toMinutes(block.start);
   const end = toMinutes(block.end);
-  return end <= start ? MINUTES_PER_DAY : end;
+  return end <= start ? end + MINUTES_PER_DAY : end;
+}
+
+/** True for a block that runs past midnight (sleep, typically). */
+export function blockWraps(block: TimeBlock): boolean {
+  return blockEndMinutes(block) > MINUTES_PER_DAY;
 }
 
 function blockStartMinutes(block: TimeBlock): number {
@@ -179,11 +186,19 @@ export function getDaySchedule(
     let minutesRemaining = 0;
     let progress = 0;
     if (nowMinutes !== null) {
-      if (nowMinutes >= end) status = "past";
-      else if (nowMinutes >= start) {
+      // A wrapping block owns both ends of the clock, so the small hours are
+      // measured against the previous evening: 03:00 reads as 1620, inside
+      // 23:00–07:00.
+      const clock =
+        end > MINUTES_PER_DAY && nowMinutes < start
+          ? nowMinutes + MINUTES_PER_DAY
+          : nowMinutes;
+
+      if (clock >= end) status = "past";
+      else if (clock >= start) {
         status = "current";
-        minutesRemaining = end - nowMinutes;
-        progress = end > start ? (nowMinutes - start) / (end - start) : 0;
+        minutesRemaining = end - clock;
+        progress = end > start ? (clock - start) / (end - start) : 0;
       }
     }
 
@@ -252,10 +267,10 @@ export function formatRange(block: TimeBlock): string {
 }
 
 /**
- * How far `now` is through the day's *blocked* span (first start → last end),
- * 0–1, or null when the day isn't underway. Deliberately not
- * midnight-to-midnight: the hours you don't block shouldn't count as
- * progress.
+ * How far `now` is through the day's blocked span (first start → last end),
+ * 0–1, or null when there is nothing to measure. Deliberately not
+ * midnight-to-midnight: a day that starts at 07:00 and ends in the small
+ * hours is one span, not two.
  */
 export function getDayProgress(blocks: TimeBlock[], now: Date): number | null {
   const ordered = sortBlocks(blocks);
@@ -263,10 +278,54 @@ export function getDayProgress(blocks: TimeBlock[], now: Date): number | null {
   const start = blockStartMinutes(ordered[0]);
   const end = blockEndMinutes(ordered[ordered.length - 1]);
   if (end <= start) return null;
+
   const nowMinutes = minutesOfDay(now);
-  if (nowMinutes <= start) return 0;
-  if (nowMinutes >= end) return 1;
-  return (nowMinutes - start) / (end - start);
+  // Before the first block but inside a wrapping last block: still last night.
+  const clock =
+    end > MINUTES_PER_DAY && nowMinutes < start
+      ? nowMinutes + MINUTES_PER_DAY
+      : nowMinutes;
+
+  if (clock <= start) return 0;
+  if (clock >= end) return 1;
+  return (clock - start) / (end - start);
+}
+
+/**
+ * The area the day mostly goes to, by minutes — "today is a freelance day".
+ *
+ * Counts the blocks the day is *built* around (focus, execution, thinking)
+ * rather than every assigned minute. Admin, buffer and evening hours are
+ * real, but a day isn't themed by its errands, and sleep and meals — which
+ * carry no area at all — never enter it. Falls back to every assigned block
+ * if nothing structural is assigned, and to null if nothing is.
+ */
+export function getDayTheme(entries: DayEntry[]): string | null {
+  const total = (only: (entry: DayEntry) => boolean) => {
+    const minutes = new Map<string, number>();
+    for (const entry of entries) {
+      if (!entry.focus || !only(entry)) continue;
+      minutes.set(
+        entry.focus,
+        (minutes.get(entry.focus) ?? 0) + blockDurationMinutes(entry.block)
+      );
+    }
+    // Ties go to the earlier block: entries are chronological, and a tied
+    // morning reads as the day's theme more than a tied evening.
+    let theme: string | null = null;
+    let best = 0;
+    for (const [focus, sum] of minutes) {
+      if (sum > best) {
+        best = sum;
+        theme = focus;
+      }
+    }
+    return theme;
+  };
+
+  const structural = (entry: DayEntry) =>
+    BLOCK_TYPE_META[entry.block.type].emphasis === "strong";
+  return total(structural) ?? total(() => true);
 }
 
 /** "1h 12m" / "45m" — used for "time left in this block". */

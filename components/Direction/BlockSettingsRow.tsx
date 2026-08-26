@@ -1,9 +1,13 @@
 "use client";
 
 import { BLOCK_TYPES, BLOCK_TYPE_META } from "@/lib/direction/block-types";
-import { toMinutes } from "@/lib/direction/schedule";
+import {
+  blockDurationMinutes,
+  blockWraps,
+  formatDuration,
+} from "@/lib/direction/schedule";
 import type { BlockType, TimeBlock } from "@/lib/direction/types";
-import { BUTTON, cx, FAINT, FIELD } from "./ui";
+import { BUTTON, cx, FAINT, FIELD, NUM } from "./ui";
 
 interface BlockSettingsRowProps {
   block: TimeBlock;
@@ -26,12 +30,12 @@ export default function BlockSettingsRow({
   onMove,
   onRemove,
 }: BlockSettingsRowProps) {
-  const runsToMidnight = toMinutes(block.end) <= toMinutes(block.start);
+  const wraps = blockWraps(block);
 
   return (
     <li
       className={cx(
-        "grid items-center gap-x-2 border-b border-black/[0.05] py-1.5 dark:border-white/[0.07]",
+        "grid items-center gap-x-2 border-b border-black/[0.05] py-2 last:border-b-0 dark:border-white/[0.07]",
         BLOCK_COLUMNS
       )}
     >
@@ -40,7 +44,7 @@ export default function BlockSettingsRow({
         value={block.start}
         onChange={(event) => onChange({ start: event.target.value })}
         aria-label={`${block.name} start time`}
-        className={cx(FIELD, "font-mono text-[13px]")}
+        className={cx(FIELD, NUM, "text-[13px]")}
       />
 
       <div>
@@ -49,11 +53,11 @@ export default function BlockSettingsRow({
           value={block.end}
           onChange={(event) => onChange({ end: event.target.value })}
           aria-label={`${block.name} end time`}
-          className={cx(FIELD, "font-mono text-[13px]")}
+          className={cx(FIELD, NUM, "text-[13px]")}
         />
-        {runsToMidnight && (
+        {wraps && (
           <span className={cx("mt-0.5 block px-1.5 text-[10px]", FAINT)}>
-            to midnight
+            next day · {formatDuration(blockDurationMinutes(block))}
           </span>
         )}
       </div>

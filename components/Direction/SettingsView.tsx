@@ -12,7 +12,7 @@ import BlockSettingsRow, { BLOCK_COLUMNS } from "./BlockSettingsRow";
 import DateOverrides from "./DateOverrides";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
-import { BUTTON_INLINE, cx, FAINT, LABEL, LABEL_XS, MUTED } from "./ui";
+import { BUTTON_INLINE, CARD, cx, FAINT, LABEL, LABEL_XS, MUTED } from "./ui";
 
 /**
  * Structure, not content: which blocks a day is made of, and the exceptions
@@ -30,27 +30,38 @@ export default function SettingsView() {
 
   return (
     <section className="mx-auto w-full max-w-3xl pt-9 pb-20 sm:pt-12">
-      <div className={cx("grid gap-x-2 border-b border-black/[0.09] pb-2 dark:border-white/[0.12]", BLOCK_COLUMNS)}>
-        <span className={cx(LABEL_XS, FAINT, "px-1.5")}>Start</span>
-        <span className={cx(LABEL_XS, FAINT, "px-1.5")}>End</span>
-        <span className={cx(LABEL_XS, FAINT, "px-1.5")}>Block</span>
-        <span className={cx(LABEL_XS, FAINT, "px-1.5")}>Type</span>
-        <span />
-      </div>
+      <div className={cx(CARD, "px-3 py-1")}>
+        <div
+          className={cx(
+            "grid gap-x-2 border-b border-black/[0.07] pt-2 pb-2 dark:border-white/[0.08]",
+            BLOCK_COLUMNS
+          )}
+        >
+          <span className={cx(LABEL_XS, FAINT, "px-2")}>Start</span>
+          <span className={cx(LABEL_XS, FAINT, "px-2")}>End</span>
+          <span className={cx(LABEL_XS, FAINT, "px-2")}>Block</span>
+          <span className={cx(LABEL_XS, FAINT, "px-2")}>Type</span>
+          <span />
+        </div>
 
-      <ul>
-        {blocks.map((block, index) => (
-          <BlockSettingsRow
-            key={block.id}
-            block={block}
-            isFirst={index === 0}
-            isLast={index === blocks.length - 1}
-            onChange={(patch) => update((current) => updateBlock(current, block.id, patch))}
-            onMove={(direction) => update((current) => moveBlock(current, block.id, direction))}
-            onRemove={() => update((current) => removeBlock(current, block.id))}
-          />
-        ))}
-      </ul>
+        <ul>
+          {blocks.map((block, index) => (
+            <BlockSettingsRow
+              key={block.id}
+              block={block}
+              isFirst={index === 0}
+              isLast={index === blocks.length - 1}
+              onChange={(patch) =>
+                update((current) => updateBlock(current, block.id, patch))
+              }
+              onMove={(direction) =>
+                update((current) => moveBlock(current, block.id, direction))
+              }
+              onRemove={() => update((current) => removeBlock(current, block.id))}
+            />
+          ))}
+        </ul>
+      </div>
 
       <button
         type="button"

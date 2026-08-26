@@ -32,13 +32,21 @@ chrome layer.
   "2:30pm". Whole hours drop their ":00" and a shared meridiem prints once,
   on the end. `formatRange()` still returns the one-line form ("8–10am") for
   the week grid and override list, where a range sits inside a dense row.
-- Each block is a bordered box, and **box height carries duration** on a
-  square-root curve (`boxHeight()` in `TimelineRow`): 3h reads about 1.6×
-  a 30m block rather than 6×. True proportion is what makes a screen look
-  like a calendar and would push the day off-screen; this keeps a whole day
-  on roughly one screen while the difference stays legible. It is a
+- Each block is a bordered box, and **box height carries duration**:
+  `boxHeight()` in `TimelineRow` is `40 + 0.58 × minutes`, capped at 190px.
+  Linear enough that 3h reads about twice 1h (a square-root curve was tried
+  first and the difference was too subtle to notice), capped so the 8-hour
+  sleep block doesn't turn the page into a scroll marathon. It is a
   *min*-height, so the live block — set at display size — simply takes the
-  room it needs. One constant tunes the whole feel.
+  room it needs. Two constants tune the whole feel.
+- **Blocks that touch are drawn as one run.** Adjacent boxes overlap by a
+  pixel so their borders collapse into a single hairline, and corners round
+  only where a run begins and ends. 08:00–09:00 and 09:00–12:00 therefore
+  read as one continuous stretch of problem-solving rather than two floating
+  cards. The payoff is that a visible gap on the timeline always *means*
+  something: unstructured time.
+- The header carries the **day's theme** — the area most of the structural
+  hours go to ("Wednesday · Income Work"), from `getDayTheme()`.
 - **Now** is the strongest element on the screen: the area jumps to ~2×
   type size, the block name goes full contrast, and the rail beside it turns
   into the clock — an accent track that fills as the block runs out. Time
@@ -105,10 +113,11 @@ detail (`note`), and where that day names the slot differently, its own
 block name (`label`). The CSV isn't kept in the repo — this file is the
 source of truth now.
 
-Only the working window is modelled. Morning routine, exercise, meals,
-wind-down and sleep are in the CSV but not in the plan — they are life, not
-direction, and the app has nothing useful to say about them. The gaps they
-leave (12:00–13:00, 19:00–20:00) read as "between blocks" on Today.
+**The whole day is modelled**, 07:00 to 07:00: morning routine, exercise,
+meals, wind-down and sleep included. An earlier cut modelled only the working
+window, which left holes at lunch and dinner and made the app go blank
+exactly when you'd glance at it. Life blocks carry no area — just a name —
+so they stay quiet and never win the day's theme.
 
 Two blocks share the name "Complex Problem Solving" on purpose: 08:00 is the
 interview-prep hour, 09:00 the main build session. Same mode of work,
@@ -131,9 +140,12 @@ Resolution is `override ?? assignment ?? ""`, computed in
 `getDaySchedule()`, which also decides status (past / current / upcoming),
 minutes remaining and progress through the live block.
 
-`end <= start` means the block runs to midnight (so `20:00–00:00` works).
-Blocks never wrap past midnight — that would make "which block am I in"
-ambiguous.
+`end <= start` means the block **wraps into the next day**: sleep is
+`23:00–07:00`, and `blockEndMinutes()` returns 1860 so its duration is 8h.
+Current-block detection measures the small hours against the previous
+evening (03:00 reads as 1620, inside 23:00–07:00), and `20:00–00:00` still
+lands exactly on 1440. Day progress spans first start → last end, so a day
+that ends after midnight is one span, not two.
 
 `order` always follows the clock, so reordering a block in Settings swaps
 its times with its neighbour's. Anything else would leave the list sorted
@@ -171,9 +183,21 @@ and a panel inside that container would be clipped by it.
 
 ## Visual rules
 
-- Inter for UI, JetBrains Mono for times, both loaded in the root layout and
-  wired to `--font-sans` / `--font-mono`. This replaced Geist, and also fixed
-  the app-wide `body { font-family: Arial }` fallback that was overriding it.
+- **One typeface: Manrope**, loaded once in the root layout. Columns of
+  digits use `tabular-nums` (the `NUM` token) plus right alignment rather
+  than a second, monospace webfont — right alignment means the column stays
+  flush even where tabular figures aren't available. `--font-mono` is mapped
+  to a system stack so a stray `font-mono` elsewhere in the app still lands
+  somewhere sensible. Manrope's uppercase is wide, so label tracking is
+  0.11em where a grotesque took 0.16em.
+- **Surfaces, not outlines.** Blocks, the week matrix and the settings table
+  sit on `--surface` cards with 16px corners. The live block is the one
+  filled surface in the app: a soft green→teal gradient with faint grain
+  (`.grain`), white text, and the area set extrabold at display size. It is
+  fully rounded and raised above the run rather than squared off inside it.
+  That is the app's only gradient and its only use of grain — everything
+  else stays flat and monochrome. There are deliberately no per-type
+  colours: a hue per category is what turns this back into a dashboard.
 - One accent — a muted green (`--accent` in `app/globals.css`) — reserved
   for a single meaning: **now**. Today's column in Week and the active nav
   underline are the only other places it appears, and always at low opacity.

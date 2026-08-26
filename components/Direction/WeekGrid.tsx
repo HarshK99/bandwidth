@@ -15,7 +15,7 @@ import { setAssignment } from "@/lib/direction/plan-ops";
 import type { DayOfWeek, DirectionPlan } from "@/lib/direction/types";
 import FocusEditor from "./FocusEditor";
 import Popover from "./Popover";
-import { cx, FAINT, LABEL, LABEL_XS, MUTED } from "./ui";
+import { CARD, cx, FAINT, LABEL, LABEL_XS, MUTED, NUM } from "./ui";
 
 export interface EditingCell {
   blockId: string;
@@ -65,10 +65,10 @@ export default function WeekGrid({
 
   return (
     <div className="-mx-5 overflow-x-auto px-5 sm:-mx-8 sm:px-8">
-      <div className="min-w-[52rem]">
+      <div className={cx(CARD, "min-w-[52rem] overflow-hidden")}>
         {/* Day header */}
         <div
-          className="grid border-b border-black/[0.09] pb-2.5 dark:border-white/[0.12]"
+          className="grid border-b border-black/[0.07] px-1 pt-3 pb-2.5 dark:border-white/[0.08]"
           style={{ gridTemplateColumns: columns }}
         >
           <div />
@@ -100,11 +100,11 @@ export default function WeekGrid({
           return (
             <div
               key={block.id}
-              className="grid border-b border-black/[0.05] dark:border-white/[0.07]"
+              className="grid border-b border-black/[0.05] px-1 last:border-b-0 dark:border-white/[0.07]"
               style={{ gridTemplateColumns: columns }}
             >
-              <div className="py-3.5 pr-4">
-                <div className={cx("font-mono text-[11px] tracking-tight", FAINT)}>
+              <div className="py-3.5 pr-4 pl-2.5">
+                <div className={cx(NUM, "text-[11px] font-medium", FAINT)}>
                   {formatRange(block)}
                 </div>
                 <div
@@ -147,7 +147,7 @@ export default function WeekGrid({
                     }
                     aria-label={`${dayName(day)}, ${block.name} — ${focus || "unassigned"}`}
                     className={cx(
-                      "group h-full min-h-[3.75rem] px-2.5 py-3.5 text-left text-[13px] leading-snug transition-colors",
+                      "group h-full min-h-[3.75rem] rounded-lg px-2.5 py-3.5 text-left text-[13px] leading-snug transition-colors",
                       "border-l border-black/[0.04] dark:border-white/[0.06]",
                       isOpen
                         ? "bg-accent/10"

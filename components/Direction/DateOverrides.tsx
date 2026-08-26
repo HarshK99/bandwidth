@@ -14,7 +14,7 @@ import {
 } from "@/lib/direction/schedule";
 import type { DayOfWeek, DirectionPlan } from "@/lib/direction/types";
 import DayNav from "./DayNav";
-import { BUTTON_INLINE, cx, FAINT, FIELD, LABEL, LABEL_XS, MUTED } from "./ui";
+import { BUTTON_INLINE, cx, FAINT, FIELD, LABEL, LABEL_XS, MUTED, NUM } from "./ui";
 
 interface DateOverridesProps {
   plan: DirectionPlan;
@@ -89,7 +89,7 @@ export default function DateOverrides({ plan, today, update }: DateOverridesProp
               key={block.id}
               className="grid grid-cols-[4.5rem_minmax(0,1fr)_1.75rem] items-center gap-x-3 border-b border-black/[0.05] py-1.5 dark:border-white/[0.07]"
             >
-              <div className={cx("font-mono text-[11px] tracking-tight", FAINT)}>
+              <div className={cx(NUM, "text-[11px] font-medium", FAINT)}>
                 {formatRange(block)}
               </div>
 

@@ -8,13 +8,23 @@ import {
   formatWeekday,
   getDayProgress,
   getDaySchedule,
+  getDayTheme,
   isSameDate,
 } from "@/lib/direction/schedule";
+import type { DayEntry } from "@/lib/direction/schedule";
 import DayNav from "./DayNav";
 import TimelineRow from "./TimelineRow";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
-import { cx, FAINT, LABEL, MUTED, STRONG } from "./ui";
+import { cx, FAINT, LABEL, MUTED, NUM, STRONG } from "./ui";
+
+/**
+ * Whether two blocks share a boundary. Blocks that touch are drawn as one
+ * run, so a visible gap on the timeline always means unstructured time.
+ */
+function touches(a: DayEntry | undefined, b: DayEntry | undefined): boolean {
+  return Boolean(a && b && a.block.end === b.block.start);
+}
 
 export default function TodayView() {
   const { plan } = useDirectionPlan();
@@ -39,6 +49,7 @@ export default function TodayView() {
 
   const { entries, current, next, minutesUntilNext } = schedule;
   const isToday = isSameDate(date, now);
+  const theme = getDayTheme(entries);
 
   // The one line the screen needs when no block is live.
   const started = entries.some((entry) => entry.status === "past");
@@ -50,37 +61,39 @@ export default function TodayView() {
       : "Outside your blocks. The day's structure is done.";
 
   return (
-    <section className="mx-auto w-full max-w-2xl pt-10 pb-16 sm:pt-14">
+    <section className="mx-auto w-full max-w-2xl pt-6 pb-16 sm:pt-8">
       <header>
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <div className={cx(LABEL, isToday ? "text-accent" : FAINT)}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-baseline gap-2">
+            <span className={cx(LABEL, isToday ? "text-accent" : FAINT)}>
               {formatWeekday(date)}
-            </div>
-            <h1
-              className={cx(
-                "mt-2 text-xl font-medium tracking-[-0.02em] sm:text-2xl",
-                STRONG
-              )}
-            >
-              {formatDayMonth(date)}
-            </h1>
-          </div>
-          <div className="flex flex-col items-end gap-3">
-            <DayNav date={date} today={now} onChange={setSelected} />
-            {isToday && (
-              <span className={cx("font-mono text-[11px] tracking-tight", FAINT)}>
-                {formatClock(now)}
-              </span>
+            </span>
+            {theme && (
+              <>
+                <span className={cx("text-[10px]", FAINT)}>·</span>
+                <span className={cx(LABEL, "truncate", MUTED)}>{theme}</span>
+              </>
             )}
           </div>
+          <DayNav date={date} today={now} onChange={setSelected} />
+        </div>
+
+        <div className="mt-1.5 flex items-baseline justify-between gap-4">
+          <h1 className={cx("text-[15px] font-medium tracking-[-0.01em]", STRONG)}>
+            {formatDayMonth(date)}
+          </h1>
+          {isToday && (
+            <span className={cx(NUM, "text-[11px] font-medium", FAINT)}>
+              {formatClock(now)}
+            </span>
+          )}
         </div>
 
         {/* Day progress — a single hairline, no numbers. */}
-        <div className="mt-6 h-px w-full bg-black/[0.09] dark:bg-white/[0.12]">
+        <div className="mt-4 h-[3px] w-full overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.09]">
           {dayProgress !== null && (
             <div
-              className="h-px bg-accent transition-[width] duration-700"
+              className="h-full rounded-full bg-accent transition-[width] duration-700"
               style={{ width: `${dayProgress * 100}%` }}
               aria-hidden
             />
@@ -97,13 +110,15 @@ export default function TodayView() {
           No time blocks yet — set the shape of a day in Settings.
         </p>
       ) : (
-        <ol className="mt-8 sm:mt-10">
+        <ol className="mt-6 sm:mt-8">
           {entries.map((entry, index) => (
             <TimelineRow
               key={entry.block.id}
               entry={entry}
               isNext={isToday && next?.block.id === entry.block.id}
               isLast={index === entries.length - 1}
+              attachedAbove={touches(entries[index - 1], entry)}
+              attachedBelow={touches(entry, entries[index + 1])}
             />
           ))}
         </ol>
