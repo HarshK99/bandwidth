@@ -7,8 +7,13 @@
 
 import type { HierarchyNode } from "../hierarchy-data";
 import { getCoverageRows, type CoverageRow } from "./coverage";
-import { blockDurationMinutes, sortBlocks } from "./schedule";
-import type { DayOfWeek, DirectionPlan } from "./types";
+import {
+  blockDaysPerWeek,
+  blockDurationMinutes,
+  blockRunsOn,
+  sortBlocks,
+} from "./schedule";
+import type { DayOfWeek, DirectionPlan, TimeBlock } from "./types";
 
 interface WeeklyRollup {
   /** Structural nodes in tree order, with minutes rolled up from below. */
@@ -31,6 +36,7 @@ export function getWeeklyRollup(plan: DirectionPlan): WeeklyRollup {
   for (const assignment of plan.assignments) {
     const block = blocks.get(assignment.blockId);
     if (!block || !assignment.nodeId) continue;
+    if (!blockRunsOn(block, assignment.day)) continue;
     const span = blockDurationMinutes(block);
     named += span;
     perDay.set(assignment.day, (perDay.get(assignment.day) ?? 0) + span);
@@ -46,13 +52,17 @@ export function getWeeklyRollup(plan: DirectionPlan): WeeklyRollup {
     .map((row) => row.node);
 
   // The whole week of block time, so "unnamed" is honest rather than implied.
+  // Times the days each block actually runs — a weekday-only block occupies
+  // five mornings, not seven.
+  const weekly = (block: TimeBlock) =>
+    blockDurationMinutes(block) * blockDaysPerWeek(block);
   const weekMinutes = [...blocks.values()].reduce(
-    (total, block) => total + blockDurationMinutes(block) * 7,
+    (total, block) => total + weekly(block),
     0
   );
   const sleepMinutes = [...blocks.values()]
     .filter((block) => blockDurationMinutes(block) >= 240)
-    .reduce((total, block) => total + blockDurationMinutes(block) * 7, 0);
+    .reduce((total, block) => total + weekly(block), 0);
 
   return {
     rows,

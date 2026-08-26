@@ -5,7 +5,7 @@
 // surprise entries back when lib/direction/default-plan.ts changes.
 
 import { createDefaultPlan } from "./default-plan";
-import type { DirectionPlan } from "./types";
+import { PLAN_VERSION, type DirectionPlan } from "./types";
 
 const STORAGE_KEY = "bandwidth.direction.plan.v1";
 
@@ -19,6 +19,26 @@ function isPlanShape(value: unknown): value is DirectionPlan {
   );
 }
 
+/**
+ * Bring a stored plan up to the current shape.
+ *
+ * The ladder goes here, one `if` per version, each one only responsible for
+ * getting from n to n+1. Nothing needs converting yet — v0 (anything written
+ * before versioning) differs from v1 only in fields that are optional — so
+ * this is a stamp. It exists now because a migration you can't write is one
+ * you didn't version for: without the number, an old plan and a new one are
+ * indistinguishable and the only recovery is Reset.
+ *
+ * A plan from a *newer* build is left exactly as it is. It parsed and it has
+ * the arrays we need; guessing at fields we don't know about, or replacing it
+ * with the seed, would both destroy work this build simply can't read.
+ */
+function migrate(plan: DirectionPlan): DirectionPlan {
+  const version = typeof plan.version === "number" ? plan.version : 0;
+  if (version >= PLAN_VERSION) return plan;
+  return { ...plan, version: PLAN_VERSION };
+}
+
 /** Client-only. Any unreadable/foreign value falls back to the seed plan. */
 export function loadPlan(): DirectionPlan {
   if (typeof window === "undefined") return createDefaultPlan();
@@ -26,7 +46,7 @@ export function loadPlan(): DirectionPlan {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return createDefaultPlan();
     const parsed: unknown = JSON.parse(raw);
-    return isPlanShape(parsed) ? parsed : createDefaultPlan();
+    return isPlanShape(parsed) ? migrate(parsed) : createDefaultPlan();
   } catch {
     return createDefaultPlan();
   }

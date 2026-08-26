@@ -14,11 +14,11 @@
   --hero-from: #1d6b4f;
   --hero-to: #2f8a7a;
 
-  /* Block-type hairlines. Very low alpha on purpose: a classifier you notice
-     on the second glance, not something that competes with the live block.
-     Deliberately no green anywhere in this ramp — the accent stays the one
-     colour that means "now". Cool for structured work, warm for the rest,
-     near-neutral for open time so buffer reads as the quietest. */
+  /* Block-type colour. Two values per type: a hairline for edges and rules,
+     and a wash for the block's own surface. Deliberately no green anywhere
+     in this ramp — the accent stays the one colour that means "now". Cool
+     for structured work, warm for the rest, near-neutral for open time so
+     buffer reads as the quietest. */
   --type-focus: rgba(99, 102, 241, 0.30);
   --type-execution: rgba(13, 148, 160, 0.30);
   --type-thinking: rgba(139, 92, 246, 0.30);
@@ -26,6 +26,19 @@
   --type-hobby: rgba(219, 39, 119, 0.24);
   --type-buffer: rgba(120, 113, 108, 0.26);
   --type-custom: rgba(113, 113, 122, 0.28);
+
+  /* The washes. Barely there — around the weight of the plain --surface grey
+     they replace, so a day reads as one calm column that happens to be
+     colour-coded, never as a set of coloured cards. Tuned per hue rather
+     than one shared alpha: at equal alpha the warm ones shout and slate
+     disappears. */
+  --type-focus-fill: rgba(99, 102, 241, 0.055);
+  --type-execution-fill: rgba(13, 148, 160, 0.06);
+  --type-thinking-fill: rgba(139, 92, 246, 0.05);
+  --type-admin-fill: rgba(100, 116, 139, 0.07);
+  --type-hobby-fill: rgba(219, 39, 119, 0.045);
+  --type-buffer-fill: rgba(120, 113, 108, 0.055);
+  --type-custom-fill: rgba(113, 113, 122, 0.055);
 }
 
 @theme inline {
@@ -65,6 +78,14 @@
     --type-hobby: rgba(244, 114, 182, 0.32);
     --type-buffer: rgba(168, 162, 158, 0.24);
     --type-custom: rgba(161, 161, 170, 0.26);
+
+    --type-focus-fill: rgba(129, 140, 248, 0.10);
+    --type-execution-fill: rgba(45, 212, 191, 0.085);
+    --type-thinking-fill: rgba(167, 139, 250, 0.10);
+    --type-admin-fill: rgba(148, 163, 184, 0.085);
+    --type-hobby-fill: rgba(244, 114, 182, 0.085);
+    --type-buffer-fill: rgba(168, 162, 158, 0.07);
+    --type-custom-fill: rgba(161, 161, 170, 0.07);
   }
 }
 

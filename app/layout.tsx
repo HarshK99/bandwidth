@@ -18,7 +18,7 @@ const manrope = Manrope({
 export const metadata: Metadata = {
   title: "Bandwidth",
   description:
-    "A zoomable, drill-down mind-map of your life/work capacity — narrow down through Build and Sustain to decide what to work on right now.",
+    "What block am I in, what area is it for, and what's next — one day at a time, against the whole map of your capacity.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

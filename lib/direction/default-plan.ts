@@ -17,6 +17,7 @@
 // lib/direction/storage.ts) wins entirely and this file is only read again on
 // a reset.
 
+import { PLAN_VERSION } from "./types";
 import type { DirectionPlan, TimeBlock, WeekAssignment } from "./types";
 
 /**
@@ -45,6 +46,10 @@ const DEFAULT_BLOCKS: TimeBlock[] = [
     end: "09:30",
     type: "focus",
     order: 1,
+    // Weekdays only, stated on the block rather than implied by leaving the
+    // weekend cells empty: Prep on a Sunday isn't unplanned, it doesn't
+    // happen. Saturday and Sunday start at Deep Work instead.
+    days: [1, 2, 3, 4, 5],
   },
   {
     id: "blk-deep",
@@ -220,6 +225,7 @@ const DEFAULT_ASSIGNMENTS: WeekAssignment[] = [
 export function createDefaultPlan(): DirectionPlan {
   // Deep-copied so callers can mutate freely without touching the seed.
   return {
+    version: PLAN_VERSION,
     blocks: DEFAULT_BLOCKS.map((block) => ({ ...block })),
     assignments: DEFAULT_ASSIGNMENTS.map((assignment) => ({ ...assignment })),
     overrides: [],

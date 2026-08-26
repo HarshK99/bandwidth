@@ -8,7 +8,12 @@
 // bury the real gaps in noise.
 
 import { hierarchyData, type HierarchyNode } from "../hierarchy-data";
-import { blockDurationMinutes, sortBlocks, WEEK_DAYS } from "./schedule";
+import {
+  blockDurationMinutes,
+  blockRunsOn,
+  sortBlocks,
+  WEEK_DAYS,
+} from "./schedule";
 import type { DayOfWeek, DirectionPlan } from "./types";
 
 type CoverageState =
@@ -65,6 +70,9 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
   for (const assignment of plan.assignments) {
     const block = blocks.get(assignment.blockId);
     if (!block || !assignment.nodeId) continue;
+    // An assignment on a day its block doesn't run is dormant, not scheduled:
+    // counting it would credit hours that never happen.
+    if (!blockRunsOn(block, assignment.day)) continue;
     namedHere.add(assignment.nodeId);
 
     const perBlock = slotsByNode.get(assignment.nodeId) ?? new Map();
@@ -96,10 +104,14 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
     const slots = perBlock
       ? [...perBlock.entries()].map(([blockName, days]) => {
           const ordered = WEEK_DAYS.filter((day) => days.has(day));
+          const weekdays =
+            ordered.length === 5 && ordered.every((day) => day >= 1 && day <= 5);
           const when =
             ordered.length === 7
               ? "Daily"
-              : ordered.map((day) => DAY_NAMES[day]).join(" ");
+              : weekdays
+                ? "Weekdays"
+                : ordered.map((day) => DAY_NAMES[day]).join(" ");
           return `${when} · ${blockName}`;
         })
       : [];

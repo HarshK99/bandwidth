@@ -1,17 +1,18 @@
 // lib/hierarchy-data.ts
-// Flat array + parentId model — makes it trivial to add an edit UI or swap in a DB later
-// without restructuring. Every node's children are simply nodes whose parentId === this node's id.
+// What the work is and why it matters. The schedule (lib/direction/) says
+// when it happens and points at these ids — see docs/DATA_MODEL.md.
 //
-// v2 change: Build now branches into 4 Value Categories (Income, Equity, Audience, Career Options)
-// before reaching Domains — matching Build's actual definition. The standalone "Mode" node is gone;
-// Career Transition is now a real domain under Career Options, flagged temporary: true instead.
+// Flat array + parentId: a node's children are the nodes whose parentId is
+// its id. Editing one node never reshapes its ancestors, and this is already
+// a single-table schema if it ever moves to a database.
 //
-// v3 change: removed the single-child "General" subFunction placeholder wherever a domain had
-// exactly one (it added a level without adding any real categorization) — those tasks now sit
-// directly on their domain. Career Options collapses even further: its three situational tasks sit
-// directly on the valueCategory itself, no domain/sub-function layer at all (temporary: true moved
-// from the old "Career Transition" domain onto each task). Income Work renamed to Income, now
-// covering two domains: Websites (the renamed original) and Digital Products (new).
+// A domain's children are the **stages its work moves through**, not a filing
+// system for it: Websites is Pipeline → Scoping → Build → Payment → Aftercare.
+// Categorical children hid gaps — a stage could quietly have no time and
+// nothing looked wrong.
+//
+// Branches are not the same depth on purpose (Sustain skips valueCategory).
+// Depth is always derived by walking parentId, never by counting levels.
 
 export type NodeLevel =
   | "capacity"
@@ -28,8 +29,8 @@ export interface HierarchyNode {
   parentId: string | null;
   description?: string;
   meta?: string; // e.g. calendar slot this task lives in
-  temporary?: boolean; // true for situational/non-permanent nodes (e.g. Career Transition tasks)
-  url?: string; // leaf-only: clicking opens this in a new tab instead of no-op
+  temporary?: boolean; // situational, not a permanent part of the structure
+  url?: string; // where a shipped thing lives; carried as data, not rendered
 }
 
 export const hierarchyData: HierarchyNode[] = [
@@ -780,49 +781,5 @@ export const hierarchyData: HierarchyNode[] = [
   },
 ];
 
-// ---------- Query helpers ----------
-// Pure functions over hierarchyData so navigation/UI code never walks
-// parentId links directly. Swapping the data source later (DB, edit UI)
-// only changes hierarchyData's origin, not these signatures. Purely
-// parentId-driven — no assumption about level order or a fixed depth, so
-// branches of uneven depth (e.g. some paths passing through valueCategory,
-// others skipping straight from masterFunction to domain, or straight from
-// valueCategory to task) work the same.
-
-export function getChildren(id: string | null): HierarchyNode[] {
-  return hierarchyData.filter((node) => node.parentId === id);
-}
-
-export function getRoot(): HierarchyNode {
-  const root = hierarchyData.find((node) => node.parentId === null);
-  if (!root) {
-    throw new Error(
-      "hierarchyData has no root node (a node with parentId === null)"
-    );
-  }
-  return root;
-}
-
-export function getNode(id: string): HierarchyNode | undefined {
-  return hierarchyData.find((node) => node.id === id);
-}
-
-// Nearest parent first, root last.
-export function getAncestors(id: string): HierarchyNode[] {
-  const ancestors: HierarchyNode[] = [];
-  let current = getNode(id);
-  while (current?.parentId) {
-    const parent = getNode(current.parentId);
-    if (!parent) break;
-    ancestors.push(parent);
-    current = parent;
-  }
-  return ancestors;
-}
-
-// Root-to-node inclusive — what the breadcrumb renders directly.
-export function getPath(id: string): HierarchyNode[] {
-  const node = getNode(id);
-  if (!node) return [];
-  return [...getAncestors(id).reverse(), node];
-}
+// Traversal helpers live in lib/direction/nodes.ts, indexed by id. This file
+// is data only.

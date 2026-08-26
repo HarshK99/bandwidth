@@ -5,6 +5,7 @@ import {
   addBlock,
   moveBlock,
   removeBlock,
+  toggleBlockDay,
   updateBlock,
 } from "@/lib/direction/plan-ops";
 import { sortBlocks } from "@/lib/direction/schedule";
@@ -41,6 +42,7 @@ export default function SettingsView() {
           <span className={cx(LABEL_XS, FAINT, "px-2")}>End</span>
           <span className={cx(LABEL_XS, FAINT, "px-2")}>Block</span>
           <span className={cx(LABEL_XS, FAINT, "px-2")}>Type</span>
+          <span className={cx(LABEL_XS, FAINT, "px-1")}>Days</span>
           <span />
         </div>
 
@@ -53,6 +55,9 @@ export default function SettingsView() {
               isLast={index === blocks.length - 1}
               onChange={(patch) =>
                 update((current) => updateBlock(current, block.id, patch))
+              }
+              onToggleDay={(day) =>
+                update((current) => toggleBlockDay(current, block.id, day))
               }
               onMove={(direction) =>
                 update((current) => moveBlock(current, block.id, direction))

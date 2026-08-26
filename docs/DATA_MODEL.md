@@ -1,107 +1,99 @@
-# Data Model
+# Data model
 
-> The hierarchy is no longer only the mind-map's data — that view was
-> replaced by `/coverage`. It is now also the vocabulary the schedule points
-> at: a block names a node id, and hours roll up this tree. See
-> `docs/DIRECTION.md`.
+Two files, one join.
 
-## Location
+| File | Answers | Shape |
+| --- | --- | --- |
+| `lib/hierarchy-data.ts` | *What the work is, and why it matters* | one flat array, `parentId` tree |
+| `lib/direction/default-plan.ts` | *When it happens* | blocks, assignments, overrides |
 
-`lib/hierarchy-data.ts` — the single source of truth for the hierarchy.
-Moved here (from the top-level `seed.ts` drop-in) so it sits with the rest
-of the data/domain layer, separate from `app/` (routing/UI).
+They are **linked, not merged**: an assignment carries a `nodeId` from the
+hierarchy. `lib/direction/nodes.ts` is the only bridge — given an id it
+returns the node, its ancestry, and its area.
 
-## Shape
+```
+WeekAssignment { day: 4, blockId: "blk-ctp", nodeId: "sub-web-scoping" }
+                                              └── lib/hierarchy-data.ts
+```
+
+That join is what makes "which parts of the tree get no time?" a query
+instead of a manual count. Free text made it impossible, and silently lost
+hours: Relationships and Financial Health once read **zero** while occupying
+four, because their area was carried as display text.
+
+## The hierarchy
 
 ```ts
-export type NodeLevel =
-  | "capacity"
-  | "masterFunction"
-  | "valueCategory"
-  | "domain"
-  | "subFunction"
-  | "task";
-
 export interface HierarchyNode {
   id: string;
   label: string;
-  level: NodeLevel;
+  level: "capacity" | "masterFunction" | "valueCategory" | "domain" | "subFunction" | "task";
   parentId: string | null;
   description?: string;
-  meta?: string; // e.g. calendar slot this task lives in
-  temporary?: boolean; // true for situational/non-permanent nodes
+  meta?: string;
+  temporary?: boolean;
+  url?: string;
 }
-
-export const hierarchyData: HierarchyNode[] = [ /* ... */ ];
 ```
 
-This already matches the flat-array-plus-`parentId` shape from the
-original spec (`Node { id, label, level, parentId, description?, meta? }`),
-with differences worth recording:
+- **Flat array, not nested objects.** O(1) lookup by id, and editing a node
+  never reshapes its ancestors — a single find-and-splice. It is also already
+  a one-table schema (`id, label, level, parent_id, …`) if this ever moves to
+  a database.
+- **`level` names what a node is, not where it sits.** Branches are different
+  depths: Build passes through `valueCategory`, Sustain skips it. Depth is
+  always derived by walking `parentId`, never by counting levels — so adding
+  or removing a layer in one branch needs no code change.
+- **`temporary` is a flag, not a level.** Career Options' stages are
+  structurally normal; what differs is that they're situational.
 
-- **Type name is `HierarchyNode`, not `Node`** — `Node` collides with
-  React Flow's own `Node<T>` type and the DOM `Node` global; every file
-  that imports both would need an alias. Keep `HierarchyNode` as the
-  canonical name; if a future refactor wants `Node`, import it aliased
-  (`import type { Node as HierarchyNode }`) rather than the reverse.
-- **Branches don't all pass through the same levels, and that's fine.**
-  Build goes `masterFunction → valueCategory → domain → subFunction →
-  task`; Sustain skips `valueCategory` entirely (`masterFunction →
-  domain → ...`). `NodeLevel` is a label for *what a node is called*, not
-  a position in a fixed sequence — nothing in the data model or the UI
-  assumes every path has the same length. Depth is always derived by
-  walking `parentId` (see `getAncestors`/`getPath` below), never by
-  counting or ordering `NodeLevel` values. Adding, removing, or
-  reordering a level for one branch (as happened going from v1 → v2 of
-  this data) requires no changes to `lib/` or `components/`: depth is always
-  derived by walking `parentId`, never by counting or ordering `NodeLevel`
-  values.
-- **`temporary` is a flag, not a level** — a node like "Career
-  Transition" is structurally a normal `domain` (has the same kind of
-  children a domain has); what's different is that it's situational.
-  Modeling that as a boolean on any node rather than a `NodeLevel` value
-  or a separate node type keeps traversal/depth logic untouched — a
-  temporary node's children work exactly like any other node's.
+**A domain's children are stages, not categories** — the phases work moves
+through. Websites is Pipeline → Scoping → Build → Payment → Aftercare (which
+loops back via referrals); Career Options is Preparation → Applications →
+Interviews → Offers. Categorical children ("Sales", "Business Operations")
+collected tasks by topic, which let a stage quietly have no time while
+nothing looked wrong.
 
-## Why flat array + `parentId` (not nested objects)
+## The plan
 
-- **O(1) lookup by id**, needed constantly (breadcrumb reconstruction,
-  "find this node's children," React Flow node/edge keys).
-- **Editing a node never requires reshaping its ancestors.** A nested
-  `{ children: [...] }` tree means every add/move/delete touches a parent
-  object; a flat array means it's a single find-and-splice. This is the
-  property that makes a future edit UI or DB swap non-disruptive — the
-  spec calls this out explicitly as the reason for the choice.
-- **Trivial DB mapping later**: this shape is already a single-table
-  schema (`id PK, label, level, parent_id FK, description, meta`) — a
-  Prisma/Drizzle model drops in with no transformation step.
+```ts
+DirectionPlan  { version, blocks, assignments, overrides }
+TimeBlock      { id, name, start, end, type, order, days? }
+WeekAssignment { day, blockId, nodeId?, serves?, note?, label? }
+DateOverride   { date, blockId, nodeId }
+```
 
-## Derived helpers (live in `lib/hierarchy-data.ts`, not in components)
+Three flat arrays and **no task entity** — tasks live in Apple Notes. The
+plan stores the shape of a week, nothing that can be completed or checked
+off. See [DIRECTION.md](./DIRECTION.md) for what each field means and how
+resolution works.
 
-- `getChildren(id: string | null): HierarchyNode[]` — filter by `parentId`.
-  `getChildren(null)` returns the root. A node's leaf-ness is
-  `getChildren(id).length === 0` — computed from actual children present,
-  never from `level`, so a leaf works the same whether it's 3 levels deep
-  (Sustain's tasks) or 5 (Build's).
-- `getRoot(): HierarchyNode` — the one node with `parentId === null`.
-- `getNode(id: string): HierarchyNode | undefined` — lookup by id.
-- `getAncestors(id: string): HierarchyNode[]` — walk `parentId` up to the
-  root (nearest parent first); this is what feeds the breadcrumb.
-- `getPath(id: string): HierarchyNode[]` — root-to-node inclusive,
-  what the breadcrumb renders directly. Its length is whatever the actual
-  ancestor chain is — 4 entries for a Sustain leaf, 6 for a Build one —
-  `Breadcrumb.tsx` just `.map()`s over it.
+## Why not merge them
 
-Keeping these as pure functions over `hierarchyData` (not React state)
-means swapping the data source later (DB fetch, edit UI writing back) only
-changes where `hierarchyData` comes from, not how the UI walks it.
+A hierarchy node is a **thing that matters**; a block is a **recurring hour**.
+The cardinality is many-to-many in both directions — one node takes several
+slots across the week, one slot serves different nodes on different days —
+so neither can own the other without duplicating it.
 
-## Extensibility already accounted for
+Merged, every schedule edit would touch the tree, and shifting dinner by
+thirty minutes would be a write against the file that defines what your life
+is for. Joined by id, the two change on their own clocks and still reconcile:
+that reconciliation is the Coverage and Hours views.
 
-- `description` and `meta` are optional and free-text on purpose — `meta`
-  is currently used for calendar slots ("Wed 5:00-6:00pm (CTP)") but
-  nothing about the type forces that; an energy-cost tag, a priority, or a
-  status could be added as additional optional fields without breaking
-  existing nodes.
-- Stable string `id`s (not array indices) mean nodes can be reordered,
-  and a future edit UI can add/remove nodes without renumbering anything.
+## Where the pairing is thin
+
+- **Single parent.** Content is one skill serving several goals, so a
+  `serves` id on the assignment records where a slot's output is aimed. It is
+  an escape hatch — a second edge, not a second tree. Two or three of these
+  is a useful annotation; twenty means the tree is wrong.
+- **Blocks are global in time, not in days.** `days` says which weekdays a
+  block runs on, so Prep can be weekdays-only — but its *hours* are the same
+  every day it runs. A Saturday that starts later, rather than starting with a
+  different block, still has no expression: that needs per-day times, which
+  would mean either a block per day-shape or an override layer on top of one.
+- **The plan is versioned, the hierarchy isn't.** `version` on the stored
+  plan drives a migration ladder in `storage.ts`. The hierarchy needs no
+  equivalent — it ships with the build, and is never written back to.
+- **Times are strings.** `"HH:MM"`, 24h, local; `end <= start` means the
+  block wraps past midnight. All arithmetic goes through
+  `lib/direction/schedule.ts` — nothing else parses a time.

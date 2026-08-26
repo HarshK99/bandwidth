@@ -75,6 +75,21 @@ export function sortBlocks(blocks: TimeBlock[]): TimeBlock[] {
   );
 }
 
+/** No `days` means every day — the normal case, and the cheaper check. */
+export function blockRunsOn(block: TimeBlock, day: DayOfWeek): boolean {
+  return !block.days || block.days.includes(day);
+}
+
+/** How many days a week this block occupies — what weekly totals multiply by. */
+export function blockDaysPerWeek(block: TimeBlock): number {
+  return block.days?.length ?? 7;
+}
+
+/** The blocks a given weekday is actually made of, in clock order. */
+export function blocksForDay(blocks: TimeBlock[], day: DayOfWeek): TimeBlock[] {
+  return sortBlocks(blocks).filter((block) => blockRunsOn(block, day));
+}
+
 function minutesOfDay(date: Date): number {
   return date.getHours() * 60 + date.getMinutes();
 }
@@ -144,6 +159,12 @@ interface DaySchedule {
   date: Date;
   iso: string;
   day: DayOfWeek;
+  /**
+   * The blocks this day is made of — `plan.blocks` minus the ones that don't
+   * run today. Returned so the ruler and the day-progress bar measure the
+   * same day the entries describe.
+   */
+  blocks: TimeBlock[];
   entries: DayEntry[];
   current: DayEntry | null;
   next: DayEntry | null;
@@ -164,7 +185,7 @@ export function getDaySchedule(
 ): DaySchedule {
   const iso = toISODate(date);
   const day = date.getDay() as DayOfWeek;
-  const blocks = sortBlocks(plan.blocks);
+  const blocks = blocksForDay(plan.blocks, day);
   const assignments = indexAssignments(plan.assignments);
   const overrides = indexOverrides(plan.overrides);
 
@@ -240,7 +261,7 @@ export function getDaySchedule(
       ? blockStartMinutes(next.block) - nowMinutes
       : null;
 
-  return { date, iso, day, entries, current, next, minutesUntilNext };
+  return { date, iso, day, blocks, entries, current, next, minutesUntilNext };
 }
 
 // ---------- formatting ----------

@@ -3,23 +3,27 @@
 import { BLOCK_TYPES, BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import {
   blockDurationMinutes,
+  blockRunsOn,
   blockWraps,
   formatDuration,
+  shortDayName,
+  WEEK_DAYS,
 } from "@/lib/direction/schedule";
-import type { BlockType, TimeBlock } from "@/lib/direction/types";
-import { BUTTON, cx, FAINT, FIELD, NUM } from "./ui";
+import type { BlockType, DayOfWeek, TimeBlock } from "@/lib/direction/types";
+import { BUTTON, cx, FAINT, FIELD, MUTED, NUM } from "./ui";
 
 interface BlockSettingsRowProps {
   block: TimeBlock;
   isFirst: boolean;
   isLast: boolean;
   onChange: (patch: Partial<Omit<TimeBlock, "id">>) => void;
+  onToggleDay: (day: DayOfWeek) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }
 
 export const BLOCK_COLUMNS =
-  "grid-cols-[4.5rem_4.5rem_minmax(0,1fr)_6.5rem_5.5rem]";
+  "grid-cols-[4.5rem_4.5rem_minmax(0,1fr)_6.5rem_8.5rem_5.5rem]";
 
 /** One block, edited in place — no dialog, no save button. */
 export default function BlockSettingsRow({
@@ -27,6 +31,7 @@ export default function BlockSettingsRow({
   isFirst,
   isLast,
   onChange,
+  onToggleDay,
   onMove,
   onRemove,
 }: BlockSettingsRowProps) {
@@ -81,6 +86,33 @@ export default function BlockSettingsRow({
           </option>
         ))}
       </select>
+
+      {/* Which days this block runs. Seven letters rather than a multi-select:
+          the whole point is to see the shape at a glance, and a closed control
+          would hide exactly the thing being edited. */}
+      <div className="flex items-center gap-px px-1">
+        {WEEK_DAYS.map((day) => {
+          const runs = blockRunsOn(block, day);
+          return (
+            <button
+              key={day}
+              type="button"
+              onClick={() => onToggleDay(day)}
+              aria-pressed={runs}
+              aria-label={`${block.name} on ${shortDayName(day)}`}
+              title={shortDayName(day)}
+              className={cx(
+                "h-6 w-[1.05rem] rounded text-[10px] font-semibold uppercase transition-colors",
+                runs
+                  ? cx(MUTED, "bg-black/[0.05] dark:bg-white/[0.08]")
+                  : cx(FAINT, "opacity-45 hover:opacity-100")
+              )}
+            >
+              {shortDayName(day).slice(0, 1)}
+            </button>
+          );
+        })}
+      </div>
 
       <div className="flex items-center justify-end">
         <button

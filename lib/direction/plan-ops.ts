@@ -4,7 +4,7 @@
 // the rules (normalised order, no duplicate assignments, orphan cleanup)
 // live in exactly one place.
 
-import { sortBlocks } from "./schedule";
+import { blockRunsOn, sortBlocks, WEEK_DAYS } from "./schedule";
 import type {
   BlockType,
   DayOfWeek,
@@ -107,6 +107,43 @@ export function updateBlock(
   return { ...plan, blocks: normaliseBlocks(blocks) };
 }
 
+/**
+ * Switch one day on or off for a block.
+ *
+ * All seven days drops the field entirely rather than storing the full list —
+ * "every day" is the default, and a block carrying `days: [0,1,2,3,4,5,6]`
+ * would be indistinguishable from one that had been deliberately set that
+ * way. The last remaining day can't be switched off: a block that runs on no
+ * day is a deleted block, and there's a button for that.
+ *
+ * Assignments on a switched-off day are kept. They go dormant — every
+ * consumer filters through `blockRunsOn` — and come back intact if the day is
+ * switched on again, which is what you want when you're trying a shape out.
+ */
+export function toggleBlockDay(
+  plan: DirectionPlan,
+  blockId: string,
+  day: DayOfWeek
+): DirectionPlan {
+  const blocks = plan.blocks.map((block) => {
+    if (block.id !== blockId) return block;
+
+    const current = block.days ?? WEEK_DAYS;
+    const next = blockRunsOn(block, day)
+      ? current.filter((value) => value !== day)
+      : [...current, day];
+    if (next.length === 0) return block;
+
+    const ordered = WEEK_DAYS.filter((value) => next.includes(value));
+    if (ordered.length < WEEK_DAYS.length) return { ...block, days: ordered };
+
+    const everyDay = { ...block };
+    delete everyDay.days;
+    return everyDay;
+  });
+  return { ...plan, blocks };
+}
+
 export function addBlock(
   plan: DirectionPlan,
   block?: Partial<Omit<TimeBlock, "id" | "order">>
@@ -125,6 +162,7 @@ export function addBlock(
 /** Removing a block takes its assignments and overrides with it. */
 export function removeBlock(plan: DirectionPlan, blockId: string): DirectionPlan {
   return {
+    ...plan,
     blocks: normaliseBlocks(plan.blocks.filter((b) => b.id !== blockId)),
     assignments: plan.assignments.filter((a) => a.blockId !== blockId),
     overrides: plan.overrides.filter((o) => o.blockId !== blockId),

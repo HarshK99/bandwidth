@@ -37,13 +37,18 @@ export default function TodayView() {
     () => (plan && date ? getDaySchedule(plan, date, now) : null),
     [plan, date, now]
   );
-  const ruler = useMemo(() => (plan ? getDayRuler(plan.blocks) : null), [plan]);
+  // Both read the day's own blocks, not the plan's: a block that doesn't run
+  // today must not put an hour on the ruler or stretch the progress bar.
+  const ruler = useMemo(
+    () => (schedule ? getDayRuler(schedule.blocks) : null),
+    [schedule]
+  );
   const dayProgress = useMemo(
     () =>
-      plan && now && date && isSameDate(date, now)
-        ? getDayProgress(plan.blocks, now)
+      schedule && now && date && isSameDate(date, now)
+        ? getDayProgress(schedule.blocks, now)
         : null,
-    [plan, now, date]
+    [schedule, now, date]
   );
 
   // Plan and clock both land after hydration; hold the space quietly.

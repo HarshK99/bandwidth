@@ -159,17 +159,21 @@ export default function TimelineRow({
           isCurrent ? "rounded-2xl" : radiusClass(attachedAbove, attachedBelow),
           attachedAbove && "-mt-px",
           isCurrent
-            ? // The one filled surface in the app: the block you're in.
+            ? // The block you're in: the one saturated surface in the app.
               "grain z-10 overflow-hidden border-transparent bg-linear-to-br " +
               "from-hero-from to-hero-to px-4 py-4 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]"
-            : "bg-surface px-3.5 py-3"
+            : "px-3.5 py-3"
         )}
         style={{
           minHeight: boxHeight(blockDurationMinutes(block)),
-          // The type's hairline, on every block including past ones. The live
-          // block is the exception: it has no border to colour, and its type
-          // is already the loudest thing on the screen.
-          ...(isCurrent ? null : { borderColor: meta.border }),
+          // The type colours the whole box, not just its edge: a hairline is
+          // read second, a fill is read first, and telling a day's blocks
+          // apart at a glance is the whole job. The live block is the
+          // exception — it has its own surface, and its type is already the
+          // loudest thing on the screen.
+          ...(isCurrent
+            ? null
+            : { backgroundColor: meta.fill, borderColor: meta.border }),
         }}
       >
         <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">

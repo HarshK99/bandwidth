@@ -26,6 +26,20 @@ export interface TimeBlock {
   end: string; // "HH:MM" — "00:00" means midnight at the end of the day
   type: BlockType;
   order: number; // ascending; normalised on every mutation
+  /**
+   * The days this block actually runs. Omitted — the normal case — means all
+   * seven.
+   *
+   * Before this existed, "weekdays only" could only be said by leaving the
+   * weekend cells unassigned, which is a different statement: the block still
+   * stood there on Saturday, empty, as if something were missing. Prep on a
+   * Sunday isn't unplanned, it doesn't happen.
+   *
+   * Assignments for a day the block no longer runs are kept, not deleted:
+   * they go dormant and come back if the day is switched on again. Every
+   * consumer filters through `blockRunsOn`.
+   */
+  days?: DayOfWeek[];
 }
 
 /** The recurring weekly template: this day-of-week + this block → this area. */
@@ -75,8 +89,18 @@ export interface DateOverride {
   nodeId: string;
 }
 
+/**
+ * The shape this build writes. Bumped whenever a stored plan needs changing
+ * to be read correctly — see the migration ladder in storage.ts. Cheap to
+ * carry now, impossible to add retroactively: without it, an old plan and a
+ * new one are indistinguishable.
+ */
+export const PLAN_VERSION = 1;
+
 /** Everything the feature persists, as one object. */
 export interface DirectionPlan {
+  /** Absent in plans stored before versioning; read as 0. */
+  version: number;
   blocks: TimeBlock[];
   assignments: WeekAssignment[];
   overrides: DateOverride[];

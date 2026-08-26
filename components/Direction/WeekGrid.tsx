@@ -3,6 +3,7 @@
 import { BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import {
   assignmentKey,
+  blockRunsOn,
   dayName,
   formatRange,
   indexAssignments,
@@ -123,9 +124,29 @@ export default function WeekGrid({
                 >
                   {block.name}
                 </div>
+                {block.days && (
+                  <div className={cx(LABEL_XS, "mt-1", FAINT)}>
+                    {days
+                      .filter((day) => blockRunsOn(block, day))
+                      .map(shortDayName)
+                      .join(" ")}
+                  </div>
+                )}
               </div>
 
               {days.map((day) => {
+                // A day this block doesn't run isn't an empty cell to fill —
+                // there is nothing there to point at.
+                if (!blockRunsOn(block, day)) {
+                  return (
+                    <div
+                      key={day}
+                      aria-label={`${dayName(day)} — no ${block.name}`}
+                      className="border-l border-black/[0.04] bg-black/[0.015] dark:border-white/[0.06] dark:bg-white/[0.02]"
+                    />
+                  );
+                }
+
                 const assignment = index.get(assignmentKey(day, block.id));
                 // The stage itself is the cell — the domain is implied by
                 // the hierarchy and would only crowd a 6rem column.

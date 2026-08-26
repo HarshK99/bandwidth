@@ -23,6 +23,13 @@ interface BlockTypeMeta {
    * whole ramp is tuned in one place.
    */
   border: string;
+  /**
+   * The same hue as a wash for the block's own surface. A hairline alone
+   * turned out not to be enough to tell blocks apart at a glance — the eye
+   * reads fills long before it reads edges — so on Today the type colours
+   * the whole box. Kept faint enough to sit where the plain grey did.
+   */
+  fill: string;
 }
 
 /**
@@ -37,42 +44,49 @@ export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
     emphasis: "strong",
     tone: "structured",
     border: "var(--type-focus)",
+    fill: "var(--type-focus-fill)",
   },
   execution: {
     label: "Execution",
     emphasis: "strong",
     tone: "structured",
     border: "var(--type-execution)",
+    fill: "var(--type-execution-fill)",
   },
   thinking: {
     label: "Thinking",
     emphasis: "strong",
     tone: "relaxed",
     border: "var(--type-thinking)",
+    fill: "var(--type-thinking-fill)",
   },
   admin: {
     label: "Admin",
     emphasis: "soft",
     tone: "structured",
     border: "var(--type-admin)",
+    fill: "var(--type-admin-fill)",
   },
   buffer: {
     label: "Buffer",
     emphasis: "soft",
     tone: "relaxed",
     border: "var(--type-buffer)",
+    fill: "var(--type-buffer-fill)",
   },
   hobby: {
     label: "Hobby",
     emphasis: "soft",
     tone: "relaxed",
     border: "var(--type-hobby)",
+    fill: "var(--type-hobby-fill)",
   },
   custom: {
     label: "Custom",
     emphasis: "soft",
     tone: "structured",
     border: "var(--type-custom)",
+    fill: "var(--type-custom-fill)",
   },
 };
 
