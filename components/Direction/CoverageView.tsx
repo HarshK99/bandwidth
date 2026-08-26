@@ -32,7 +32,7 @@ export default function CoverageView() {
     if (row.hasChildren && isOpen(row)) openIds.add(row.node.id);
   }
 
-  const gaps = rows.filter((row) => row.state === "gap" && row.node.level !== "task");
+  const gaps = rows.filter((row) => row.state === "gap" && row.node.kind !== "task");
 
   const toggle = (row: CoverageRow) => {
     setToggled((prev) => {
@@ -60,7 +60,7 @@ export default function CoverageView() {
 
       <ul className={cx(CARD, "mt-6 px-2 py-1 sm:px-3")}>
         {visible.map((row) => {
-          const isTask = row.node.level === "task";
+          const isTask = row.node.kind === "task";
           const open = row.hasChildren && isOpen(row);
 
           return (

@@ -7,7 +7,7 @@
 // get time — it just isn't named by any block — and calling that a gap would
 // bury the real gaps in noise.
 
-import { hierarchyData, type HierarchyNode } from "../hierarchy-data";
+import { hierarchy, type HierarchyNode } from "../life";
 import {
   blockDurationMinutes,
   blockRunsOn,
@@ -26,11 +26,7 @@ type CoverageState =
 
 export interface CoverageRow {
   node: HierarchyNode;
-  /**
-   * The parent *within this list* — null for the top rows. The capacity root
-   * isn't included (a row reading "everything: 74.5h" tells you nothing), so
-   * pointing at it would orphan every master function.
-   */
+  /** The parent *within this list* — null for the top rows. */
   parentId: string | null;
   depth: number;
   hasChildren: boolean;
@@ -51,7 +47,7 @@ const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 /** Flat, in depth-first order — the view handles expansion by filtering. */
 export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
   const childrenOf = new Map<string | null, HierarchyNode[]>();
-  for (const node of hierarchyData) {
+  for (const node of hierarchy) {
     const list = childrenOf.get(node.parentId) ?? [];
     list.push(node);
     childrenOf.set(node.parentId, list);
@@ -65,7 +61,7 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
   const namedHere = new Set<string>();
   const slotsByNode = new Map<string, Map<string, Set<DayOfWeek>>>();
 
-  const parentOf = new Map(hierarchyData.map((n) => [n.id, n.parentId]));
+  const parentOf = new Map(hierarchy.map((n) => [n.id, n.parentId]));
 
   for (const assignment of plan.assignments) {
     const block = blocks.get(assignment.blockId);
@@ -134,8 +130,7 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
     }
   };
 
-  // Start at the master functions: the capacity root is the whole tree, and
-  // a row saying "everything: 74.5h" tells you nothing.
-  for (const top of childrenOf.get("capacity-root") ?? []) walk(top, 0, false);
+  // Build and Sustain are the roots — there is no node above them.
+  for (const top of childrenOf.get(null) ?? []) walk(top, 0, false);
   return rows;
 }

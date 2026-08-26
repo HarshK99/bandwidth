@@ -4,7 +4,7 @@
 // here from a DirectionPlan plus a Date.
 
 import { BLOCK_TYPE_META } from "./block-types";
-import { getAreaLabel, getNode } from "./nodes";
+import { getAreaLabel, getNode, getTasks } from "./nodes";
 import type {
   DateOverride,
   DayOfWeek,
@@ -14,6 +14,9 @@ import type {
 } from "./types";
 
 const MINUTES_PER_DAY = 1440;
+
+/** Above this, a stage's tasks read as a list rather than as direction. */
+const MAX_IMPLIED_TASKS = 3;
 
 /** Week starts Monday — the template is read as a working week. */
 export const WEEK_DAYS: DayOfWeek[] = [1, 2, 3, 4, 5, 6, 0];
@@ -68,10 +71,25 @@ export function blockDurationMinutes(block: TimeBlock): number {
   return blockEndMinutes(block) - blockStartMinutes(block);
 }
 
+/**
+ * The day is modelled as running from this clock time to the same time the
+ * next morning (see docs) — not from midnight. A block whose own start falls
+ * before this (in practice, only sleep, whenever it starts after midnight)
+ * still belongs at the *end* of the day's reading order, as the thing that
+ * closes it out, not the thing that opens it.
+ */
+const DAY_STARTS_AT_MINUTES = 7 * 60;
+
+/** Where a block sits in the day's reading order, 0 at the day's own start. */
+function readingOrderMinutes(block: TimeBlock): number {
+  const start = blockStartMinutes(block);
+  return (start - DAY_STARTS_AT_MINUTES + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+
 /** Chronological order, with `order` as the tiebreaker for equal starts. */
 export function sortBlocks(blocks: TimeBlock[]): TimeBlock[] {
   return [...blocks].sort(
-    (a, b) => blockStartMinutes(a) - blockStartMinutes(b) || a.order - b.order
+    (a, b) => readingOrderMinutes(a) - readingOrderMinutes(b) || a.order - b.order
   );
 }
 
@@ -207,9 +225,31 @@ export function getDaySchedule(
     const rawNote = override !== undefined ? undefined : assignment?.note;
     const written =
       rawNote === undefined ? [] : Array.isArray(rawNote) ? rawNote : [rawNote];
-    // A note says what today's version of the work is; without one the stage
-    // speaks for itself ("Sales / Pipeline").
-    const notes = written.length > 0 ? written : node ? [node.label] : [];
+    // Named tasks, then the node's own — stop retyping what the tree already
+    // says. A written note still wins: it describes today specifically, which
+    // is always more than a standing task can.
+    const listed =
+      override !== undefined
+        ? []
+        : (assignment?.tasks ?? [])
+            .map((task) => getNode(task)?.label)
+            .filter((label): label is string => Boolean(label));
+    // Falling back to every task only reads as direction while the list is
+    // short. Past that it's a menu, and the stage's own name says more.
+    const own = nodeId ? getTasks(nodeId) : [];
+    const implied = own.length > 0 && own.length <= MAX_IMPLIED_TASKS
+      ? own.map((task) => task.label)
+      : [];
+    const notes =
+      written.length > 0
+        ? written
+        : listed.length > 0
+          ? listed
+          : implied.length > 0
+            ? implied
+            : node
+              ? [node.label]
+              : [];
     const name = assignment?.label ?? block.name;
     // An override replaces the area, so the template's purpose goes with it.
     const servesId = override !== undefined ? undefined : assignment?.serves;
@@ -252,6 +292,40 @@ export function getDaySchedule(
       minutesRemaining,
       progress,
     };
+  });
+
+  // Adjacent blocks that touch and say the exact same thing - Sunday's CTP,
+  // Dinner and Hobbies can all resolve to "Relationships / Protected
+  // family/friends time" - read as an error repeated three times, not as
+  // three facts. Blank every repeat, so TimelineRow's own fallback promotes
+  // each block's name into the lead: the run says what it is once, at its
+  // head, and just names itself after that.
+  //
+  // Content is compared against the head of the run (not blanked, even
+  // across several repeats), but adjacency is checked against the immediate
+  // neighbour: a blanked entry is still physically touching the one after
+  // it, so the chain must not break just because its own content was
+  // cleared.
+  let head: DayEntry | null = null;
+  entries.forEach((entry, index) => {
+    const prevEntry = index > 0 ? entries[index - 1] : null;
+    const touchesPrev = prevEntry !== null && prevEntry.block.end === entry.block.start;
+    const sameAsHead =
+      touchesPrev &&
+      head !== null &&
+      Boolean(entry.nodeId) &&
+      entry.nodeId === head.nodeId &&
+      entry.notes.join("|") === head.notes.join("|") &&
+      entry.focus === head.focus &&
+      entry.serves === head.serves;
+
+    if (sameAsHead) {
+      entry.notes = [];
+      entry.focus = "";
+      entry.serves = "";
+    } else {
+      head = entry;
+    }
   });
 
   const current = entries.find((entry) => entry.status === "current") ?? null;

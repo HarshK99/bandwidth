@@ -1,5 +1,5 @@
 // lib/time-dots.ts
-// Pure data layer for the Time Dots view — no UI. Mirrors hierarchy-data.ts's
+// Pure data layer for the Time Dots view — no UI. Mirrors lib/life's
 // split between data/derivation and rendering.
 //
 // All "elapsed" counts use Jan 1 as the turnover point (calendar year), not

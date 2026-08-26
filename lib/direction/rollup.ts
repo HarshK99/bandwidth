@@ -5,7 +5,7 @@
 // This is what the nodeId pairing buys: hours per area, and the list of
 // hierarchy nodes nothing points at, both computed rather than counted.
 
-import type { HierarchyNode } from "../hierarchy-data";
+import type { HierarchyNode } from "../life";
 import { getCoverageRows, type CoverageRow } from "./coverage";
 import {
   blockDaysPerWeek,
@@ -44,9 +44,9 @@ export function getWeeklyRollup(plan: DirectionPlan): WeeklyRollup {
 
   // One tree walk, shared with the coverage view: it already credits every
   // ancestor and returns rows in depth-first order. Building them here from
-  // the flat data file instead is what made this read as level-groups rather
-  // than a tree, and gave Sustain's domains the indent of Build's.
-  const rows = getCoverageRows(plan).filter((row) => row.node.level !== "task");
+  // the flat data instead is what made this read as level-groups rather than
+  // a tree, and gave Sustain's areas the indent of Build's.
+  const rows = getCoverageRows(plan).filter((row) => row.node.kind !== "task");
   const gaps: HierarchyNode[] = rows
     .filter((row) => row.minutes === 0)
     .map((row) => row.node);

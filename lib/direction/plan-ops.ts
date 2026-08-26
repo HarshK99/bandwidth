@@ -28,9 +28,10 @@ function nextBlockId(): string {
  * Point one cell of the template at a hierarchy node (or at nothing).
  *
  * A per-day `label` survives — it names how that day uses the slot, which
- * doesn't change just because the area did. The `note` does not: it described
- * the old area, so keeping it would leave a stale line under a new one.
- * Clearing the area drops the whole assignment unless a label is holding it.
+ * doesn't change just because the area did. The `note` and the chosen `tasks`
+ * do not: both described the old area, so keeping either would leave a stale
+ * line under a new one. Clearing the area drops the whole assignment unless a
+ * label is holding it.
  */
 export function setAssignment(
   plan: DirectionPlan,

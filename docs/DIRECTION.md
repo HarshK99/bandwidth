@@ -111,22 +111,31 @@ from something else" is worth seeing.
 
 ## Data model
 
-Three flat arrays, no tasks — see `lib/direction/types.ts`, and
-[DATA_MODEL.md](./DATA_MODEL.md) for how this joins the hierarchy.
+Three flat arrays, no tasks — see `lib/direction/types.ts`. The data is
+authored in `lib/life/`; [DATA_MODEL.md](./DATA_MODEL.md) covers that format
+and why the tree and the week stay two tables.
 
 ```ts
 DirectionPlan  { version, blocks, assignments, overrides }
 TimeBlock      { id, name, start, end, type, order, days? }
-WeekAssignment { day, blockId, nodeId?, serves?, note?, label? }  // recurring template
-DateOverride   { date, blockId, nodeId }                          // one date, template untouched
+WeekAssignment { day, blockId, nodeId?, tasks?, serves?, note?, label? }
+DateOverride   { date, blockId, nodeId }   // one date, template untouched
 ```
 
-`nodeId` is a **hierarchy node id, not typed text**. Editing an area is
-therefore a picker (`FocusEditor` over `getAreaOptions()`), and you add an
-area to the hierarchy before you can point a block at it. A block with no
-`nodeId` is genuinely unassigned — lunch, sleep, open time. Life-support
-blocks carry no node on purpose: counting sleep as capacity spent on a bet
-would drown every rollup.
+`nodeId` is a **tree node id, not typed text** — checked by the compiler in
+the authored week, by a picker (`FocusEditor` over `getAreaOptions()`) in the
+UI. You add an area to the tree before you can point a block at it. A block
+with no `nodeId` is genuinely unassigned — lunch, sleep, open time.
+Life-support blocks carry no node on purpose: counting sleep as capacity
+spent on a bet would drown every rollup.
+
+`tasks` names which of the node's tasks a slot is for, written in the week
+grid as `do: ["outreach", "followup"]`. Same move as `nodeId` one level down:
+stop typing what you can point at. Today resolves them in order — a written
+`note` first, then the named tasks, then the node's *own* tasks when there
+are at most `MAX_IMPLIED_TASKS` (3) of them, then the node's label. The cap
+is the line between direction and a menu: past three, the stage's own name
+says more than a list does.
 
 `serves` exists because **the tree is single-parent but some work is a shared
 capability**. Content is one skill — script, shoot, edit, publish — pointed
@@ -144,7 +153,7 @@ primary intent, not accounting.
 `days` is the days a block actually runs; omitted — the normal case — means
 all seven. Before it existed, "weekdays only" could only be said by leaving
 the weekend cells unassigned, which is a different statement: the block still
-stood there on Saturday, empty, as if something were missing. Prep on a
+stood there on Saturday, empty, as if something were missing. Deep Study on a
 Sunday isn't unplanned, it doesn't happen. Everything that reads a block
 filters through `blockRunsOn` — the timeline, the ruler, the day-progress
 bar, both rollups — so a dormant day contributes no hours anywhere.
@@ -164,9 +173,9 @@ calling those by the weekday name would simply be wrong. The block still owns
 the hours; only its name changes.
 
 Resolution splits along those lines: an override replaces the **area**, so
-the template's `note` and `serves` go with it (both described the old area),
-while `label` survives — how the day uses the slot doesn't change because the
-area did. `setAssignment` follows the same rule.
+the template's `note`, `tasks` and `serves` go with it (all three described
+the old area), while `label` survives — how the day uses the slot doesn't
+change because the area did. `setAssignment` follows the same rule.
 
 ### Time
 
@@ -186,26 +195,30 @@ differently than it reads.
 **The whole day is modelled**, 07:00 to 07:00: morning routine, exercise,
 meals, wind-down and sleep included. An earlier cut modelled only the working
 window, which left holes at lunch and dinner and made the app go blank
-exactly when you'd glance at it. Life blocks carry no area — just a name — so
-they stay quiet and never win the day's theme.
+exactly when you'd glance at it. Life blocks appear nowhere in `WEEK` — they
+carry no area, so they stay quiet and never win the day's theme.
 
 Two shape decisions worth keeping in view: the old 2.5h buffer is split, with
 `Reset` (14:30) deliberately light because it lands in the post-lunch slump
 and lunch sometimes runs to 2pm, and `Second Push` (15:30) owned work placed
-where energy is back. `Prep` runs weekdays only — seven-days-a-week
-preparation with no rest day is how preparation quietly becomes theatre.
+where energy is back. `Deep Study` (08:00, the block used to be called
+"Prep" — renamed once it was clear that's what actually belongs there in
+the morning) runs weekdays only — seven-days-a-week study with no rest day
+is how it quietly becomes theatre.
 
-Once anything is edited the stored plan wins entirely and `default-plan.ts`
-is only read again on a reset.
+Once anything is edited the stored plan wins entirely and `lib/life` is only
+read again on a reset.
 
 ## Layers
 
 | File | Responsibility |
 | --- | --- |
-| `lib/hierarchy-data.ts` | What the work is. Data only. |
+| `lib/life/areas/*.ts` | What the work is, authored as a nested tree. |
+| `lib/life/life.ts` | The day's shape, and which day goes where. |
+| `lib/life/schema.ts` | Authoring types, flatten, validate, day parsing. |
+| `lib/life/index.ts` | The flat arrays, checked once at import. |
 | `lib/direction/types.ts` | The model. |
-| `lib/direction/default-plan.ts` | Local seed data — the shipped week. No database. |
-| `lib/direction/nodes.ts` | The bridge: id → node, ancestry, area, pickable options. |
+| `lib/direction/nodes.ts` | The bridge: id → node, ancestry, area, tasks, options. |
 | `lib/direction/block-types.ts` | Block type → emphasis, tone, hairline colour. |
 | `lib/direction/schedule.ts` | Pure derivation: time math, current block, day resolution, progress. |
 | `lib/direction/coverage.ts` | The tree walked with hours attached. |
@@ -217,17 +230,17 @@ is only read again on a reset.
 
 A stored plan carries a `version` (`PLAN_VERSION` in `types.ts`), and
 `storage.ts` runs it through `migrate()` on load — one step per version,
-each responsible only for getting from n to n+1. Nothing needs converting
-yet, so today it is a stamp. It exists early on purpose: a migration you
-can't write is one you didn't version for, and without the number an old plan
-and a new one are indistinguishable, leaving Reset as the only recovery. A
-plan from a *newer* build is left exactly as it is rather than guessed at or
-replaced.
+each responsible only for getting from n to n+1. v1 → v2 renames every node
+id (`sub-web-pipeline` → `web.pipeline`), which is exactly why the number was
+added a version before it was needed: without it, a plan holding the old ids
+and one holding the new ones are indistinguishable, and Reset would be the
+only recovery. A plan from a *newer* build is left exactly as it is rather
+than guessed at or replaced.
 
 Persistence is **localStorage only** (`bandwidth.direction.plan.v1`),
 matching the rest of the app's no-backend posture. A stored plan replaces the
 seed wholesale rather than merging, so edits never get surprise entries back
-when `default-plan.ts` changes. Settings → Reset drops the stored plan.
+when `lib/life` changes. Settings → Reset drops the stored plan.
 
 The plan is read through `useSyncExternalStore` rather than copied into
 component state: it is genuinely external, shared by four views, and can

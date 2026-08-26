@@ -55,10 +55,21 @@ export interface WeekAssignment {
    */
   nodeId?: string;
   /**
+   * Which of the node's tasks this slot is for, as full ids. Written in the
+   * week grid as `do: ["outreach", "followup"]`, relative to `nodeId`.
+   *
+   * This is the same move as `nodeId` one level down: stop typing what you
+   * can point at. It also replaces the prose calendar slots that used to sit
+   * on every task ("Second push (Mon/Wed)") — a second, unchecked copy of the
+   * schedule living inside the hierarchy. Still not a task list: nothing here
+   * can be completed, reordered or checked off.
+   */
+  tasks?: string[];
+  /**
    * What this block is actually for on this day ("Website dev"). One line,
    * or a few when the block genuinely holds two things — buffer time is
-   * loose ends *and* the day's reading. Direction, not a task list: there is
-   * nothing to complete, reorder or check off.
+   * loose ends *and* the day's reading. Overrides `tasks` when both are
+   * present: a written line is always more specific than a stage's menu.
    */
   note?: string | string[];
   /**
@@ -95,7 +106,7 @@ export interface DateOverride {
  * carry now, impossible to add retroactively: without it, an old plan and a
  * new one are indistinguishable.
  */
-export const PLAN_VERSION = 1;
+export const PLAN_VERSION = 2;
 
 /** Everything the feature persists, as one object. */
 export interface DirectionPlan {

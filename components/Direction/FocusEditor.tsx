@@ -16,7 +16,7 @@ interface FocusEditorProps {
 /**
  * Picks the part of the hierarchy a block points at. A filter box rather than
  * a free-text field: areas are a fixed vocabulary that lives in
- * lib/hierarchy-data.ts, and letting them be typed is how the same area ends
+ * lib/life/areas, and letting them be typed is how the same area ends
  * up spelled three ways and missing from every total.
  *
  * Callers key this by the cell being edited so a new selection remounts it.
