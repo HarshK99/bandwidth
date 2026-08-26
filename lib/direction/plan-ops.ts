@@ -25,29 +25,29 @@ function nextBlockId(): string {
 // ---------- weekly template ----------
 
 /**
- * Set the area for one cell of the template.
+ * Point one cell of the template at a hierarchy node (or at nothing).
  *
  * A per-day `label` survives — it names how that day uses the slot, which
  * doesn't change just because the area did. The `note` does not: it described
- * the old area, so keeping it would leave a stale line under a new focus.
- * Clearing the focus drops the whole assignment unless a label is holding it.
+ * the old area, so keeping it would leave a stale line under a new one.
+ * Clearing the area drops the whole assignment unless a label is holding it.
  */
 export function setAssignment(
   plan: DirectionPlan,
   day: DayOfWeek,
   blockId: string,
-  focus: string
+  nodeId: string
 ): DirectionPlan {
-  const trimmed = focus.trim();
   const existing = plan.assignments.find(
     (a) => a.day === day && a.blockId === blockId
   );
   const rest = plan.assignments.filter(
     (a) => !(a.day === day && a.blockId === blockId)
   );
-  if (!trimmed && !existing?.label) return { ...plan, assignments: rest };
+  if (!nodeId && !existing?.label) return { ...plan, assignments: rest };
 
-  const next: WeekAssignment = { day, blockId, focus: trimmed };
+  const next: WeekAssignment = { day, blockId };
+  if (nodeId) next.nodeId = nodeId;
   if (existing?.label) next.label = existing.label;
   return { ...plan, assignments: [...rest, next] };
 }
@@ -55,7 +55,7 @@ export function setAssignment(
 // ---------- date overrides ----------
 
 /**
- * A blank focus is kept as a real override — "nothing today" is a decision,
+ * A blank area is kept as a real override — "nothing today" is a decision,
  * and it must survive rather than falling back to the template. Use
  * clearOverride to actually return the date to the template.
  */
@@ -63,15 +63,12 @@ export function setOverride(
   plan: DirectionPlan,
   date: string,
   blockId: string,
-  focus: string
+  nodeId: string
 ): DirectionPlan {
   const rest = plan.overrides.filter(
     (o) => !(o.date === date && o.blockId === blockId)
   );
-  return {
-    ...plan,
-    overrides: [...rest, { date, blockId, focus: focus.trim() }],
-  };
+  return { ...plan, overrides: [...rest, { date, blockId, nodeId }] };
 }
 
 export function clearOverride(

@@ -17,6 +17,12 @@ interface BlockTypeMeta {
    * time shouldn't read as an obligation.
    */
   tone: "structured" | "relaxed";
+  /**
+   * CSS variable holding this type's hairline colour (see app/globals.css).
+   * Named rather than classed so Tailwind has nothing to purge, and so the
+   * whole ramp is tuned in one place.
+   */
+  border: string;
 }
 
 /**
@@ -26,13 +32,48 @@ interface BlockTypeMeta {
  * If a block should carry a phrase, assign it one in Week.
  */
 export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
-  focus: { label: "Focus", emphasis: "strong", tone: "structured" },
-  execution: { label: "Execution", emphasis: "strong", tone: "structured" },
-  thinking: { label: "Thinking", emphasis: "strong", tone: "relaxed" },
-  admin: { label: "Admin", emphasis: "soft", tone: "structured" },
-  buffer: { label: "Buffer", emphasis: "soft", tone: "relaxed" },
-  hobby: { label: "Hobby", emphasis: "soft", tone: "relaxed" },
-  custom: { label: "Custom", emphasis: "soft", tone: "structured" },
+  focus: {
+    label: "Focus",
+    emphasis: "strong",
+    tone: "structured",
+    border: "var(--type-focus)",
+  },
+  execution: {
+    label: "Execution",
+    emphasis: "strong",
+    tone: "structured",
+    border: "var(--type-execution)",
+  },
+  thinking: {
+    label: "Thinking",
+    emphasis: "strong",
+    tone: "relaxed",
+    border: "var(--type-thinking)",
+  },
+  admin: {
+    label: "Admin",
+    emphasis: "soft",
+    tone: "structured",
+    border: "var(--type-admin)",
+  },
+  buffer: {
+    label: "Buffer",
+    emphasis: "soft",
+    tone: "relaxed",
+    border: "var(--type-buffer)",
+  },
+  hobby: {
+    label: "Hobby",
+    emphasis: "soft",
+    tone: "relaxed",
+    border: "var(--type-hobby)",
+  },
+  custom: {
+    label: "Custom",
+    emphasis: "soft",
+    tone: "structured",
+    border: "var(--type-custom)",
+  },
 };
 
 export const BLOCK_TYPES = Object.keys(BLOCK_TYPE_META) as BlockType[];

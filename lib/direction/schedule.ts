@@ -4,6 +4,7 @@
 // here from a DirectionPlan plus a Date.
 
 import { BLOCK_TYPE_META } from "./block-types";
+import { getAreaLabel, getNode } from "./nodes";
 import type {
   DateOverride,
   DayOfWeek,
@@ -114,9 +115,7 @@ export function indexAssignments(
 }
 
 function indexOverrides(overrides: DateOverride[]): Map<string, string> {
-  return new Map(
-    overrides.map((o) => [overrideKey(o.date, o.blockId), o.focus])
-  );
+  return new Map(overrides.map((o) => [overrideKey(o.date, o.blockId), o.nodeId]));
 }
 
 export type BlockStatus = "past" | "current" | "upcoming";
@@ -126,8 +125,12 @@ export interface DayEntry {
   /** The block's name on this day — an assignment may rename it. */
   name: string;
   focus: string;
-  /** Quiet second line under the area. Empty when there isn't one. */
-  note: string;
+  /** What the block is for today, as lines. Empty when there is nothing. */
+  notes: string[];
+  /** The hierarchy node in play, for rollups. Empty when unassigned. */
+  nodeId: string;
+  /** Label of what this slot's output serves, when it serves something else. */
+  serves: string;
   /** True when a date override supplied this focus (including a blank one). */
   isOverride: boolean;
   status: BlockStatus;
@@ -172,12 +175,26 @@ export function getDaySchedule(
     const assignment = assignments.get(assignmentKey(day, block.id));
     const override = overrides.get(overrideKey(iso, block.id));
 
-    const focus = override ?? assignment?.focus ?? "";
+    const nodeId = override ?? assignment?.nodeId ?? "";
+    const node = nodeId ? getNode(nodeId) : null;
+    // The area is the *context* line: the domain a stage belongs to. Dropped
+    // when it would only repeat the lead.
+    const area = nodeId ? getAreaLabel(nodeId) : "";
     // The note belongs to the area: overriding the area makes the template's
     // note wrong, so it doesn't survive. The label is the opposite — it
     // describes how the day uses the slot, which an override doesn't change.
-    const note = override !== undefined ? "" : (assignment?.note ?? "");
+    const rawNote = override !== undefined ? undefined : assignment?.note;
+    const written =
+      rawNote === undefined ? [] : Array.isArray(rawNote) ? rawNote : [rawNote];
+    // A note says what today's version of the work is; without one the stage
+    // speaks for itself ("Sales / Pipeline").
+    const notes = written.length > 0 ? written : node ? [node.label] : [];
     const name = assignment?.label ?? block.name;
+    // An override replaces the area, so the template's purpose goes with it.
+    const servesId = override !== undefined ? undefined : assignment?.serves;
+    const serves = servesId ? (getNode(servesId)?.label ?? "") : "";
+    // Dropped when it would only repeat the lead or the block's own name.
+    const focus = area && area !== notes[0] && area !== name ? area : "";
 
     const start = blockStartMinutes(block);
     const end = blockEndMinutes(block);
@@ -206,7 +223,9 @@ export function getDaySchedule(
       block,
       name,
       focus,
-      note,
+      notes,
+      nodeId,
+      serves,
       isOverride: override !== undefined,
       status,
       minutesRemaining,
@@ -248,13 +267,82 @@ function toClock12(minutes: number): Clock12 {
  * "8" over "10am", "1" over "2:30pm" — so the stacked column stays about
  * four characters wide instead of nine.
  */
-export function formatRangeParts(block: TimeBlock): { start: string; end: string } {
+function formatRangeParts(block: TimeBlock): { start: string; end: string } {
   const start = toClock12(blockStartMinutes(block));
   const end = toClock12(blockEndMinutes(block));
   return {
     start: start.suffix === end.suffix ? start.text : `${start.text}${start.suffix}`,
     end: `${end.text}${end.suffix}`,
   };
+}
+
+export interface RulerTick {
+  /** 0–1 down the block's own height. */
+  offset: number;
+  label: string;
+  /** A block start that doesn't land on the hour. */
+  offHour: boolean;
+}
+
+/**
+ * The left column as a continuous clock: every hour from the day's first to
+ * its last, in order, never skipped or repeated.
+ *
+ * The scale is *piecewise*, not uniform — each hour sits at its proportional
+ * position inside its own block, and block heights aren't proportional to
+ * duration. So an hour of deep work is physically shorter than an hour of
+ * admin. That's the trade for keeping a whole day on two screens: a uniform
+ * scale would make 09:00–12:00 six times a 30-minute block and turn the page
+ * into a calendar.
+ *
+ * A meridiem is printed only when it changes, the way a clock reads: 7am, 8,
+ * 9 … 12pm, 1, 2 … 12am, 2, 4.
+ */
+export function getDayRuler(blocks: TimeBlock[]): Map<string, RulerTick[]> {
+  const ordered = sortBlocks(blocks);
+  const ruler = new Map<string, RulerTick[]>();
+  let meridiem: "am" | "pm" | null = null;
+
+  const label = (minutes: number): string => {
+    const clock = toClock12(minutes);
+    const text =
+      clock.suffix === meridiem ? clock.text : `${clock.text}${clock.suffix}`;
+    meridiem = clock.suffix;
+    return text;
+  };
+
+  ordered.forEach((block, index) => {
+    const start = blockStartMinutes(block);
+    const end = blockEndMinutes(block);
+    const span = end - start;
+    if (span <= 0) {
+      ruler.set(block.id, []);
+      return;
+    }
+
+    const ticks: RulerTick[] = [];
+    if (start % 60 !== 0) {
+      ticks.push({ offset: 0, label: label(start), offHour: true });
+    }
+
+    const first = Math.ceil(start / 60) * 60;
+    for (let minute = first; minute < end; minute += 60) {
+      // Long blocks (sleep) thin to every other hour so the marks don't
+      // crowd. Anchored to even hours, which keeps midnight on the ruler.
+      const thinned = span > 240 && minute !== first && (minute / 60) % 2 !== 0;
+      if (thinned) continue;
+      ticks.push({ offset: (minute - start) / span, label: label(minute), offHour: false });
+    }
+
+    // The last block closes the loop — its end is the next day's first hour.
+    if (index === ordered.length - 1) {
+      ticks.push({ offset: 1, label: label(end), offHour: false });
+    }
+
+    ruler.set(block.id, ticks);
+  });
+
+  return ruler;
 }
 
 /**

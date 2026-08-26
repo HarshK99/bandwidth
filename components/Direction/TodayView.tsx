@@ -7,6 +7,7 @@ import {
   formatDuration,
   formatWeekday,
   getDayProgress,
+  getDayRuler,
   getDaySchedule,
   getDayTheme,
   isSameDate,
@@ -36,6 +37,7 @@ export default function TodayView() {
     () => (plan && date ? getDaySchedule(plan, date, now) : null),
     [plan, date, now]
   );
+  const ruler = useMemo(() => (plan ? getDayRuler(plan.blocks) : null), [plan]);
   const dayProgress = useMemo(
     () =>
       plan && now && date && isSameDate(date, now)
@@ -45,7 +47,7 @@ export default function TodayView() {
   );
 
   // Plan and clock both land after hydration; hold the space quietly.
-  if (!schedule || !now || !date) return <div className="h-40" aria-hidden />;
+  if (!schedule || !now || !date || !ruler) return <div className="h-40" aria-hidden />;
 
   const { entries, current, next, minutesUntilNext } = schedule;
   const isToday = isSameDate(date, now);
@@ -119,6 +121,7 @@ export default function TodayView() {
               isLast={index === entries.length - 1}
               attachedAbove={touches(entries[index - 1], entry)}
               attachedBelow={touches(entry, entries[index + 1])}
+              ticks={ruler.get(entry.block.id) ?? []}
             />
           ))}
         </ol>

@@ -14,7 +14,15 @@ it stores is the *shape* of a week.
 | ---------------------- | -------- | ------------------------------------------------ |
 | `/direction`           | Today    | Primary screen. Read-only timeline of one day.   |
 | `/direction/week`      | Week     | The recurring rhythm — block × day, click to set. |
+| `/direction/hours`     | Hours    | Where the week goes, rolled up the hierarchy.    |
 | `/direction/settings`  | Settings | Block structure, and single-date overrides.      |
+| `/coverage`            | Coverage | The hierarchy with hours attached — what has a place. |
+
+`/coverage` replaced the radial mind-map that used to live at `/`. Its job
+was "what should I work on right now", which Today now answers directly; what
+was left was a way to see the whole tree, and an indented outline reads that
+far better than a ring — a column of numbers makes a zero obvious. The
+`@xyflow/react` dependency went with it.
 
 Direction is the app's home: `/` redirects to `/direction`, the mind-map
 moved to `/map`, and the tab bar lists Direction first. Inside the section,
@@ -28,10 +36,21 @@ chrome layer.
   date.
 - A vertical timeline: time rail on the left, block name and area on the
   right. No proportional heights — this is not a calendar.
-- Times stack vertically in a ~3.5rem column — "8" over "10am", "1" over
-  "2:30pm". Whole hours drop their ":00" and a shared meridiem prints once,
-  on the end. `formatRange()` still returns the one-line form ("8–10am") for
-  the week grid and override list, where a range sits inside a dense row.
+- The left column is a **continuous hour ruler**, not each block's own range:
+  every hour from the day's first to its last, once, in order — plus a
+  fainter mark where a block starts off the hour (7:30, 2:30). A meridiem
+  prints only when it changes, the way a clock reads: `7am · 7:30 · 8 · 9 ·
+  10 · 11 · 12pm · 1 · 2 · 2:30 · 3 …`.
+
+  The scale is **piecewise, not uniform** (`getDayRuler()`): each mark sits
+  at its proportional position *inside its own block*, and block heights
+  aren't proportional to duration — so an hour of deep work is physically
+  shorter (~48px) than an hour of admin (~61px). That's the trade for keeping
+  a day on two screens; a uniform scale would make 09:00–12:00 six times a
+  30-minute block and turn the page into a calendar. Blocks longer than 4h
+  thin to every other hour, anchored to even hours so midnight stays on the
+  ruler. `formatRange()` still returns the one-line form ("8–10am") for the
+  week grid and override list, where a range sits inside a dense row.
 - Each block is a bordered box, and **box height carries duration**:
   `boxHeight()` in `TimelineRow` is `40 + 0.58 × minutes`, capped at 190px.
   Linear enough that 3h reads about twice 1h (a square-root curve was tried
@@ -47,10 +66,15 @@ chrome layer.
   something: unstructured time.
 - The header carries the **day's theme** — the area most of the structural
   hours go to ("Wednesday · Income Work"), from `getDayTheme()`.
-- **Now** is the strongest element on the screen: the area jumps to ~2×
-  type size, the block name goes full contrast, and the rail beside it turns
-  into the clock — an accent track that fills as the block runs out. Time
-  remaining sits with the NOW tag, not in the time column.
+- Inside a block the order is **eyebrow → lead → caption**: the block's own
+  name smallest, what you're actually doing biggest, and the area under it at
+  mid size. A block with neither note nor area (lunch, sleep) promotes its
+  name into the lead, so a card is never headed by nothing.
+- **Now** is the strongest element on the screen: the lead jumps to ~2× type
+  size on a filled card, and the rail beside it turns into the clock — an
+  accent track that fills as the block runs out. Time remaining sits with the
+  NOW tag, not in the time column. A multi-line lead drops a size: a hero
+  line works for one statement, not for a list.
 - **Next** is always tagged, whether or not a block is live. Nothing else is
   dimmed: an earlier version faded later blocks progressively and made the
   day unreadable. Past blocks only step their *text* back a shade (and their
@@ -86,13 +110,29 @@ Three flat arrays, no tasks — see `lib/direction/types.ts`.
 
 ```ts
 TimeBlock      { id, name, start, end, type, order }
-WeekAssignment { day, blockId, focus, note?, label? }  // recurring template
-DateOverride   { date, blockId, focus }                // one date, template untouched
+WeekAssignment { day, blockId, nodeId?, serves?, note?, label? }  // recurring template
+DateOverride   { date, blockId, nodeId }                          // one date, template untouched
 ```
 
-`note` is a quieter second line under the area — what that area means on
-that day ("Client mid-week delivery push"). It is not a task: nothing can be
-completed, ordered or checked off.
+`serves` exists because **the tree is single-parent but some work is a shared
+capability**. Content is one skill — script, shoot, edit, publish — pointed at
+several goals: skits for their own sake, marketing for Wave, launch clips for
+Digital Products. Modelled as one node under Audience you can't ask "how much
+am I investing in marketing Wave?"; modelled as three pipelines you duplicate
+stages that are really one skill, and a batched shoot day forces an arbitrary
+choice anyway.
+
+So the capability stays in one place and the *slot* carries the purpose. Hours
+credit both, shown apart: Personal Brand keeps its own hours, and Wave reads
+`5h +2.5h`. Attribution is deliberately approximate — one session can produce
+two videos, so this records primary intent, not accounting.
+
+`note` is what the block is actually for on that day ("Website dev"). It
+takes one line, or an array where a block genuinely holds two things — buffer
+time is loose ends *and* the day's reading, which render as bullets. It is
+not a task list: nothing can be completed, ordered or checked off.
+`getDaySchedule` normalises it to `notes: string[]` so views never branch on
+the shape.
 
 `label` renames the block for one day. Some days genuinely use a slot
 differently — Saturday 9–12 is skit filming, Sunday 6pm is family time — and
@@ -103,6 +143,62 @@ Resolution splits along those lines: an override replaces the **area**, so
 the template's `note` goes with it (a note written for a different area is
 stale), while `label` survives — how the day uses the slot doesn't change
 because the area did. `setAssignment` follows the same rule.
+
+### Stages, not categories
+
+A domain's children are the **phases its work moves through**, not a filing
+system for it. Websites is Pipeline → Scoping → Build → Payment → Aftercare
+(which loops back to Pipeline via referrals); Personal Brand is Scripting →
+Shooting → Editing → Distribution; Wave is Outreach System → Outreach
+Execution; Digital Products is Design → Listing → Fulfilment; Career Options
+is Preparation → Applications → Interviews → Offers, sitting straight on the
+value category because inventing a domain layer there would add a node that
+means nothing.
+
+Some late stages have no recurring slot and that is correct, not an
+oversight: Interviews, Offers and Fulfilment only exist once something else
+happens. The coverage view still shows them, because "when this lands it will
+take a morning from something else" is worth seeing.
+
+That shape exists because the phases are genuinely different work needing
+different slots — scoping is thinking and belongs in CTP, build is a long
+morning, chasing an invoice is fifteen admin minutes. Categorical children
+("Sales", "Business Operations") hid that: they collected tasks by topic, so
+a stage could quietly have no time and nothing would look wrong. Websites'
+old Business Operations was dissolved on those grounds — every task in it
+belonged to a phase (case studies win work, pricing shapes a quote,
+invoicing closes a job).
+
+The coverage view opens two levels deep by default so these are visible
+without a click. "Does each step have a slot" is the question it exists to
+answer, and a row reading `Websites 15.5h` doesn't answer it.
+
+### The schedule points at the hierarchy
+
+An assignment carries a **`nodeId` from `lib/hierarchy-data.ts`**, not a typed
+area. `lib/direction/nodes.ts` is the bridge: given a node it returns the
+label, the area (nearest `domain` ancestor, or a task-bearing
+`valueCategory`), and whether it rolls up to Build or Sustain.
+
+This is the pairing's whole point. The hierarchy says *what the work is and
+why it matters*; the schedule says *when it happens*; and because they share
+ids, "which parts of the tree get no time?" is a query rather than a manual
+count. Free text made that impossible — and worse, it silently lost hours:
+Relationships and Financial Health once showed **zero** while occupying four,
+because their area was carried as a presentational day-`label` with an empty
+focus field. An area that can be typed is an area that can go missing.
+
+Consequences worth knowing:
+
+- Editing an area is a **picker**, not a text field (`FocusEditor` filters
+  `getAreaOptions()`), and date overrides are a `<select>`. You cannot invent
+  an area from the UI; you add it to the hierarchy first.
+- A block with no `nodeId` is genuinely unassigned — lunch, sleep, open time.
+  Life-support blocks carry no node on purpose: counting sleep as capacity
+  spent on a bet would drown every rollup.
+- The lead line is the note if there is one, otherwise the node's own label,
+  so `sub-web-pipeline` alone renders as "Pipeline". The area line beneath
+  is dropped whenever it would only repeat the lead or the block's name.
 
 ### Where the seed data comes from
 
@@ -196,8 +292,19 @@ and a panel inside that container would be clipped by it.
   (`.grain`), white text, and the area set extrabold at display size. It is
   fully rounded and raised above the run rather than squared off inside it.
   That is the app's only gradient and its only use of grain — everything
-  else stays flat and monochrome. There are deliberately no per-type
-  colours: a hue per category is what turns this back into a dashboard.
+  else stays flat and monochrome.
+- **Block type shows as a hairline**, never as fill: seven `--type-*`
+  variables in `globals.css`, named from `BLOCK_TYPE_META.border` and applied
+  as an inline `borderColor` (so there is no dynamic class for Tailwind to
+  purge). At 20–30% alpha it classifies on the second glance without
+  competing with the live block — filled per-category colour is what turns a
+  screen like this into a dashboard, a hairline isn't. The ramp runs cool for
+  structured work to warm for the rest, with near-neutrals for buffer and
+  custom so open time stays quietest, and contains **no green**: the accent
+  remains the only colour meaning *now*. Dark mode needs both lighter hues
+  and more alpha — the light values vanish on near-black. The live block is
+  the one exception, having no border to colour. The week grid uses the same
+  value as a 2px left rule on each row.
 - One accent — a muted green (`--accent` in `app/globals.css`) — reserved
   for a single meaning: **now**. Today's column in Week and the active nav
   underline are the only other places it appears, and always at low opacity.

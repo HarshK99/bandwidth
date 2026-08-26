@@ -10,7 +10,7 @@ import {
   sortBlocks,
   WEEK_DAYS,
 } from "@/lib/direction/schedule";
-import { getFocusSuggestions } from "@/lib/direction/focus";
+import { getNode } from "@/lib/direction/nodes";
 import { setAssignment } from "@/lib/direction/plan-ops";
 import type { DayOfWeek, DirectionPlan } from "@/lib/direction/types";
 import FocusEditor from "./FocusEditor";
@@ -47,19 +47,18 @@ export default function WeekGrid({
   const days = WEEK_DAYS;
   const blocks = sortBlocks(plan.blocks);
   const index = indexAssignments(plan.assignments);
-  const suggestions = getFocusSuggestions(plan, 6);
 
   const columns = `minmax(8rem, 1fr) repeat(${days.length}, minmax(6rem, 1fr))`;
 
   const editingBlock = editing
     ? (blocks.find((block) => block.id === editing.blockId) ?? null)
     : null;
-  const editingFocus = editing
-    ? (index.get(assignmentKey(editing.day, editing.blockId))?.focus ?? "")
+  const editingNodeId = editing
+    ? (index.get(assignmentKey(editing.day, editing.blockId))?.nodeId ?? "")
     : "";
 
-  const commit = (blockId: string, day: DayOfWeek, focus: string) => {
-    update((current) => setAssignment(current, day, blockId, focus));
+  const commit = (blockId: string, day: DayOfWeek, nodeId: string) => {
+    update((current) => setAssignment(current, day, blockId, nodeId));
     onEdit(null);
   };
 
@@ -103,7 +102,12 @@ export default function WeekGrid({
               className="grid border-b border-black/[0.05] px-1 last:border-b-0 dark:border-white/[0.07]"
               style={{ gridTemplateColumns: columns }}
             >
-              <div className="py-3.5 pr-4 pl-2.5">
+              {/* Same hairline as Today, turned on its side — type reads the
+                  same way in both views. */}
+              <div
+                className="border-l-2 py-3.5 pr-4 pl-2.5"
+                style={{ borderColor: meta.border }}
+              >
                 <div className={cx(NUM, "text-[11px] font-medium", FAINT)}>
                   {formatRange(block)}
                 </div>
@@ -123,7 +127,11 @@ export default function WeekGrid({
 
               {days.map((day) => {
                 const assignment = index.get(assignmentKey(day, block.id));
-                const focus = assignment?.focus ?? "";
+                // The stage itself is the cell — the domain is implied by
+                // the hierarchy and would only crowd a 6rem column.
+                const focus = assignment?.nodeId
+                  ? (getNode(assignment.nodeId)?.label ?? "")
+                  : "";
                 // A day that renames the slot says so, quietly, above the
                 // area — that difference is part of the week's shape.
                 const label =
@@ -181,11 +189,9 @@ export default function WeekGrid({
       <Popover anchor={editing?.anchor ?? null} onDismiss={() => onEdit(null)}>
         {editingBlock && editing && (
           <FocusEditor
-            key={`${editing.blockId}:${editing.day}:${editingFocus}`}
+            key={`${editing.blockId}:${editing.day}:${editingNodeId}`}
             title={`${dayName(editing.day)} · ${editingBlock.name}`}
-            initialValue={editingFocus}
-            suggestions={suggestions}
-            clearLabel={editingFocus ? "Clear" : null}
+            nodeId={editingNodeId}
             onCommit={(next) => commit(editing.blockId, editing.day, next)}
             onClear={() => commit(editing.blockId, editing.day, "")}
             onCancel={() => onEdit(null)}

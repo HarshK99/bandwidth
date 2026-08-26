@@ -12,6 +12,7 @@ import {
   sortBlocks,
   toISODate,
 } from "@/lib/direction/schedule";
+import { getAreaLabel, getAreaOptions, getNode } from "@/lib/direction/nodes";
 import type { DayOfWeek, DirectionPlan } from "@/lib/direction/types";
 import DayNav from "./DayNav";
 import { BUTTON_INLINE, cx, FAINT, FIELD, LABEL, LABEL_XS, MUTED, NUM } from "./ui";
@@ -36,9 +37,11 @@ export default function DateOverrides({ plan, today, update }: DateOverridesProp
     [plan.assignments]
   );
   const overridesForDate = useMemo(
-    () => new Map(plan.overrides.filter((o) => o.date === iso).map((o) => [o.blockId, o.focus])),
+    () =>
+      new Map(plan.overrides.filter((o) => o.date === iso).map((o) => [o.blockId, o.nodeId])),
     [plan.overrides, iso]
   );
+  const options = useMemo(() => getAreaOptions(), []);
 
   /** Dates that differ from the template, newest first. */
   const datesWithOverrides = useMemo(() => {
@@ -51,13 +54,13 @@ export default function DateOverrides({ plan, today, update }: DateOverridesProp
 
   const blocks = sortBlocks(plan.blocks);
 
-  const commit = (blockId: string, value: string, stored: string | undefined) => {
-    const next = value.trim();
-    if (next === (stored ?? "")) return;
+  /** "" means follow the template; NONE means "nothing today", on purpose. */
+  const NONE = "__none__";
+  const commit = (blockId: string, value: string) => {
     update((current) =>
-      next === ""
+      value === ""
         ? clearOverride(current, iso, blockId)
-        : setOverride(current, iso, blockId, next)
+        : setOverride(current, iso, blockId, value === NONE ? "" : value)
     );
   };
 
@@ -79,7 +82,9 @@ export default function DateOverrides({ plan, today, update }: DateOverridesProp
           const assignment = templateIndex.get(
             assignmentKey(date.getDay() as DayOfWeek, block.id)
           );
-          const template = assignment?.focus ?? "";
+          const template = assignment?.nodeId
+            ? (getNode(assignment.nodeId)?.label ?? "")
+            : "";
           // The day may rename the block — show what that date actually calls it.
           const name = assignment?.label ?? block.name;
           const isOverridden = stored !== undefined;
@@ -97,27 +102,24 @@ export default function DateOverrides({ plan, today, update }: DateOverridesProp
                 <span className={cx(LABEL_XS, "w-40 shrink-0 truncate", MUTED)}>
                   {name}
                 </span>
-                <input
-                  // Remount when the stored value changes so the uncommitted
-                  // draft never fights an update from elsewhere.
-                  key={`${iso}:${block.id}:${stored ?? ""}`}
-                  defaultValue={stored ?? ""}
-                  placeholder={template || "unassigned"}
+                <select
+                  value={stored === undefined ? "" : stored === "" ? NONE : stored}
+                  onChange={(event) => commit(block.id, event.target.value)}
                   aria-label={`${name} area on ${formatShortDate(date)}`}
-                  onBlur={(event) => commit(block.id, event.target.value, stored)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
-                    if (event.key === "Escape") {
-                      event.currentTarget.value = stored ?? "";
-                      event.currentTarget.blur();
-                    }
-                  }}
-                  className={cx(
-                    FIELD,
-                    "text-[13px]",
-                    isOverridden ? "text-zinc-900 dark:text-zinc-100" : ""
-                  )}
-                />
+                  className={cx(FIELD, "cursor-pointer appearance-none text-[13px]")}
+                >
+                  <option value="">
+                    {template ? `Template — ${template}` : "Template — unassigned"}
+                  </option>
+                  <option value={NONE}>Nothing today</option>
+                  {options.map((node) => (
+                    <option key={node.id} value={node.id}>
+                      {getAreaLabel(node.id) === node.label
+                        ? node.label
+                        : `${getAreaLabel(node.id)} · ${node.label}`}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {isOverridden ? (

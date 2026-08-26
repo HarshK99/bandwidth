@@ -13,6 +13,19 @@
      both themes; this is the app's only gradient. */
   --hero-from: #1d6b4f;
   --hero-to: #2f8a7a;
+
+  /* Block-type hairlines. Very low alpha on purpose: a classifier you notice
+     on the second glance, not something that competes with the live block.
+     Deliberately no green anywhere in this ramp — the accent stays the one
+     colour that means "now". Cool for structured work, warm for the rest,
+     near-neutral for open time so buffer reads as the quietest. */
+  --type-focus: rgba(99, 102, 241, 0.30);
+  --type-execution: rgba(13, 148, 160, 0.30);
+  --type-thinking: rgba(139, 92, 246, 0.30);
+  --type-admin: rgba(100, 116, 139, 0.30);
+  --type-hobby: rgba(219, 39, 119, 0.24);
+  --type-buffer: rgba(120, 113, 108, 0.26);
+  --type-custom: rgba(113, 113, 122, 0.28);
 }
 
 @theme inline {
@@ -22,6 +35,13 @@
   --color-accent: var(--accent);
   --color-hero-from: var(--hero-from);
   --color-hero-to: var(--hero-to);
+  --color-type-focus: var(--type-focus);
+  --color-type-execution: var(--type-execution);
+  --color-type-thinking: var(--type-thinking);
+  --color-type-admin: var(--type-admin);
+  --color-type-hobby: var(--type-hobby);
+  --color-type-buffer: var(--type-buffer);
+  --color-type-custom: var(--type-custom);
   --font-sans: var(--font-manrope);
   /* No second webfont: columns of digits use tabular-nums on the sans face.
      This exists only so a stray `font-mono` lands somewhere sensible. */
@@ -36,6 +56,15 @@
     --accent: #6fb894;
     --hero-from: #1c6b51;
     --hero-to: #2b8478;
+
+    /* Lighter hues and more alpha: the light-mode values vanish on near-black. */
+    --type-focus: rgba(129, 140, 248, 0.38);
+    --type-execution: rgba(45, 212, 191, 0.34);
+    --type-thinking: rgba(167, 139, 250, 0.38);
+    --type-admin: rgba(148, 163, 184, 0.30);
+    --type-hobby: rgba(244, 114, 182, 0.32);
+    --type-buffer: rgba(168, 162, 158, 0.24);
+    --type-custom: rgba(161, 161, 170, 0.26);
   }
 }
 

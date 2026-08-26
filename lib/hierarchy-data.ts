@@ -113,14 +113,16 @@ export const hierarchyData: HierarchyNode[] = [
     label: "Company Building (Wave)",
     level: "domain",
     parentId: "vc-equity",
-    description: "Main long-term company bet — currently acquisition-focused.",
+    description:
+      "Main long-term company bet. The product is built — the whole job now is getting users, so its children are an outreach system and the outreach itself, not features.",
   },
   {
     id: "dom-sideproject",
     label: "Future Bet (Side-project)",
     level: "domain",
     parentId: "vc-equity",
-    description: "Next potential startup — apps/tools, early stage.",
+    description:
+      "Next potential startup — apps/tools, early stage. Inherits the build capacity Wave no longer needs: this is where the appetite to build goes now.",
   },
   {
     id: "dom-brand",
@@ -182,172 +184,260 @@ export const hierarchyData: HierarchyNode[] = [
       "Confidence, communication, and emotional resilience — the internal capacity Build execution actually runs on.",
   },
 
-  // ---------- SUB-FUNCTIONS: Websites ----------
+  // ---------- SUB-FUNCTIONS: Websites — the stages of an engagement ----------
+  // These were categories (Sales, Delivery, Client Relationship, Business
+  // Operations), which hid the fact that a client job moves through phases
+  // that are genuinely different work needing different energy and different
+  // slots. Now they are the sequence a job actually runs through, and
+  // Business Operations is gone: every piece of it belonged to a stage —
+  // case studies win work (Pipeline), pricing shapes a quote (Scoping),
+  // invoicing is how a job closes (Payment).
   {
-    id: "sub-sales",
-    label: "Sales / Pipeline",
+    id: "sub-web-pipeline",
+    label: "Pipeline",
     level: "subFunction",
     parentId: "dom-income",
     description:
-      "Cold outreach, follow-ups, referrals, proposals/quotes. Cycle: feeds Delivery; fed by Client Relationship (referrals).",
+      "Finding and approaching work: cold outreach, follow-ups, referrals, and the case studies that make them land. Fed by Aftercare — the loop closes here.",
   },
   {
-    id: "sub-delivery",
-    label: "Delivery / Execution",
-    level: "subFunction",
-    parentId: "dom-income",
-    description: "Actual dev work per client engagement.",
-  },
-  {
-    id: "sub-clientrel",
-    label: "Client Relationship",
+    id: "sub-web-scoping",
+    label: "Scoping",
     level: "subFunction",
     parentId: "dom-income",
     description:
-      "Check-ins, revisions, performance updates, upsell conversations. Feeds back into Sales via referrals.",
+      "Turning interest into a defined job: discovery, requirements, architecture, pricing, the proposal. Thinking work — it belongs in a thinking slot, not between builds.",
   },
   {
-    id: "sub-ops",
-    label: "Business Operations",
+    id: "sub-web-build",
+    label: "Build",
+    level: "subFunction",
+    parentId: "dom-income",
+    description: "Design and development against an agreed scope, plus fixes and launch.",
+  },
+  {
+    id: "sub-web-payment",
+    label: "Payment",
     level: "subFunction",
     parentId: "dom-income",
     description:
-      "Pricing/packages, invoicing, contracts, portfolio/case studies, tooling. Runs underneath all three above.",
+      "How a job actually ends: invoice, chase, reconcile. A stage of its own because unpaid work is unfinished work, however finished the site is.",
+  },
+  {
+    id: "sub-web-aftercare",
+    label: "Aftercare",
+    level: "subFunction",
+    parentId: "dom-income",
+    description:
+      "Check-ins, maintenance, upsells after handover — and where referrals come from, which is why this feeds back into Pipeline.",
   },
 
-  // ---------- TASKS: Sales / Pipeline ----------
+  // ---------- TASKS: Pipeline ----------
   {
-    id: "task-sales-outreach",
+    id: "task-web-outreach",
     label: "Cold outreach to prospects",
     level: "task",
-    parentId: "sub-sales",
-    meta: "Ad-hoc",
+    parentId: "sub-web-pipeline",
+    meta: "Second push (Mon/Wed)",
   },
   {
-    id: "task-sales-followup",
+    id: "task-web-followup",
     label: "Follow up on existing leads",
     level: "task",
-    parentId: "sub-sales",
-    meta: "Ad-hoc",
+    parentId: "sub-web-pipeline",
+    meta: "Second push (Mon/Wed)",
   },
   {
-    id: "task-sales-referral",
+    id: "task-web-referral",
     label: "Ask past clients for referrals",
     level: "task",
-    parentId: "sub-sales",
-    meta: "Ad-hoc",
+    parentId: "sub-web-pipeline",
+    meta: "Second push (Wed)",
   },
   {
-    id: "task-sales-proposal",
-    label: "Write proposal/quote",
+    id: "task-web-portfolio",
+    label: "Portfolio / case study updates",
     level: "task",
-    parentId: "sub-sales",
-    meta: "Wed 5:00-6:00pm (CTP)",
+    parentId: "sub-web-pipeline",
+    meta: "Ad-hoc — sales assets, not admin",
   },
 
-  // ---------- TASKS: Delivery / Execution ----------
+  // ---------- TASKS: Scoping ----------
   {
-    id: "task-delivery-dev",
+    id: "task-web-discovery",
+    label: "Discovery call + requirements",
+    level: "task",
+    parentId: "sub-web-scoping",
+    meta: "CTP (Wed)",
+  },
+  {
+    id: "task-web-proposal",
+    label: "Write proposal / quote",
+    level: "task",
+    parentId: "sub-web-scoping",
+    meta: "CTP (Wed)",
+  },
+  {
+    id: "task-web-pricing",
+    label: "Pricing / package review",
+    level: "task",
+    parentId: "sub-web-scoping",
+    meta: "Ad-hoc",
+  },
+
+  // ---------- TASKS: Build ----------
+  {
+    id: "task-web-dev",
     label: "Client website development",
     level: "task",
-    parentId: "sub-delivery",
-    meta: "Morning 9:00-12:00 (Mon/Wed/Fri)",
+    parentId: "sub-web-build",
+    meta: "Deep work (Mon/Wed/Fri)",
   },
   {
-    id: "task-delivery-debug",
-    label: "Debugging/fixes",
+    id: "task-web-debug",
+    label: "Debugging / fixes",
     level: "task",
-    parentId: "sub-delivery",
-    meta: "Morning 9:00-12:00",
+    parentId: "sub-web-build",
+    meta: "Deep work (Mon/Wed/Fri)",
   },
 
-  // ---------- TASKS: Client Relationship ----------
+  // ---------- TASKS: Payment ----------
   {
-    id: "task-rel-checkin",
-    label: "Client check-in call",
-    level: "task",
-    parentId: "sub-clientrel",
-    meta: "Admin 1:00-2:30",
-  },
-  {
-    id: "task-rel-upsell",
-    label: "Upsell conversation (maintenance/SEO)",
-    level: "task",
-    parentId: "sub-clientrel",
-    meta: "Admin 1:00-2:30",
-  },
-
-  // ---------- TASKS: Business Operations ----------
-  {
-    id: "task-ops-invoice",
+    id: "task-web-invoice",
     label: "Invoicing",
     level: "task",
-    parentId: "sub-ops",
-    meta: "Fri 1:00-2:30 (Admin)",
+    parentId: "sub-web-payment",
+    meta: "Admin (Fri)",
   },
   {
-    id: "task-ops-portfolio",
-    label: "Portfolio/case study updates",
+    id: "task-web-chase",
+    label: "Chase + reconcile payments",
     level: "task",
-    parentId: "sub-ops",
-    meta: "Admin",
-  },
-  {
-    id: "task-ops-pricing",
-    label: "Pricing/package review",
-    level: "task",
-    parentId: "sub-ops",
-    meta: "Admin",
+    parentId: "sub-web-payment",
+    meta: "Admin (Fri)",
   },
 
-  // ---------- TASKS: Digital Products (direct — no sub-function layer yet) ----------
+  // ---------- TASKS: Aftercare ----------
   {
-    id: "task-digitalproducts-sell",
-    label: "Design + list stickers/paintings for sale",
+    id: "task-web-checkin",
+    label: "Client check-in call",
     level: "task",
+    parentId: "sub-web-aftercare",
+    meta: "Admin (Tue)",
+  },
+  {
+    id: "task-web-upsell",
+    label: "Upsell conversation (maintenance / SEO)",
+    level: "task",
+    parentId: "sub-web-aftercare",
+    meta: "Admin (Tue)",
+  },
+
+  // ---------- SUB-FUNCTIONS: Digital Products — the stages of a product ----------
+  {
+    id: "sub-dp-design",
+    label: "Design",
+    level: "subFunction",
     parentId: "dom-digitalproducts",
-    meta: "Ad-hoc",
+    description: "Making the thing — the painting or sticker itself.",
+  },
+  {
+    id: "sub-dp-listing",
+    label: "Listing",
+    level: "subFunction",
+    parentId: "dom-digitalproducts",
+    description:
+      "Photograph, write, price, publish. Designed-but-unlisted is the state this stage exists to prevent.",
+  },
+  {
+    id: "sub-dp-fulfilment",
+    label: "Fulfilment",
+    level: "subFunction",
+    parentId: "dom-digitalproducts",
+    description:
+      "Orders, packing, shipping, buyer questions. Event-driven — no recurring slot, because it only exists once something sells.",
+  },
+
+  // ---------- TASKS: Digital Products stages ----------
+  {
+    id: "task-dp-design",
+    label: "Design a sticker / painting",
+    level: "task",
+    parentId: "sub-dp-design",
+    meta: "Hobbies (Mon)",
+  },
+  {
+    id: "task-dp-list",
+    label: "Photograph, price and publish",
+    level: "task",
+    parentId: "sub-dp-listing",
+    meta: "Hobbies (Fri)",
+  },
+  {
+    id: "task-dp-ship",
+    label: "Pack and ship orders",
+    level: "task",
+    parentId: "sub-dp-fulfilment",
+    meta: "Ad-hoc — when something sells",
   },
 
   // ---------- SUB-FUNCTIONS: Company Building (Wave) ----------
+  // Product/Tech was removed when the build finished: acquisition is not a
+  // phase of building, it is the work. Splitting "the system" from "doing it"
+  // keeps the machine from being rebuilt every time outreach is due.
   {
-    id: "sub-wave-acquisition",
-    label: "Customer Acquisition",
+    id: "sub-wave-system",
+    label: "Outreach System",
     level: "subFunction",
     parentId: "dom-wave",
-    description: "Skill-building and actual execution are deliberately split across two slots.",
+    description:
+      "The machine: who to contact, what to say, how to follow up, what to measure. Built once and sharpened, not improvised per batch.",
   },
   {
-    id: "sub-wave-product",
-    label: "Product / Tech",
+    id: "sub-wave-outreach",
+    label: "Outreach Execution",
     level: "subFunction",
     parentId: "dom-wave",
-    description: "Currently de-prioritized — acquisition is the focus.",
+    description: "Running the machine — batches of calls, DMs and follow-ups.",
   },
 
-  // ---------- TASKS: Customer Acquisition ----------
+  // ---------- TASKS: Outreach System ----------
   {
-    id: "task-wave-skillbuild",
-    label: "Study outreach approaches / refine pitch script",
+    id: "task-wave-icp",
+    label: "Define ICP + build prospect list",
     level: "task",
-    parentId: "sub-wave-acquisition",
-    meta: "Tue 5:00-6:00pm (CTP)",
+    parentId: "sub-wave-system",
+    meta: "CTP (Tue)",
   },
   {
-    id: "task-wave-execute",
-    label: "Actual outreach execution",
+    id: "task-wave-script",
+    label: "Sharpen pitch + message sequences",
     level: "task",
-    parentId: "sub-wave-acquisition",
-    meta: "Thu Morning 9:00-12:00",
+    parentId: "sub-wave-system",
+    meta: "CTP (Tue)",
+  },
+  {
+    id: "task-wave-review",
+    label: "Review outreach numbers + iterate",
+    level: "task",
+    parentId: "sub-wave-system",
+    meta: "CTP (Tue)",
   },
 
-  // ---------- TASKS: Product / Tech ----------
+  // ---------- TASKS: Outreach Execution ----------
   {
-    id: "task-wave-build",
-    label: "Wave build session (if slack)",
+    id: "task-wave-batch",
+    label: "Outreach batch — calls / DMs",
     level: "task",
-    parentId: "sub-wave-product",
-    meta: "Tue/Thu Morning (compressed)",
+    parentId: "sub-wave-outreach",
+    meta: "Second push (Tue/Thu) — when people actually reply",
+  },
+  {
+    id: "task-wave-followup",
+    label: "Follow-ups + booked calls",
+    level: "task",
+    parentId: "sub-wave-outreach",
+    meta: "Second push (Tue/Thu)",
   },
 
   // ---------- SUB-FUNCTIONS: Future Bet (build steps, not parallel categories —
@@ -380,14 +470,14 @@ export const hierarchyData: HierarchyNode[] = [
     label: "Brainstorm + validate concept",
     level: "task",
     parentId: "sub-sideproject-ideation",
-    meta: "Sunday Morning 9:00-12:00 (optional)",
+    meta: "Deep work (Sun, optional)",
   },
   {
     id: "task-sideproject-mvp",
     label: "Build MVP",
     level: "task",
     parentId: "sub-sideproject-dev",
-    meta: "Ad-hoc",
+    meta: "Deep work (Tue/Thu)",
   },
   {
     id: "task-sideproject-launchcontent",
@@ -397,56 +487,158 @@ export const hierarchyData: HierarchyNode[] = [
     meta: "Ad-hoc",
   },
 
-  // ---------- Personal Brand: tasks sit directly on the domain (no sub-function layer) ----------
+  // ---------- SUB-FUNCTIONS: Personal Brand ----------
+  // Given stages, like Websites, because content is a pipeline rather than a
+  // single activity: each stage has its own energy and its own slot, and the
+  // one that actually grows the page (Distribution) is the one that used to
+  // go missing.
+  {
+    id: "sub-brand-script",
+    label: "Scripting",
+    level: "subFunction",
+    parentId: "dom-brand",
+    description: "Ideas and scripts — thinking work, not production.",
+  },
+  {
+    id: "sub-brand-shoot",
+    label: "Shooting",
+    level: "subFunction",
+    parentId: "dom-brand",
+    description: "Filming. Needs daylight, so it takes daytime slots.",
+  },
+  {
+    id: "sub-brand-edit",
+    label: "Editing",
+    level: "subFunction",
+    parentId: "dom-brand",
+    description: "Cutting and assembling — low-stakes evening work.",
+  },
+  {
+    id: "sub-brand-growth",
+    label: "Distribution / Growth",
+    level: "subFunction",
+    parentId: "dom-brand",
+    description:
+      "Posting, replying, engaging. The stage that actually grows the page, and the easiest one to skip.",
+  },
+
+  // ---------- TASKS: Personal Brand stages ----------
   {
     id: "task-brand-scripting",
-    label: "Skit scripting/ideas",
+    label: "Skit scripting / ideas",
     level: "task",
-    parentId: "dom-brand",
-    meta: "Mon/Thu CTP",
+    parentId: "sub-brand-script",
+    meta: "CTP (Mon/Thu)",
   },
   {
     id: "task-brand-filming",
     label: "Skit filming",
     level: "task",
-    parentId: "dom-brand",
-    meta: "Saturday 9:00-11:00 (daylight)",
+    parentId: "sub-brand-shoot",
+    meta: "Daytime — Sat deep work",
   },
   {
     id: "task-brand-editing",
-    label: "Skit editing/planning",
+    label: "Skit editing",
     level: "task",
-    parentId: "dom-brand",
-    meta: "Hobbies 8:00-10:00",
+    parentId: "sub-brand-edit",
+    meta: "Hobbies (Tue/Thu)",
+  },
+  {
+    id: "task-brand-post",
+    label: "Post, reply and engage",
+    level: "task",
+    parentId: "sub-brand-growth",
+    meta: "Admin (Wed)",
   },
 
-  // ---------- Career Options: three situational tasks sit directly on the value
-  // category itself — no domain, no sub-function. temporary: true marks them as
-  // active-but-not-permanent; once resolved these get removed or promoted to a
-  // real domain, not folded back into a placeholder layer. ----------
+  // ---------- SUB-FUNCTIONS: Career Options — a job search is a pipeline ----------
+  // These sit straight on the value category: there is no domain layer here,
+  // and inventing one would add a node that means nothing. `temporary` marks
+  // the branch as situational — when the search resolves it gets deleted
+  // rather than left to rot.
+  {
+    id: "sub-career-prep",
+    label: "Preparation",
+    level: "subFunction",
+    parentId: "vc-career",
+    temporary: true,
+    description: "Getting good enough to pass: technical practice, stories, mock interviews.",
+  },
+  {
+    id: "sub-career-apply",
+    label: "Applications",
+    level: "subFunction",
+    parentId: "vc-career",
+    temporary: true,
+    description: "Targeting, tailoring, sending, tracking.",
+  },
+  {
+    id: "sub-career-interview",
+    label: "Interviews",
+    level: "subFunction",
+    parentId: "vc-career",
+    temporary: true,
+    description:
+      "The rounds themselves. Event-driven: no recurring slot, and when one lands it takes a morning from something else.",
+  },
+  {
+    id: "sub-career-offer",
+    label: "Offers",
+    level: "subFunction",
+    parentId: "vc-career",
+    temporary: true,
+    description: "Negotiation and the decision. Rare, high-stakes, unschedulable.",
+  },
+
+  // ---------- TASKS: Career stages ----------
   {
     id: "task-career-techprep",
-    label: "Interview technical prep (DSA/system design)",
+    label: "Interview technical prep",
     level: "task",
-    parentId: "vc-career",
-    meta: "Daily 8:00-9:00am",
+    parentId: "sub-career-prep",
     temporary: true,
+    meta: "Prep (Mon–Fri)",
   },
   {
     id: "task-career-behavioral",
     label: "Resume tailoring / STAR stories / mock interviews",
     level: "task",
-    parentId: "vc-career",
-    meta: "Mon/Wed/Fri 6:00-7:00pm",
+    parentId: "sub-career-prep",
     temporary: true,
+    meta: "Prep (Mon–Fri)",
   },
   {
     id: "task-career-applications",
     label: "Job applications + company research",
     level: "task",
-    parentId: "vc-career",
-    meta: "Mon/Thu Admin 1:00-2:30pm",
+    parentId: "sub-career-apply",
     temporary: true,
+    meta: "Admin (Mon/Thu)",
+  },
+  {
+    id: "task-career-tracking",
+    label: "Track applications + follow up",
+    level: "task",
+    parentId: "sub-career-apply",
+    temporary: true,
+    meta: "Admin (Mon/Thu)",
+  },
+  {
+    id: "task-career-rounds",
+    label: "Interview rounds + debrief notes",
+    level: "task",
+    parentId: "sub-career-interview",
+    temporary: true,
+    meta: "Ad-hoc — displaces whatever it lands on",
+  },
+  {
+    id: "task-career-negotiate",
+    label: "Negotiate offer + decide",
+    level: "task",
+    parentId: "sub-career-offer",
+    temporary: true,
+    meta: "Ad-hoc",
   },
 
   // ---------- Sustain domains — task(s) sit directly on the domain (no sub-function layer) ----------

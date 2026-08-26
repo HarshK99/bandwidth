@@ -7,6 +7,7 @@ import { cx, LABEL_XS } from "./ui";
 const LINKS = [
   { href: "/direction", label: "Today" },
   { href: "/direction/week", label: "Week" },
+  { href: "/direction/hours", label: "Hours" },
   { href: "/direction/settings", label: "Settings" },
 ] as const;
 

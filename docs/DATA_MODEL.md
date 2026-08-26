@@ -1,5 +1,10 @@
 # Data Model
 
+> The hierarchy is no longer only the mind-map's data — that view was
+> replaced by `/coverage`. It is now also the vocabulary the schedule points
+> at: a block names a node id, and hours roll up this tree. See
+> `docs/DIRECTION.md`.
+
 ## Location
 
 `lib/hierarchy-data.ts` — the single source of truth for the hierarchy.
@@ -48,10 +53,9 @@ with differences worth recording:
   walking `parentId` (see `getAncestors`/`getPath` below), never by
   counting or ordering `NodeLevel` values. Adding, removing, or
   reordering a level for one branch (as happened going from v1 → v2 of
-  this data) requires no changes to `lib/` or `components/` beyond
-  `LEVEL_STYLES` in `HierarchyFlowNode.tsx` needing a color for any new
-  level name — TypeScript's `Record<NodeLevel, ...>` enforces that at
-  compile time.
+  this data) requires no changes to `lib/` or `components/`: depth is always
+  derived by walking `parentId`, never by counting or ordering `NodeLevel`
+  values.
 - **`temporary` is a flag, not a level** — a node like "Career
   Transition" is structurally a normal `domain` (has the same kind of
   children a domain has); what's different is that it's situational.

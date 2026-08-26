@@ -1,85 +1,110 @@
 "use client";
 
-import { useState } from "react";
-import { cx, FAINT, FIELD, LABEL_XS } from "./ui";
+import { useMemo, useState } from "react";
+import { getAreaLabel, getAreaOptions } from "@/lib/direction/nodes";
+import { cx, FAINT, FIELD, LABEL_XS, MUTED } from "./ui";
 
 interface FocusEditorProps {
-  /** Context line, e.g. "Monday · Execution". */
+  /** Context line, e.g. "Monday · Second Push". */
   title: string;
-  initialValue: string;
-  suggestions: string[];
-  /** Shown when there is something to remove (an area, or an override). */
-  clearLabel: string | null;
-  onCommit: (focus: string) => void;
+  nodeId: string;
+  onCommit: (nodeId: string) => void;
   onClear: () => void;
   onCancel: () => void;
 }
 
 /**
- * The feature's only text-entry surface: one line, some one-tap areas, and
- * nothing else. Enter commits, Escape cancels, and clicking away commits —
- * whichever way you leave, you don't lose the edit.
+ * Picks the part of the hierarchy a block points at. A filter box rather than
+ * a free-text field: areas are a fixed vocabulary that lives in
+ * lib/hierarchy-data.ts, and letting them be typed is how the same area ends
+ * up spelled three ways and missing from every total.
  *
  * Callers key this by the cell being edited so a new selection remounts it.
  */
 export default function FocusEditor({
   title,
-  initialValue,
-  suggestions,
-  clearLabel,
+  nodeId,
   onCommit,
   onClear,
   onCancel,
 }: FocusEditorProps) {
-  const [value, setValue] = useState(initialValue);
+  const [query, setQuery] = useState("");
+  const options = useMemo(() => getAreaOptions(), []);
+
+  const needle = query.trim().toLowerCase();
+  const matches = options
+    .filter((node) => {
+      if (!needle) return true;
+      return (
+        node.label.toLowerCase().includes(needle) ||
+        getAreaLabel(node.id).toLowerCase().includes(needle)
+      );
+    })
+    .slice(0, 7);
 
   return (
     <form
       onSubmit={(event) => {
         event.preventDefault();
-        onCommit(value);
+        if (matches[0]) onCommit(matches[0].id);
       }}
     >
       <div className={cx(LABEL_XS, FAINT)}>{title}</div>
 
       <input
         autoFocus
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.stopPropagation();
             onCancel();
           }
         }}
-        placeholder="Area / focus"
-        aria-label="Area or focus"
+        placeholder="Filter areas"
+        aria-label="Filter areas"
         className={cx(FIELD, "mt-2 border-black/10 dark:border-white/15")}
       />
 
-      {suggestions.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap gap-1">
-          {suggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onCommit(suggestion)}
-              className="rounded-full border border-black/10 px-2 py-0.5 text-[11px] text-zinc-600 transition-colors hover:border-accent/40 hover:text-zinc-900 dark:border-white/15 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      )}
+      <ul className="mt-2 max-h-60 overflow-y-auto">
+        {matches.map((node) => {
+          const area = getAreaLabel(node.id);
+          const selected = node.id === nodeId;
+          return (
+            <li key={node.id}>
+              <button
+                type="button"
+                onClick={() => onCommit(node.id)}
+                className={cx(
+                  "flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left transition-colors",
+                  selected
+                    ? "bg-accent/10 text-zinc-900 dark:text-zinc-100"
+                    : "hover:bg-black/[0.04] dark:hover:bg-white/[0.06]"
+                )}
+              >
+                <span className="text-[13px]">{node.label}</span>
+                {area !== node.label && (
+                  <span className={cx("text-[11px]", FAINT)}>{area}</span>
+                )}
+              </button>
+            </li>
+          );
+        })}
+        {matches.length === 0 && (
+          <li className={cx("px-2 py-1.5 text-[12px]", MUTED)}>
+            Nothing matches — areas come from the hierarchy.
+          </li>
+        )}
+      </ul>
 
-      {clearLabel && (
-        <div className="mt-3 flex justify-end">
+      {nodeId && (
+        <div className="mt-2 flex justify-end border-t border-black/[0.07] pt-2 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={onClear}
             className={cx("text-[11px] transition-colors", FAINT, "hover:text-zinc-900 dark:hover:text-zinc-100")}
           >
-            {clearLabel}
+            Clear
           </button>
         </div>
       )}

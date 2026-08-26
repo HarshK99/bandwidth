@@ -32,13 +32,32 @@ export interface TimeBlock {
 export interface WeekAssignment {
   day: DayOfWeek;
   blockId: string;
-  focus: string;
   /**
-   * A quieter second line under the area — what that area means on this day
-   * ("Client mid-week delivery push"). Direction, not a task: there is
+   * The hierarchy node this block is aimed at (see lib/direction/nodes.ts).
+   * Not free text: a typed area silently drops out of every rollup, which is
+   * exactly how Relationships and Financial Health came to show zero hours
+   * while actually occupying four. Omit it for a block that genuinely has no
+   * area — lunch, sleep, open time.
+   */
+  nodeId?: string;
+  /**
+   * What this block is actually for on this day ("Website dev"). One line,
+   * or a few when the block genuinely holds two things — buffer time is
+   * loose ends *and* the day's reading. Direction, not a task list: there is
    * nothing to complete, reorder or check off.
    */
-  note?: string;
+  note?: string | string[];
+  /**
+   * What this slot's output is *for*, when that differs from where the work
+   * sits in the tree. Content is one skill serving several goals: the
+   * scripting stage lives under Personal Brand, but a given Thursday's script
+   * may be marketing for Wave. Without this the hours all land on Audience
+   * and "how much am I investing in marketing Wave?" has no answer.
+   *
+   * Attribution here is approximate on purpose — one shoot can produce two
+   * videos. It records primary intent, not accounting.
+   */
+  serves?: string;
   /**
    * Renames the block for this day only. Some days genuinely use a slot
    * differently — Saturday's 9–12 is filming, not deep work — and calling it
@@ -52,7 +71,8 @@ export interface WeekAssignment {
 export interface DateOverride {
   date: string; // ISO "YYYY-MM-DD", local calendar date
   blockId: string;
-  focus: string; // "" is meaningful: explicitly nothing for that block
+  /** "" is meaningful: explicitly nothing for that block, that day. */
+  nodeId: string;
 }
 
 /** Everything the feature persists, as one object. */
