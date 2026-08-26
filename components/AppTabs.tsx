@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS = [
-  { href: "/", label: "Bandwidth" },
+  { href: "/direction", label: "Direction" },
+  { href: "/map", label: "Bandwidth" },
   { href: "/time", label: "Time" },
 ] as const;
 
@@ -17,7 +18,9 @@ export default function AppTabs() {
       className="flex shrink-0 items-stretch justify-around border-t border-black/10 bg-white/80 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-white/10 dark:bg-black/80"
     >
       {TABS.map((tab) => {
-        const isActive = pathname === tab.href;
+        // Sections with sub-routes (e.g. /direction/week) keep their tab lit.
+        const isActive =
+          pathname === tab.href || pathname.startsWith(`${tab.href}/`);
         return (
           <Link
             key={tab.href}
