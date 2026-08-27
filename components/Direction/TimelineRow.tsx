@@ -13,6 +13,11 @@ interface TimelineRowProps {
   attachedAbove: boolean;
   /** The block after this one starts exactly when it ends. */
   attachedBelow: boolean;
+  /** Real minutes of nothing before the next block, when there isn't one
+   * right after this — 0 when attachedBelow, or when this is the last
+   * block. Sizes the gap so it reads as "this much is open," not a
+   * one-size sliver. */
+  openMinutesAfter: number;
   /** Hour marks falling inside this block, from `getDayRuler`. */
   ticks: RulerTick[];
 }
@@ -27,10 +32,10 @@ interface TimelineRowProps {
  * line note used to be able to push a 1-hour block visibly taller than a
  * 1.5-hour block sitting next to it with a one-line note, which quietly broke
  * the one promise this number makes — that height tracks duration. The card
- * now shrinks its own text to fit this instead of growing past it; see
- * `pickLeadTier` below. The live block is the deliberate exception: it's a
- * min-height there, so the block you're actually in takes whatever room its
- * content needs at display size.
+ * now shrinks its own text, and if needed drops its caption, to fit this
+ * instead of growing past it; see `fitLead` below. The live block is the
+ * deliberate exception: it's a min-height there, so the block you're
+ * actually in takes whatever room its content needs at display size.
  */
 function boxHeight(minutes: number): number {
   return Math.round(Math.min(190, 62 + 0.62 * Math.max(0, minutes)));
@@ -78,21 +83,48 @@ function leadHeight(lead: string[], tier: (typeof LEAD_TIERS)[number]): number {
   return perLine + (lead.length - 1) * BULLET_GAP;
 }
 
-function pickLeadTier(
-  lead: string[],
-  hasCaption: boolean,
-  boxHeightPx: number
-): (typeof LEAD_TIERS)[number] {
-  const budget =
-    boxHeightPx -
-    CARD_PAD -
-    EYEBROW_ROW -
-    LEAD_GAP -
-    (hasCaption ? CAPTION_GAP + CAPTION_LINE : 0);
-  return (
-    LEAD_TIERS.find((tier) => leadHeight(lead, tier) <= budget) ??
-    LEAD_TIERS[LEAD_TIERS.length - 1]
-  );
+interface LeadFit {
+  tier: (typeof LEAD_TIERS)[number];
+  /** False when even the caption's ~22px cost is what stood between the
+   * lead and fitting — the block's own name and area are the recoverable
+   * ones; two tasks the block is actually *for* are not. */
+  showCaption: boolean;
+}
+
+/**
+ * The lead is the one thing on this card that can't be guessed from
+ * elsewhere, so it's what gets to keep its size. The caption goes first —
+ * dropped whole rather than shrunk, since a half-legible area name reads as
+ * a bug and a missing one just reads as "the card didn't need it" (which is
+ * already how a caption-less card looks everywhere else). Only once losing
+ * the caption still doesn't buy a fit does the lead itself start shrinking.
+ */
+function fitLead(lead: string[], hasCaption: boolean, boxHeightPx: number): LeadFit {
+  for (const showCaption of hasCaption ? [true, false] : [false]) {
+    const budget =
+      boxHeightPx -
+      CARD_PAD -
+      EYEBROW_ROW -
+      LEAD_GAP -
+      (showCaption ? CAPTION_GAP + CAPTION_LINE : 0);
+    const tier = LEAD_TIERS.find((candidate) => leadHeight(lead, candidate) <= budget);
+    if (tier) return { tier, showCaption };
+  }
+  // Last resort: smallest type, caption gone. overflow-hidden on the card
+  // is the final backstop if even this doesn't quite fit.
+  return { tier: LEAD_TIERS[LEAD_TIERS.length - 1], showCaption: false };
+}
+
+/**
+ * How much extra space a real gap gets, beyond the standard ~12px between
+ * any two non-touching blocks. Compressed like `boxHeight` — a 90-minute
+ * hole shouldn't cost 90 minutes of scrolling — but big enough that a
+ * genuinely empty Tuesday morning doesn't read as the same thin seam a
+ * 15-minute gap gets.
+ */
+function gapHeight(minutes: number): number {
+  if (minutes <= 0) return 12;
+  return Math.round(Math.min(56, 12 + 0.28 * minutes));
 }
 
 /** Corners are rounded only where a run of touching blocks begins and ends. */
@@ -109,6 +141,7 @@ export default function TimelineRow({
   isLast,
   attachedAbove,
   attachedBelow,
+  openMinutesAfter,
   ticks,
 }: TimelineRowProps) {
   const { block, name, focus, notes, serves, status, minutesRemaining, progress, isOverride } =
@@ -128,15 +161,16 @@ export default function TimelineRow({
   const multi = lead.length > 1;
 
   // Only a resting card's size is content-driven — the live block always
-  // reads at its own display size, unconstrained.
-  const restingTier = pickLeadTier(lead, Boolean(caption), boxHeight(blockDurationMinutes(block)));
+  // reads at its own display size, unconstrained, caption included.
+  const fit = fitLead(lead, Boolean(caption), boxHeight(blockDurationMinutes(block)));
+  const showCaption = isCurrent || fit.showCaption;
 
   const leadClass = cx(
     isCurrent
       ? multi
         ? "text-[1.35rem] leading-[1.25] sm:text-[1.6rem]"
         : "text-[1.9rem] leading-[1.1] tracking-[-0.025em] text-balance sm:text-[2.6rem]"
-      : restingTier.cls,
+      : fit.tier.cls,
     // Relaxed blocks never take extra weight — thinking and hobby time
     // shouldn't shout, even when it's the live block.
     relaxed ? "font-medium" : isCurrent ? "font-extrabold" : "font-semibold",
@@ -155,10 +189,10 @@ export default function TimelineRow({
 
   return (
     <li
-      className={cx(
-        "grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_1.25rem_minmax(0,1fr)]",
-        attachedBelow ? "pb-0" : "pb-3"
-      )}
+      className="grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_1.25rem_minmax(0,1fr)]"
+      // A real gap gets real room: see gapHeight above. Touching blocks
+      // still get exactly 0 — that's what makes a run read as continuous.
+      style={{ paddingBottom: attachedBelow ? 0 : gapHeight(openMinutesAfter) }}
     >
       {/* Time — a continuous hour ruler rather than this block's own range.
           Each mark sits at its proportional position *inside* the block, so
@@ -193,10 +227,8 @@ export default function TimelineRow({
           // The rail beside the live block doubles as the clock: it fills as
           // the block runs out. No calendar grid, no numbers.
           <div
-            className={cx(
-              "absolute top-0 w-[3px] overflow-hidden rounded-full bg-accent/20",
-              attachedBelow ? "bottom-0" : "bottom-3"
-            )}
+            className="absolute top-0 w-[3px] overflow-hidden rounded-full bg-accent/20"
+            style={{ bottom: attachedBelow ? 0 : gapHeight(openMinutesAfter) }}
           >
             <div
               className="w-full bg-accent transition-[height] duration-500"
@@ -286,10 +318,10 @@ export default function TimelineRow({
           )}
         </div>
 
-        {/* Sized rather than clipped: a resting card's type shrinks to what
-            pickLeadTier estimates will fit (see above), so a wordy note
-            stays fully readable instead of being cut off mid-word. The live
-            block is never resized — its box grows to fit instead. */}
+        {/* Sized rather than clipped: a resting card's type shrinks (and its
+            caption may drop) to what fitLead estimates will fit, so a wordy
+            note stays fully readable instead of being cut off mid-word. The
+            live block is never resized — its box grows to fit instead. */}
         {!nameIsLead &&
           (multi ? (
             <ul className={cx(leadClass, "mt-1.5 space-y-1")}>
@@ -306,7 +338,7 @@ export default function TimelineRow({
             <p className={cx(leadClass, "mt-1.5")}>{lead[0]}</p>
           ))}
 
-        {caption && (
+        {caption && showCaption && (
           <p className={cx(captionClass, "mt-1.5", !isCurrent && "line-clamp-1")}>
             {caption}
             {/* Where this session's output is aimed, when that isn't where

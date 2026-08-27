@@ -20,16 +20,19 @@ import type { NodeId } from "./areas";
  * smallest clock time.
  *
  * Start and end are both explicit. The day is usually contiguous, but a real
- * gap is a real thing to be able to say: Deep Study runs weekdays only, so weekends
- * genuinely have nothing between 08:00 and 09:30.
+ * gap is a real thing to be able to say: weekends genuinely have nothing
+ * between 08:00 and 09:30 — see the note on `blk-prep` below.
  */
 export const DAY = [
   { id: "blk-morning", label: "Morning Routine", start: "07:00", end: "08:00", type: "custom" },
-  // Weekdays only. Seven-days-a-week study with no rest day is how it
-  // quietly becomes theatre. Named "Deep Study" rather than "Prep" — the
-  // generic name undersold what actually belongs in the morning: focused,
-  // effortful study, the same register as the block right after it.
-  { id: "blk-prep", label: "Deep Study", start: "08:00", end: "09:30", type: "focus", days: "mon-fri" },
+  // Weekdays, 15 minutes short of touching Deep Work. The frequency was
+  // dropped to 3x/week for a stretch, on the theory that five straight
+  // mornings of interview prep reads as job-hunt anxiety opening every day
+  // — reverted; back to daily. The 15-minute gap before Deep Work stayed:
+  // that fixed a different thing, the 5.5 unbroken hours of focus work
+  // (Deep Study straight into Deep Work) that were the single most
+  // strained stretch in the day, and it's unrelated to how often this runs.
+  { id: "blk-prep", label: "Deep Study", start: "08:00", end: "09:15", type: "focus", days: "mon-fri" },
   { id: "blk-deep", label: "Deep Work", start: "09:30", end: "13:00", type: "focus" },
   { id: "blk-lunch", label: "Lunch", start: "13:00", end: "13:30", type: "buffer" },
   // End held at 14:30 rather than shifting the afternoon: only the start
@@ -68,10 +71,11 @@ type Slot =
 /**
  * blockId → days → what it's for.
  *
- * `all` means every day the block runs, so Deep Study needs one line rather than
- * five identical ones. `do` names the node's own tasks instead of retyping
- * them as prose; a `note` overrides both, for the days where what you're
- * doing is more specific than any standing task.
+ * `all` means every day *the block itself* runs, not every day of the week —
+ * relevant for a block whose `days` (see `DAY` above) is narrower than
+ * seven. `do` names the node's own tasks instead of retyping them as prose;
+ * a `note` overrides both, for the days where what you're doing is more
+ * specific than any standing task.
  *
  * Life-support blocks — morning routine, lunch, sleep — appear nowhere here.
  * They carry no area on purpose: counting sleep as capacity spent on a bet
@@ -92,7 +96,12 @@ export const WEEK = {
   },
 
   "blk-admin": {
-    mon: { node: "career.apply", do: ["send"] },
+    // Was also Monday — the same job-application task touching the day
+    // twice. One weekly session, kept on Thursday since it already paired
+    // sending with tracking; Monday's Admin is now genuinely open rather
+    // than immediately refilled, so clustering the career work actually
+    // nets out to less of it, not just a rescheduled version of the same
+    // amount.
     tue: { node: "web.aftercare", do: ["checkin"] },
     // Posting grows the page, but this slot is aimed at moving products.
     wed: { node: "brand.growth", do: ["post"], serves: "dp" },
@@ -112,6 +121,11 @@ export const WEEK = {
     // so the week's close-out lands on an already-open slot rather than
     // displacing something else.
     sun: { node: "rest", do: ["review"], label: "Review" },
+    // Saturday afternoon was four and a half hours fully open (Reset,
+    // Second Push, and the Free/Flex CTP block, back to back) — one light
+    // landmark rather than a total blank, and the other two stay open on
+    // purpose.
+    sat: { node: "rest", do: ["hobbies"] },
   },
 
   "blk-push": {

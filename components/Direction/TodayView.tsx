@@ -11,6 +11,7 @@ import {
   getDaySchedule,
   getDayTheme,
   isSameDate,
+  toMinutes,
 } from "@/lib/direction/schedule";
 import type { DayEntry } from "@/lib/direction/schedule";
 import DayNav from "./DayNav";
@@ -25,6 +26,20 @@ import { cx, FAINT, LABEL, MUTED, NUM, STRONG } from "./ui";
  */
 function touches(a: DayEntry | undefined, b: DayEntry | undefined): boolean {
   return Boolean(a && b && a.block.end === b.block.start);
+}
+
+/**
+ * Real elapsed minutes between two entries, when there's no block at all
+ * covering that stretch — a genuinely open Tue/Thu morning, say. Used only
+ * to size the gap the timeline draws, so it reads as "this much time is
+ * unaccounted for" rather than the same thin sliver regardless of whether
+ * it's fifteen minutes or ninety. Bounded and non-negative on purpose: this
+ * is a rendering cue, not a promise to represent every wrap correctly.
+ */
+function openMinutesBetween(a: DayEntry | undefined, b: DayEntry | undefined): number {
+  if (!a || !b) return 0;
+  const gap = toMinutes(b.block.start) - toMinutes(a.block.end);
+  return gap > 0 && gap < 360 ? gap : 0;
 }
 
 export default function TodayView() {
@@ -126,6 +141,7 @@ export default function TodayView() {
               isLast={index === entries.length - 1}
               attachedAbove={touches(entries[index - 1], entry)}
               attachedBelow={touches(entry, entries[index + 1])}
+              openMinutesAfter={openMinutesBetween(entry, entries[index + 1])}
               ticks={ruler.get(entry.block.id) ?? []}
             />
           ))}

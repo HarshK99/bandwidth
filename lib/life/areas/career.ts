@@ -26,8 +26,8 @@ export const career = {
       label: "Applications",
       about: "Targeting, tailoring, sending, tracking.",
       tasks: {
-        send: "Job applications + company research",
-        track: "Track applications + follow up",
+        send: "Applications + research",
+        track: "Track + follow up",
       },
     },
     {

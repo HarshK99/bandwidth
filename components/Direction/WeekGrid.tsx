@@ -66,12 +66,18 @@ export default function WeekGrid({
   return (
     <div className="-mx-5 overflow-x-auto px-5 sm:-mx-8 sm:px-8">
       <div className={cx(CARD, "min-w-[52rem] overflow-hidden")}>
-        {/* Day header */}
+        {/* Day header. Sticky on both axes: it pins to the top of the
+            scrolling section as the grid's many rows pass underneath it, and
+            the grid itself scrolls horizontally past a fixed nav — without a
+            day name in view, a cell three columns in is unreadable. */}
         <div
-          className="grid border-b border-black/[0.07] px-1 pt-3 pb-2.5 dark:border-white/[0.08]"
+          className="sticky top-0 z-20 grid border-b border-black/[0.07] bg-surface px-1 pt-3 pb-2.5 dark:border-white/[0.08]"
           style={{ gridTemplateColumns: columns }}
         >
-          <div />
+          {/* The corner: sticky on its own left edge too, so it stays put
+              through both scroll directions at once — otherwise a day name
+              would slide out from under the row headers as the grid pans. */}
+          <div className="sticky left-0 z-10 bg-surface" />
           {days.map((day) => {
             const isToday = day === today;
             const isWeekend = day === 0 || day === 6;
@@ -104,9 +110,10 @@ export default function WeekGrid({
               style={{ gridTemplateColumns: columns }}
             >
               {/* Same hairline as Today, turned on its side — type reads the
-                  same way in both views. */}
+                  same way in both views. Sticky-left so which block a row is
+                  survives scrolling right to the weekend columns. */}
               <div
-                className="border-l-2 py-3.5 pr-4 pl-2.5"
+                className="sticky left-0 z-10 border-l-2 bg-surface py-3.5 pr-4 pl-2.5"
                 style={{ borderColor: meta.border }}
               >
                 <div className={cx(NUM, "text-[11px] font-medium", FAINT)}>
