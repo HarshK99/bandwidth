@@ -54,7 +54,7 @@ lists it first. Inside the section, four words and an accent underline
   *min*-height, so the live block simply takes the room it needs.
 - **Blocks that touch are drawn as one run.** Adjacent boxes overlap by a
   pixel so their borders collapse into a single hairline, and corners round
-  only where a run begins and ends. 08:00–09:30 and 09:30–12:00 read as one
+  only where a run begins and ends. 08:00–09:30 and 09:30–13:00 read as one
   continuous stretch rather than two floating cards. The payoff is that a
   visible gap on the timeline always *means* something: unstructured time.
 - The header carries the **day's theme** — the area most of the structural

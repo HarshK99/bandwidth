@@ -30,9 +30,12 @@ export const DAY = [
   // generic name undersold what actually belongs in the morning: focused,
   // effortful study, the same register as the block right after it.
   { id: "blk-prep", label: "Deep Study", start: "08:00", end: "09:30", type: "focus", days: "mon-fri" },
-  { id: "blk-deep", label: "Deep Work", start: "09:30", end: "12:00", type: "focus" },
-  { id: "blk-lunch", label: "Lunch", start: "12:00", end: "13:00", type: "buffer" },
-  { id: "blk-admin", label: "Admin", start: "13:00", end: "14:30", type: "admin" },
+  { id: "blk-deep", label: "Deep Work", start: "09:30", end: "13:00", type: "focus" },
+  { id: "blk-lunch", label: "Lunch", start: "13:00", end: "13:30", type: "buffer" },
+  // End held at 14:30 rather than shifting the afternoon: only the start
+  // moved, so the block that shrank is genuinely this one, not a relabelled
+  // hour taken from Reset.
+  { id: "blk-admin", label: "Admin", start: "13:30", end: "14:30", type: "admin" },
   // Deliberately light: it lands in the post-lunch slump and lunch sometimes
   // runs to 2pm, so it holds reading and practice, never heavy work.
   { id: "blk-reset", label: "Reset", start: "14:30", end: "15:30", type: "buffer" },
