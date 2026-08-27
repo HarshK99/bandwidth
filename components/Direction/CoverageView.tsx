@@ -129,6 +129,11 @@ export default function CoverageView() {
             <li
               key={row.node.id}
               className="border-b border-black/[0.04] last:border-b-0 dark:border-white/[0.06]"
+              // A wash per node kind, not per branch: area/stage/task is a
+              // fixed, three-value vocabulary the same way block type is on
+              // Today, so it stays a structural cue rather than a rainbow
+              // key you'd need a legend for.
+              style={{ backgroundColor: `var(--kind-${row.node.kind}-fill)` }}
             >
               {/* The whole row toggles — a 12px caret is a poor target, and
                   every part of the row means the same thing. */}

@@ -39,6 +39,16 @@
   --type-hobby-fill: rgba(219, 39, 119, 0.045);
   --type-buffer-fill: rgba(120, 113, 108, 0.055);
   --type-custom-fill: rgba(113, 113, 122, 0.055);
+
+  /* Coverage row washes, one per node kind — a separate ramp from the block
+     types above (different page, different vocabulary: this is *what a row
+     is structurally*, not what kind of time it gets). Fainter than the block
+     washes on purpose: many rows sit adjacent in one scrolling list, so the
+     tint only needs to say "container" vs "leaf" at a glance, never compete
+     with the state colours (gap/inherited/covered) already carried by text. */
+  --kind-area-fill: rgba(59, 130, 246, 0.035);
+  --kind-stage-fill: rgba(217, 119, 6, 0.035);
+  --kind-task-fill: rgba(219, 39, 119, 0.022);
 }
 
 @theme inline {
@@ -86,6 +96,10 @@
     --type-hobby-fill: rgba(244, 114, 182, 0.085);
     --type-buffer-fill: rgba(168, 162, 158, 0.07);
     --type-custom-fill: rgba(161, 161, 170, 0.07);
+
+    --kind-area-fill: rgba(96, 165, 250, 0.06);
+    --kind-stage-fill: rgba(251, 191, 36, 0.06);
+    --kind-task-fill: rgba(244, 114, 182, 0.04);
   }
 }
 
