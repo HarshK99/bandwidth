@@ -14,7 +14,7 @@ import {
   sortBlocks,
   WEEK_DAYS,
 } from "./schedule";
-import type { DayOfWeek, DirectionPlan } from "./types";
+import type { BlockType, DayOfWeek, DirectionPlan } from "./types";
 
 type CoverageState =
   /** This node, or something beneath it, has scheduled time. */
@@ -40,6 +40,14 @@ export interface CoverageRow {
   state: CoverageState;
   /** Where it is scheduled, e.g. "Mon Wed · Second Push". Empty unless named. */
   slots: string[];
+  /**
+   * The block types among this node's own slots — "admin" if it's directly
+   * assigned to an admin-type block anywhere, whatever the day. Same
+   * attribution as `slots`/`minutes`: a stage named by a `do:` list carries
+   * this, its individual tasks don't (they read it via being shown as a
+   * match's descendants — see CoverageView's filter).
+   */
+  slotTypes: BlockType[];
 }
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -60,6 +68,7 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
   const via = new Map<string, number>();
   const namedHere = new Set<string>();
   const slotsByNode = new Map<string, Map<string, Set<DayOfWeek>>>();
+  const slotTypesByNode = new Map<string, Set<BlockType>>();
 
   const parentOf = new Map(hierarchy.map((n) => [n.id, n.parentId]));
 
@@ -76,6 +85,10 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
     days.add(assignment.day);
     perBlock.set(block.name, days);
     slotsByNode.set(assignment.nodeId, perBlock);
+
+    const types = slotTypesByNode.get(assignment.nodeId) ?? new Set<BlockType>();
+    types.add(block.type);
+    slotTypesByNode.set(assignment.nodeId, types);
 
     const span = blockDurationMinutes(block);
     let id: string | null | undefined = assignment.nodeId;
@@ -123,6 +136,7 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
       // own stages are covered.
       state: total > 0 ? "covered" : ancestorNamed ? "inherited" : "gap",
       slots,
+      slotTypes: [...(slotTypesByNode.get(node.id) ?? [])],
     });
 
     for (const child of children) {
