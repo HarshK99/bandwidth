@@ -14,6 +14,12 @@
   --hero-from: #1d6b4f;
   --hero-to: #2f8a7a;
 
+  /* The Upgrades active card. Its own royal-purple surface, deliberately not
+     the accent green — that colour means "now" on the Direction screen and
+     nothing else should borrow it. Both stops hold white text. */
+  --upgrade-from: #4c1d95;
+  --upgrade-to: #7c3aed;
+
   /* Block-type colour. Two values per type: a hairline for edges and rules,
      and a wash for the block's own surface. Deliberately no green anywhere
      in this ramp — the accent stays the one colour that means "now". Cool
@@ -58,6 +64,8 @@
   --color-accent: var(--accent);
   --color-hero-from: var(--hero-from);
   --color-hero-to: var(--hero-to);
+  --color-upgrade-from: var(--upgrade-from);
+  --color-upgrade-to: var(--upgrade-to);
   --color-type-focus: var(--type-focus);
   --color-type-execution: var(--type-execution);
   --color-type-thinking: var(--type-thinking);

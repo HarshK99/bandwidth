@@ -7,6 +7,7 @@ const TABS = [
   { href: "/direction", label: "Direction" },
   { href: "/coverage", label: "Coverage" },
   { href: "/time", label: "Time" },
+  { href: "/upgrades", label: "Upgrades" },
 ] as const;
 
 export default function AppTabs() {
