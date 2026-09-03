@@ -10,6 +10,7 @@ import {
 } from "@/lib/direction/plan-ops";
 import { sortBlocks } from "@/lib/direction/schedule";
 import BlockSettingsRow, { BLOCK_COLUMNS } from "./BlockSettingsRow";
+import CalendarSettings from "./CalendarSettings";
 import DateOverrides from "./DateOverrides";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
@@ -78,6 +79,10 @@ export default function SettingsView() {
 
       <div className="mt-16 border-t border-black/[0.09] pt-9 dark:border-white/[0.12]">
         <DateOverrides plan={plan} today={now} update={update} />
+      </div>
+
+      <div className="mt-16 border-t border-black/[0.09] pt-9 dark:border-white/[0.12]">
+        <CalendarSettings />
       </div>
 
       <div className="mt-16 border-t border-black/[0.09] pt-9 dark:border-white/[0.12]">

@@ -251,6 +251,7 @@ export default function TimelineRow({
           borders collapse into one hairline and the run reads as continuous
           time — a visible gap then means there really is one. */}
       <div
+        data-timeline-box=""
         className={cx(
           "relative flex flex-col border transition-colors",
           // The live block is lifted out of the run — fully rounded and

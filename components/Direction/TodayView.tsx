@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { eventsForDate } from "@/lib/calendar/day-events";
 import {
   formatClock,
   formatDayMonth,
@@ -15,7 +16,9 @@ import {
 } from "@/lib/direction/schedule";
 import type { DayEntry } from "@/lib/direction/schedule";
 import DayNav from "./DayNav";
+import EventsLane from "./EventsLane";
 import TimelineRow from "./TimelineRow";
+import { useCalendar } from "./useCalendar";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
 import { cx, FAINT, LABEL, MUTED, NUM, STRONG } from "./ui";
@@ -44,8 +47,15 @@ function openMinutesBetween(a: DayEntry | undefined, b: DayEntry | undefined): n
 
 export default function TodayView() {
   const { plan } = useDirectionPlan();
+  const { state: calendarState, sync: syncCalendar } = useCalendar();
   const now = useNow();
   const [selected, setSelected] = useState<Date | null>(null);
+  const timelineRef = useRef<HTMLOListElement>(null);
+
+  // Pull external events on open — throttled to once a minute in the store.
+  useEffect(() => {
+    syncCalendar();
+  }, [syncCalendar]);
 
   const date = selected ?? now;
   const schedule = useMemo(
@@ -64,6 +74,13 @@ export default function TodayView() {
         ? getDayProgress(schedule.blocks, now)
         : null,
     [schedule, now, date]
+  );
+  const dayEvents = useMemo(
+    () =>
+      calendarState?.connected && date
+        ? eventsForDate(calendarState.events, date)
+        : [],
+    [calendarState, date]
   );
 
   // Plan and clock both land after hydration; hold the space quietly.
@@ -132,20 +149,31 @@ export default function TodayView() {
           No time blocks yet — set the shape of a day in Settings.
         </p>
       ) : (
-        <ol className="mt-6 sm:mt-8">
-          {entries.map((entry, index) => (
-            <TimelineRow
-              key={entry.block.id}
-              entry={entry}
-              isNext={isToday && next?.block.id === entry.block.id}
-              isLast={index === entries.length - 1}
-              attachedAbove={touches(entries[index - 1], entry)}
-              attachedBelow={touches(entry, entries[index + 1])}
-              openMinutesAfter={openMinutesBetween(entry, entries[index + 1])}
-              ticks={ruler.get(entry.block.id) ?? []}
+        <div className="relative mt-6 sm:mt-8">
+          <ol ref={timelineRef}>
+            {entries.map((entry, index) => (
+              <TimelineRow
+                key={entry.block.id}
+                entry={entry}
+                isNext={isToday && next?.block.id === entry.block.id}
+                isLast={index === entries.length - 1}
+                attachedAbove={touches(entries[index - 1], entry)}
+                attachedBelow={touches(entry, entries[index + 1])}
+                openMinutesAfter={openMinutesBetween(entry, entries[index + 1])}
+                ticks={ruler.get(entry.block.id) ?? []}
+              />
+            ))}
+          </ol>
+          {dayEvents.length > 0 && (
+            <EventsLane
+              events={dayEvents}
+              timelineRef={timelineRef}
+              entries={entries}
+              date={date}
+              nowMs={now.getTime()}
             />
-          ))}
-        </ol>
+          )}
+        </div>
       )}
     </section>
   );
