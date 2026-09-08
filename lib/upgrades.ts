@@ -25,20 +25,8 @@ export const upgrades: {
   // Seed entries — replace with the real ones.
   past: [
     {
-      id: "phone-mornings",
-      title: "Phone-first mornings",
-      note: "Reaching for the phone before getting out of bed. Fixed by charging it in another room.",
-      date: "2026-03-01",
-    },
-    {
-      id: "open-ended-nights",
-      title: "Open-ended late nights",
-      note: "No hard stop in the evening, which wrecked the next morning. Set a wind-down block.",
-      date: "2026-06-01",
-    },
-    {
       id: "wake-early",
-      title: "Waking up late",
+      title: "Waking up at 7am",
       note: "Years of it. Fixed over about six weeks — earlier wind-down, alarm across the room, no snooze, morning light straight away.",
       date: "2026-07-01",
     },
@@ -46,24 +34,13 @@ export const upgrades: {
   active: {
     id: "formidable",
     title: "Being formidable",
-    note: "Hard to dismiss — presence, directness, saying the difficult thing, following through where people can see it.",
+    note: "One who gets what he wants; focuses on goals not the path or obstacle.",
     date: "2026-09-01",
   },
   future: [
     {
-      id: "context-switching",
-      title: "Context-switching mid-block",
-      note: "Jumping between tasks inside a focus block instead of holding one.",
-    },
-    {
-      id: "saying-yes-fast",
-      title: "Saying yes too fast",
-      note: "Committing in the moment, resenting the calendar later.",
-    },
-    {
-      id: "breaks-become-scrolling",
-      title: "Breaks that turn into scrolling",
-      note: "A five-minute break becoming thirty on a feed.",
+      id: "charming",
+      title: "Become charming",
     },
   ],
 };

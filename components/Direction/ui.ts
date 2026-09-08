@@ -1,5 +1,5 @@
 // components/Direction/ui.ts
-// Shared class strings for the Direction feature, so Today / Week / Settings
+// Shared class strings for the Direction feature, so Today / Week / Calendar
 // stay one visual system. Monochrome zinc plus a single muted green accent,
 // which is reserved for one meaning: *now*. Hierarchy comes from type scale,
 // weight and space — not from colour or containers.

@@ -13,13 +13,19 @@ the *shape* of a week.
 | --- | --- | --- |
 | `/direction` | Today | Primary screen. Read-only timeline of one day. |
 | `/direction/week` | Week | The recurring rhythm — block × day, click to set. |
-| `/direction/hours` | Hours | Where the week goes, rolled up the hierarchy. |
-| `/direction/settings` | Settings | Block structure, and single-date overrides. |
+| `/direction/calendar` | Calendar | Connect one read-only Google Calendar (events layer over Today). |
 | `/coverage` | Coverage | The hierarchy with hours attached — what has a place. |
 
 Direction is the app's home: `/` redirects to `/direction` and the tab bar
-lists it first. Inside the section, four words and an accent underline
+lists it first. Inside the section, three words and an accent underline
 (`DirectionNav`) — no icons, no second chrome layer.
+
+The day's block structure and single-date overrides aren't edited in the
+app: they're defined in `lib/life/life.ts` (see
+[PLAN_SCHEDULE.md](./PLAN_SCHEDULE.md)). Making the default obvious enough
+that leaving it is a noticed choice beat a settings table nobody opened
+twice. Coverage already answers "where do the hours go", so there's no
+separate Hours view either.
 
 ### Today
 
@@ -32,7 +38,11 @@ lists it first. Inside the section, four words and an accent underline
   every hour from the day's first to its last, once, in order — plus a
   fainter mark where a block starts off the hour (7:30, 2:30). A meridiem
   prints only when it changes, the way a clock reads: `7am · 7:30 · 8 · 9 ·
-  10 · 11 · 12pm · 1 · 2 · 2:30 · 3 …`.
+  10 · 11 · 12pm · 1 · 2 · 2:30 · 3 …`. The marks are set in `MUTED`, not
+  `FAINT` — a ruler you have to squint at isn't one — with off-hour marks
+  only lightly stepped back (`opacity-75`). The column itself is narrow
+  (`2.5rem`, `2.75rem` at `sm`) and the labels sit close to the rail, so the
+  timeline starts near the left edge rather than behind a wide gutter.
 
   The scale is **piecewise, not uniform** (`getDayRuler()`): each mark sits
   at its proportional position *inside its own block*. That's the trade for
@@ -47,11 +57,14 @@ lists it first. Inside the section, four words and an accent underline
   The washes sit at roughly the weight of the plain grey they replaced, so
   the day still reads as one calm column that happens to be colour-coded.
 - Each block is a bordered box, and **box height carries duration**:
-  `boxHeight()` in `TimelineRow` is `40 + 0.58 × minutes`, capped at 190px.
+  `boxHeight()` in `TimelineRow` is `62 + 0.62 × minutes`, capped at 190px.
   Linear enough that 3h reads about twice 1h (a square-root curve was tried
   first and the difference was too subtle to notice), capped so the 8-hour
-  sleep block doesn't turn the page into a scroll marathon. It is a
-  *min*-height, so the live block simply takes the room it needs.
+  sleep block doesn't turn the page into a scroll marathon. For a resting
+  card it's a fixed `height` — the text shrinks (and may drop its caption) to
+  fit rather than pushing the box past its duration; see `fitLead()`. The
+  live block is the exception: there it's a `minHeight`, so the block you're
+  actually in takes whatever room its content needs.
 - **Blocks that touch are drawn as one run.** Adjacent boxes overlap by a
   pixel so their borders collapse into a single hairline, and corners round
   only where a run begins and ends. 08:00–09:30 and 09:30–13:00 read as one
@@ -64,11 +77,13 @@ lists it first. Inside the section, four words and an accent underline
   size. A block with neither note nor area (lunch, sleep) promotes its name
   into the lead, so a card is never headed by nothing. Where a slot's output
   is aimed elsewhere the caption carries it: `Personal Brand → Wave`.
-- **Now** is the strongest element on the screen: the lead jumps to ~2× type
-  size on a filled card, and the rail beside it turns into the clock — an
-  accent track that fills as the block runs out. Time remaining sits with the
-  NOW tag, not in the time column. A multi-line lead drops a size: a hero
-  line works for one statement, not for a list.
+- **Now** is the strongest element on the screen: the lead steps up to
+  `1.4rem` (`1.7rem` at `sm`) on a filled card — larger than any resting
+  block but no longer a full hero headline, which crowded the small caption
+  and the NOW row beneath it — and the rail beside it turns into the clock:
+  an accent track that fills as the block runs out. Time remaining sits with
+  the NOW tag, not in the time column. A multi-line lead drops to `1.1rem`
+  (`1.25rem` at `sm`): a raised line works for one statement, not for a list.
 - **Next** is always tagged, whether or not a block is live. Nothing else is
   dimmed: an earlier version faded later blocks progressively and made the
   day unreadable. Past blocks only step their *text* back a shade — the box
@@ -88,10 +103,11 @@ wash; weekends are quieter. Clicking a cell opens a small popover — a filter
 box over the hierarchy's areas, Enter to save. Edits here change the
 template, so they apply every week.
 
-### Hours and Coverage
+### Coverage
 
-Two readings of the same walk (`getCoverageRows`): **Hours** asks where the
-week goes, **Coverage** asks whether everything has a place.
+`getCoverageRows` walks the hierarchy top to bottom with the week's hours
+attached, answering two questions at once: where the time goes, and whether
+everything has a place.
 
 Coverage opens one level deep — master functions and their categories — and
 the whole row is the toggle. Stages are a click away rather than in the first
@@ -153,10 +169,10 @@ primary intent, not accounting.
 `days` is the days a block actually runs; omitted — the normal case — means
 all seven. Before it existed, "weekdays only" could only be said by leaving
 the weekend cells unassigned, which is a different statement: the block still
-stood there on Saturday, empty, as if something were missing. Deep Study on a
+stood there on Sunday, empty, as if something were missing. Study on a
 Sunday isn't unplanned, it doesn't happen. Everything that reads a block
 filters through `blockRunsOn` — the timeline, the ruler, the day-progress
-bar, both rollups — so a dormant day contributes no hours anywhere.
+bar, the coverage rollup — so a dormant day contributes no hours anywhere.
 Assignments on a switched-off day are **kept, not deleted**: they come back
 intact if the day is switched on again, which is what you want while trying a
 shape out. Toggling all seven back on drops the field rather than storing the
@@ -186,28 +202,51 @@ Current-block detection measures the small hours against the previous evening
 exactly on 1440. Day progress spans first start → last end, so a day that
 ends after midnight is one span, not two.
 
-`order` always follows the clock, so reordering a block in Settings swaps its
-times with its neighbour's. Anything else would leave the list sorted
-differently than it reads.
+`order` is just each block's index in the authored `DAY` array
+(`buildBlocks`), which is written in clock order — so it never disagrees
+with the times it sits next to, and views can sort on it without re-reading
+the strings.
 
 ### The seed week
 
 **The whole day is modelled**, 07:00 to 07:00: morning routine, exercise,
-meals, wind-down and sleep included. An earlier cut modelled only the working
-window, which left holes at lunch and dinner and made the app go blank
-exactly when you'd glance at it. Life blocks appear nowhere in `WEEK` — they
-carry no area, so they stay quiet and never win the day's theme.
+three meal breaks, wind-down and sleep included. An earlier cut modelled only
+the working window, which left holes at lunch and dinner and made the app go
+blank exactly when you'd glance at it. The pure life-support blocks — morning
+routine, the three meal breaks, sleep — appear nowhere in `WEEK`: no area, so
+they stay quiet and never win the day's theme.
 
-Two shape decisions worth keeping in view: the old 2.5h buffer is split, with
-`Reset` (14:30) deliberately light because it lands in the post-lunch slump
-and lunch sometimes runs to 2pm, and `Second Push` (15:30) owned work placed
-where energy is back. `Deep Study` (08:00, the block used to be called
-"Prep" — renamed once it was clear that's what actually belongs there in
-the morning) runs weekdays only — seven-days-a-week study with no rest day
-is how it quietly becomes theatre.
+The week runs on **two pushes** — Websites (pays now) and Wave (the long
+bet, whose whole job is users). Everything else is a keystone habit, a
+weekly slot, or weekend-only, because one person can push two or three
+things at once and a plan that services six just chops every day into
+slivers. See [PLAN_SCHEDULE.md](./PLAN_SCHEDULE.md) for the full reasoning.
 
-Once anything is edited the stored plan wins entirely and `lib/life` is only
-read again on a reset.
+Shape decisions worth keeping in view:
+
+- **The day's "must" ends at lunch** — `Study` then `Deep Work`. The
+  afternoon is upside, so falling off it isn't falling behind.
+- **`Decompress` (13:30, ~2h) is a real block.** The post-lunch dip is
+  circadian, not a willpower failure, so it's named rather than pretended
+  away — and it points at `rest`, because rest is genuinely what it's for.
+  Rest/Reflection reading as heavily covered is correct, not a leak.
+- **`Build` (15:30) is self-directed**, and defaults to the Side Project;
+  client work preempts it whenever a build or deadline is live that week.
+- **`Loose Ends` (17:45, after the 5pm meal break) works the backlog** — one
+  stage a weekday that no theme day would otherwise reach (scoping,
+  aftercare, scripting, posting, DP listing, side ideation). The one block
+  that's deliberately *off* the day's theme.
+- **Each weekday has a theme** — Mon/Wed/Fri Websites, Tue/Thu Wave, Sat
+  Content, Sun Review — and `Deep Work` + `Build` both point at it, so
+  there's no cold restart mid-afternoon.
+- **`Study` runs Mon–Sat.** Weekday-only reads as job-hunt anxiety opening
+  every workday; seven days with no break becomes theatre. Six is the deal.
+- **Evenings are light** — editing, admin, design, people — never deep work.
+
+Block times are the same all seven days. Sunday genuinely wants its own
+shape (later start, fewer blocks); the model can't express that yet, so for
+now Sunday just runs fewer assignments. Once anything is edited the stored
+plan wins entirely and `lib/life` is only read again on a reset.
 
 ## Layers
 
@@ -221,29 +260,30 @@ read again on a reset.
 | `lib/direction/nodes.ts` | The bridge: id → node, ancestry, area, tasks, options. |
 | `lib/direction/block-types.ts` | Block type → emphasis, tone, hairline colour. |
 | `lib/direction/schedule.ts` | Pure derivation: time math, current block, day resolution, progress. |
-| `lib/direction/coverage.ts` | The tree walked with hours attached. |
-| `lib/direction/rollup.ts` | Weekly totals, over the same walk. |
-| `lib/direction/plan-ops.ts` | Every mutation, as pure `plan → plan` functions. |
+| `lib/direction/coverage.ts` | The tree walked with hours attached; `formatHours`. |
+| `lib/direction/plan-ops.ts` | The one mutation left (`setAssignment`), as a pure `plan → plan` function. |
 | `lib/direction/storage.ts` | localStorage read/write. |
 | `lib/direction/plan-store.ts` | External store (subscribe/getSnapshot) over the above. |
 | `components/Direction/*` | Views. No plan logic — they call `plan-ops`. |
 
 A stored plan carries a `version` (`PLAN_VERSION` in `types.ts`), and
-`storage.ts` runs it through `migrate()` on load — one step per version,
-each responsible only for getting from n to n+1. v1 → v2 renames every node
-id (`sub-web-pipeline` → `web.pipeline`), which is exactly why the number was
-added a version before it was needed: without it, a plan holding the old ids
-and one holding the new ones are indistinguishable, and Reset would be the
-only recovery. A plan from a *newer* build is left exactly as it is rather
-than guessed at or replaced.
+`storage.ts` runs it through `migrate()` on load. A plan older than the
+current version is swapped for the current seed: the versioned changes so
+far (the v1→v2 node-id rename, the v3 day rebuild) each invalidated the
+stored plan wholesale rather than needing a field-by-field upgrade, so the
+number's real job is just telling a stale plan apart from a current one —
+without it, Reset would be the only recovery. A plan from a *newer* build is
+left exactly as it is rather than guessed at or replaced.
 
 Persistence is **localStorage only** (`bandwidth.direction.plan.v1`),
 matching the rest of the app's no-backend posture. A stored plan replaces the
 seed wholesale rather than merging, so edits never get surprise entries back
-when `lib/life` changes. Settings → Reset drops the stored plan.
+when `lib/life` changes. There's no Reset button any more — a stale plan
+self-heals on load (`migrate()`), and `resetPlanToDefaults` stays in
+`plan-store` for the console if a plan ever needs clearing by hand.
 
 The plan is read through `useSyncExternalStore` rather than copied into
-component state: it is genuinely external, shared by four views, and can
+component state: it is genuinely external, shared by several views, and can
 change in another tab. `useNow` follows the same shape and ticks every 30s.
 Both return `null` on the server and during hydration, so nothing time- or
 storage-dependent can hydrate-mismatch; views hold quiet space until the
@@ -260,10 +300,11 @@ and a panel inside that container would be clipped by it.
   than a second, monospace webfont. `--font-mono` is mapped to a system stack
   so a stray `font-mono` still lands somewhere sensible. Manrope's uppercase
   is wide, so label tracking is 0.11em where a grotesque took 0.16em.
-- **Surfaces, not outlines.** Blocks, the week matrix and the settings table
+- **Surfaces, not outlines.** Blocks, the week matrix and the calendar panel
   sit on `--surface` cards with 16px corners. The live block is the one
   filled surface in the app: a soft green→teal gradient with faint grain
-  (`.grain`), white text, set at display size. It is fully rounded and raised
+  (`.grain`), white text, its lead a step up from the rest of the page. It is
+  fully rounded and raised
   above the run rather than squared off inside it. That is the app's only
   gradient and its only use of grain.
 - **Block type is one hue in two strengths**: `--type-*` for hairlines and

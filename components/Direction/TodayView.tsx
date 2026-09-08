@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { eventsForDate } from "@/lib/calendar/day-events";
 import {
-  formatClock,
-  formatDayMonth,
   formatDuration,
-  formatWeekday,
   getDayProgress,
   getDayRuler,
   getDaySchedule,
@@ -15,13 +12,13 @@ import {
   toMinutes,
 } from "@/lib/direction/schedule";
 import type { DayEntry } from "@/lib/direction/schedule";
-import DayNav from "./DayNav";
+import DayBar from "./DayBar";
 import EventsLane from "./EventsLane";
 import TimelineRow from "./TimelineRow";
 import { useCalendar } from "./useCalendar";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
-import { cx, FAINT, LABEL, MUTED, NUM, STRONG } from "./ui";
+import { cx, MUTED } from "./ui";
 
 /**
  * Whether two blocks share a boundary. Blocks that touch are drawn as one
@@ -100,53 +97,20 @@ export default function TodayView() {
       : "Outside your blocks. The day's structure is done.";
 
   return (
-    <section className="mx-auto w-full max-w-2xl pt-6 pb-16 sm:pt-8">
-      <header>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <span className={cx(LABEL, isToday ? "text-accent" : FAINT)}>
-              {formatWeekday(date)}
-            </span>
-            {theme && (
-              <>
-                <span className={cx("text-[10px]", FAINT)}>·</span>
-                <span className={cx(LABEL, "truncate", MUTED)}>{theme}</span>
-              </>
-            )}
-          </div>
-          <DayNav date={date} today={now} onChange={setSelected} />
-        </div>
-
-        <div className="mt-1.5 flex items-baseline justify-between gap-4">
-          <h1 className={cx("text-[15px] font-medium tracking-[-0.01em]", STRONG)}>
-            {formatDayMonth(date)}
-          </h1>
-          {isToday && (
-            <span className={cx(NUM, "text-[11px] font-medium", FAINT)}>
-              {formatClock(now)}
-            </span>
-          )}
-        </div>
-
-        {/* Day progress — a single hairline, no numbers. */}
-        <div className="mt-4 h-[3px] w-full overflow-hidden rounded-full bg-black/[0.06] dark:bg-white/[0.09]">
-          {dayProgress !== null && (
-            <div
-              className="h-full rounded-full bg-accent transition-[width] duration-700"
-              style={{ width: `${dayProgress * 100}%` }}
-              aria-hidden
-            />
-          )}
-        </div>
-
-        {isToday && !current && (
-          <p className={cx("mt-4 text-[13px]", MUTED)}>{gapMessage}</p>
-        )}
-      </header>
+    <section className="mx-auto w-full max-w-2xl pb-16">
+      <DayBar
+        date={date}
+        now={now}
+        isToday={isToday}
+        theme={theme}
+        dayProgress={dayProgress}
+        gapMessage={isToday && !current ? gapMessage : null}
+        onChangeDate={setSelected}
+      />
 
       {entries.length === 0 ? (
         <p className={cx("mt-12 text-sm", MUTED)}>
-          No time blocks yet — set the shape of a day in Settings.
+          Nothing runs on this day.
         </p>
       ) : (
         <div className="relative mt-6 sm:mt-8">

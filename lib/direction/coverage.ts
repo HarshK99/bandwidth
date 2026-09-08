@@ -38,7 +38,7 @@ export interface CoverageRow {
    */
   viaMinutes: number;
   state: CoverageState;
-  /** Where it is scheduled, e.g. "Mon Wed · Second Push". Empty unless named. */
+  /** Where it is scheduled, e.g. "Mon Wed · Build". Empty unless named. */
   slots: string[];
   /**
    * The block types among this node's own slots — "admin" if it's directly
@@ -147,4 +147,10 @@ export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
   // Build and Sustain are the roots — there is no node above them.
   for (const top of childrenOf.get(null) ?? []) walk(top, 0, false);
   return rows;
+}
+
+/** "7h", "1.5h" — the one place weekly minutes get formatted for display. */
+export function formatHours(minutes: number): string {
+  const value = minutes / 60;
+  return `${Number.isInteger(value) ? value : value.toFixed(1)}h`;
 }

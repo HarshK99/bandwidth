@@ -13,9 +13,9 @@ over the planned timeline — never merged into it.
   `getDayProgress`, `getDayTheme`, the touching-run logic — all keep
   operating on your planned blocks only. Calendar events are merged **at
   render time, in Today**, and nowhere else.
-- **Not in Week / Hours / Coverage.** A one-off interview isn't a recurring
+- **Not in Week or Coverage.** A one-off interview isn't a recurring
   template row and isn't capacity you allocate. It contributes zero hours to
-  every rollup.
+  the rollup.
 - **Not two-way.** The app never writes to Google.
 - **No all-day events** (v1). Only timed events.
 
@@ -35,8 +35,8 @@ short-lived (~1h) read-only access token and calls the Calendar API directly.
   `prompt: "none"`, which renews through a hidden iframe when the Google
   session is alive and rejects silently when it isn't.
 - `localStorage` (`bandwidth.calendar.v1`) holds the `connected` flag, the
-  chosen `calendarId`, the calendar list (so Settings doesn't re-fetch — and
-  re-auth — on every load), and the last event cache.
+  chosen `calendarId`, the calendar list (so the Calendar view doesn't
+  re-fetch — and re-auth — on every load), and the last event cache.
 - Scope: `https://www.googleapis.com/auth/calendar.readonly`. Worst case in
   any breach is "someone read a calendar," for at most an hour.
 - The OAuth app stays in Google's **Testing** mode with you as the sole test
@@ -56,24 +56,25 @@ See the bottom of this doc for the one-time Google Cloud setup.
 | `lib/calendar/day-events.ts` | Pure: `eventsForDate`, `minutesInto`, time / relative-time formatting. |
 | `components/Direction/useCalendar.ts` | The hook over the store. |
 | `components/Direction/EventsLane.tsx` | The overlay lane in Today — measurement, the minute→y map, the cards. |
-| `components/Direction/CalendarSettings.tsx` | The Settings section. |
+| `components/Direction/CalendarSettings.tsx` | Connect / pick / sync / disconnect — the whole panel. |
+| `components/Direction/CalendarView.tsx` | `/direction/calendar` — wraps the panel in a page section. |
 
 Touched, minimally: `TodayView` (renders the overlay, syncs on mount),
-`SettingsView` (mounts the section), `TimelineRow` (one `data-timeline-box`
-attribute so the lane can measure each block's rendered box).
+`TimelineRow` (one `data-timeline-box` attribute so the lane can measure
+each block's rendered box).
 
 ## Fetching
 
 - **Window**: today 00:00 → +8 days. `singleEvents=true` (recurrences
   expanded), `orderBy=startTime`.
 - **On every Today mount**, `sync()` runs — throttled to once per 60s so
-  rapid reloads don't hammer. Plus an explicit **Sync now** button in
-  Settings for "I just added an event."
+  rapid reloads don't hammer. Plus an explicit **Sync now** button on the
+  Calendar view for "I just added an event."
 - **Filtered out**: `status: "cancelled"`, events you've RSVP'd `declined`,
   all-day (`start.date` with no `start.dateTime`).
 - **Cache**: events + `lastSyncedMs` persisted. Stepping across the 7 days and
   reloading are instant; the network only refreshes. A failed sync keeps the
-  last cache and only whispers about it in Settings — never in Today.
+  last cache and only whispers about it on the Calendar view — never in Today.
 
 ## The lane — an overlay, not a column
 
@@ -107,7 +108,7 @@ sit *within* each block), so there's no global pixels-per-minute. The lane
 
 ## States
 
-| Situation | Today | Settings |
+| Situation | Today | Calendar view |
 | --- | --- | --- |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` unset | nothing | "Set the client ID to enable." |
 | Configured, not connected | nothing | "Connect Google Calendar" |

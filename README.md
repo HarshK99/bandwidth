@@ -17,7 +17,7 @@ checked-in file, the plan lives in localStorage.
 
 | Route | What it's for |
 | --- | --- |
-| `/direction` | Today, Week, Hours, Settings — the schedule. |
+| `/direction` | Today, Week, Calendar — the schedule. |
 | `/coverage` | The hierarchy with hours attached. |
 | `/time` | Life in dots. |
 

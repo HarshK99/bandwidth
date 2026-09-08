@@ -68,7 +68,7 @@ done is below and receding.
   centred on the line with its label directly beneath; the connector above
   each node is the visible thread between stops. Solid, not dotted —
   hairlines over everything.
-- **Ahead** sits at the top, **collapsed** behind an `Ahead · 3` toggle —
+- **Ahead** sits at the top, **collapsed** behind an `Ahead · 1` toggle —
   the order up there isn't decided, so it isn't shown until asked for. When
   open, entries are hollow dots and quiet titles, nearest-term nearest the
   active card.

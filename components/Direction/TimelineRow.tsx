@@ -168,8 +168,8 @@ export default function TimelineRow({
   const leadClass = cx(
     isCurrent
       ? multi
-        ? "text-[1.35rem] leading-[1.25] sm:text-[1.6rem]"
-        : "text-[1.9rem] leading-[1.1] tracking-[-0.025em] text-balance sm:text-[2.6rem]"
+        ? "text-[1.1rem] leading-[1.3] sm:text-[1.25rem]"
+        : "text-[1.4rem] leading-[1.15] tracking-[-0.02em] text-balance sm:text-[1.7rem]"
       : fit.tier.cls,
     // Relaxed blocks never take extra weight — thinking and hobby time
     // shouldn't shout, even when it's the live block.
@@ -183,13 +183,13 @@ export default function TimelineRow({
 
   const captionClass = cx(
     "font-medium",
-    isCurrent ? "text-[15px] text-white/70 sm:text-base" : "text-[12px]",
+    isCurrent ? "text-[13px] text-white/70 sm:text-[14px]" : "text-[12px]",
     !isCurrent && (isPast ? FAINT : MUTED)
   );
 
   return (
     <li
-      className="grid grid-cols-[3.25rem_1rem_minmax(0,1fr)] sm:grid-cols-[3.5rem_1.25rem_minmax(0,1fr)]"
+      className="grid grid-cols-[2.5rem_0.75rem_minmax(0,1fr)] sm:grid-cols-[2.75rem_1rem_minmax(0,1fr)]"
       // A real gap gets real room: see gapHeight above. Touching blocks
       // still get exactly 0 — that's what makes a run read as continuous.
       style={{ paddingBottom: attachedBelow ? 0 : gapHeight(openMinutesAfter) }}
@@ -204,9 +204,9 @@ export default function TimelineRow({
             key={`${tick.offset}-${tick.label}`}
             className={cx(
               NUM,
-              "absolute right-2 text-[11px] leading-none font-medium whitespace-nowrap sm:right-2.5",
-              isCurrent ? "text-accent" : FAINT,
-              tick.offHour && "opacity-60"
+              "absolute right-1 text-[11px] leading-none font-medium whitespace-nowrap sm:right-1.5",
+              isCurrent ? "text-accent" : MUTED,
+              tick.offHour && "opacity-75"
             )}
             style={{ top: `${tick.offset * 100}%`, transform: "translateY(-50%)" }}
           >

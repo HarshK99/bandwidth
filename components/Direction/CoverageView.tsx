@@ -2,8 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { BLOCK_TYPES, BLOCK_TYPE_META } from "@/lib/direction/block-types";
-import { getCoverageRows, type CoverageRow } from "@/lib/direction/coverage";
-import { formatHours } from "@/lib/direction/rollup";
+import {
+  formatHours,
+  getCoverageRows,
+  type CoverageRow,
+} from "@/lib/direction/coverage";
 import type { BlockType } from "@/lib/direction/types";
 import { useDirectionPlan } from "./useDirectionPlan";
 import { CARD, cx, FAINT, FIELD, LABEL, LABEL_XS, MUTED, STRONG } from "./ui";
