@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { BLOCK_TYPES, BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import {
   formatHours,
@@ -58,8 +59,29 @@ export default function CoverageView() {
   const rows = useMemo(() => (plan ? getCoverageRows(plan) : null), [plan]);
   /** Ids whose open/closed state differs from the depth default. */
   const [toggled, setToggled] = useState<Set<string>>(new Set());
-  /** "" is the unfiltered, everything-shown state. */
-  const [filterType, setFilterType] = useState<BlockType | "">("");
+
+  // The active filter lives in the URL as ?type=<BlockType>. That's what lets
+  // a block card on Today deep-link straight into the right filter, and it
+  // means a hand-picked filter survives a refresh or a shared link. "" — and
+  // any unrecognised value — is the unfiltered, everything-shown state.
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const paramType = searchParams.get("type");
+  const filterType: BlockType | "" =
+    paramType && (BLOCK_TYPES as string[]).includes(paramType)
+      ? (paramType as BlockType)
+      : "";
+
+  const setFilterType = (next: BlockType | "") => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next) params.set("type", next);
+    else params.delete("type");
+    const query = params.toString();
+    // replace, not push: cycling the <select> shouldn't stack history entries
+    // between you and the day you came from.
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const included = useMemo(
     () => (rows && filterType ? matchedIds(rows, filterType) : null),

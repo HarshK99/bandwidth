@@ -1,8 +1,11 @@
 "use client";
 
+import type { CSSProperties, ReactNode } from "react";
+import Link from "next/link";
 import { BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import { blockDurationMinutes, formatDuration } from "@/lib/direction/schedule";
 import type { DayEntry, RulerTick } from "@/lib/direction/schedule";
+import type { BlockType } from "@/lib/direction/types";
 import { cx, FAINT, LABEL_XS, MUTED, NUM } from "./ui";
 
 interface TimelineRowProps {
@@ -250,8 +253,8 @@ export default function TimelineRow({
       {/* The block itself. Touching blocks overlap by a pixel so their
           borders collapse into one hairline and the run reads as continuous
           time — a visible gap then means there really is one. */}
-      <div
-        data-timeline-box=""
+      <BlockBox
+        type={block.type}
         className={cx(
           "relative flex flex-col border transition-colors",
           // The live block is lifted out of the run — fully rounded and
@@ -265,23 +268,21 @@ export default function TimelineRow({
               "from-hero-from to-hero-to px-4 py-4 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]"
             : "overflow-hidden px-3.5 py-3"
         )}
-        style={{
-          // Fixed for a resting card — its text clamps instead of growing
-          // past this, so height stays a true reading of duration. The live
-          // block keeps it as a floor: it's the one card whose content should
-          // win.
-          [isCurrent ? "minHeight" : "height"]: boxHeight(
-            blockDurationMinutes(block)
-          ),
-          // The type colours the whole box, not just its edge: a hairline is
-          // read second, a fill is read first, and telling a day's blocks
-          // apart at a glance is the whole job. The live block is the
-          // exception — it has its own surface, and its type is already the
-          // loudest thing on the screen.
-          ...(isCurrent
-            ? null
-            : { backgroundColor: meta.fill, borderColor: meta.border }),
-        }}
+        style={
+          // Fixed height for a resting card — its text clamps instead of
+          // growing past this, so height stays a true reading of duration.
+          // The live block keeps it as a floor: it's the one card whose
+          // content should win. The type also colours the whole box (fill is
+          // read before edge; telling a day's blocks apart at a glance is the
+          // job) — except the live block, which has its own surface.
+          isCurrent
+            ? { minHeight: boxHeight(blockDurationMinutes(block)) }
+            : {
+                height: boxHeight(blockDurationMinutes(block)),
+                backgroundColor: meta.fill,
+                borderColor: meta.border,
+              }
+        }
       >
         <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
           <h3
@@ -347,7 +348,52 @@ export default function TimelineRow({
             {serves && <span className="opacity-60"> → {serves}</span>}
           </p>
         )}
-      </div>
+      </BlockBox>
     </li>
+  );
+}
+
+/**
+ * The card surface. Every block is a quiet link into Coverage filtered to its
+ * own type — "I'm in this kind of time, what else is scheduled for it" — the
+ * one move Today can't otherwise answer without a tab switch and a manual
+ * filter. A hover ring is the only tell: no caret, no button, the whole card
+ * is the target.
+ *
+ * Buffer blocks (lunch, breaks) are the exception: nothing in the plan is
+ * scheduled in a buffer-type slot, so the link would only ever land on an
+ * empty Coverage page. They render as a plain box.
+ */
+function BlockBox({
+  type,
+  className,
+  style,
+  children,
+}: {
+  type: BlockType;
+  className: string;
+  style: CSSProperties;
+  children: ReactNode;
+}) {
+  if (type === "buffer") {
+    return (
+      <div data-timeline-box="" className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+  return (
+    <Link
+      href={`/coverage?type=${type}`}
+      data-timeline-box=""
+      className={cx(
+        className,
+        "cursor-pointer hover:ring-1 hover:ring-black/10 dark:hover:ring-white/15",
+        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+      )}
+      style={style}
+    >
+      {children}
+    </Link>
   );
 }

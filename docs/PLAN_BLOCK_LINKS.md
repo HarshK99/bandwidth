@@ -1,7 +1,20 @@
 # Plan: Today block → Coverage link
 
-**Status: planned, not built.** Design + rationale only. Pairs with the v4
-schedule in [PLAN_SCHEDULE.md](./PLAN_SCHEDULE.md).
+**Status: built.** Pairs with the v4 schedule in
+[PLAN_SCHEDULE.md](./PLAN_SCHEDULE.md).
+
+Shipped as designed, with the three open questions resolved: whole card is the
+link, `buffer` blocks are skipped, and the `<select>` does full two-way sync
+(`router.replace`, no scroll, no history entry).
+
+- `components/Direction/CoverageView.tsx` — filter state now derives from
+  `?type=<BlockType>` (via `useSearchParams`); the `<select>` writes it back.
+  An unrecognised value reads as unfiltered.
+- `app/coverage/page.tsx` — `<CoverageView>` wrapped in `<Suspense>`, required
+  once a static page reads search params.
+- `components/Direction/TimelineRow.tsx` — the card surface is a `BlockBox`
+  helper: `next/link` to `/coverage?type=<block.type>` for every type except
+  `buffer`, which stays a plain `<div>`. Hover ring only, no caret.
 
 ## The problem
 
@@ -58,11 +71,11 @@ No new filter code, no `nodes.ts` change, no area plumbing.
   Coverage tab lights up, browser back returns to the day. No custom "back"
   affordance unless it feels abrupt in use.
 
-## Open questions (for when we build it)
+## Open questions — resolved
 
-1. **Whole card is the link, or just a line on it?** Lean: whole card.
+1. **Whole card is the link, or just a line on it?** → whole card.
 2. **Skip the link on `buffer` blocks** (empty target), or keep it for
-   consistency? Lean: skip.
+   consistency? → skip.
 3. **Does the `<select>` change also push a URL update** (so a manual filter
-   is shareable / survives refresh), or only read on mount? Lean: full
-   two-way sync — it's nearly free once the read side exists.
+   is shareable / survives refresh), or only read on mount? → full two-way
+   sync, via `router.replace` (no history entry, no scroll).
