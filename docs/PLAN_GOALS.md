@@ -77,8 +77,13 @@ mistake merging the tree and the schedule would have been.
 A goal is a third concern — *why* — sitting alongside *what* (the tree) and
 *when* (the schedule), joined by the same node ids, stored where the
 schedule already lives: the plan, in localStorage, editable in the UI.
-`PLAN_VERSION` → 3, with a migration step defaulting `goals: []` on any
-older stored plan (the same shape the v1→v2 step already took).
+`PLAN_VERSION` → 4 (3 is the schedule-redesign seed — see
+`docs/PLAN_SCHEDULE.md`). Adding a `goals` field is a real field upgrade,
+not a wholesale swap: the v3 `migrate()` replaces any older plan with the
+seed because the blocks changed underneath it, but a v3 plan carrying real
+edits must survive into v4 with `goals: []` defaulted onto it. So the
+ladder grows a genuine `v3 → v4` step — `{ ...plan, goals: plan.goals ?? [] }`
+— rather than another reset.
 
 `plan-ops.ts` gets `addGoal` / `updateGoal` / `removeGoal` — pure functions
 returning a new plan, same pattern as every other mutation there.

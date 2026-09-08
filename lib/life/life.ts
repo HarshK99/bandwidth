@@ -13,46 +13,64 @@ import type { NodeId } from "./areas";
  * window. An earlier cut modelled only work hours, which left holes at lunch
  * and dinner and made the app go blank exactly when you'd glance at it.
  *
- * Sleep runs 00:00–07:00: a genuinely later start than the rest of the day,
- * not a wrap. `sortBlocks` in schedule.ts still reads it as the day's last
- * block, not its first — the day's *reading order* starts at 07:00 (see
- * `DAY_STARTS_AT_MINUTES` there), independent of which block has the
- * smallest clock time.
+ * Two pushes only — Websites (pays now) and Wave (the long bet, whose whole
+ * job is users). Everything else is a keystone habit, a weekly slot, or
+ * weekend-only. See docs/PLAN_SCHEDULE.md for the reasoning.
  *
- * Start and end are both explicit. The day is usually contiguous, but a real
- * gap is a real thing to be able to say: weekends genuinely have nothing
- * between 08:00 and 09:30 — see the note on `blk-prep` below.
+ * The day's "must" ends at lunch: Study, then one deep session. The
+ * afternoon is upside. `Decompress` is a real block — the post-lunch dip is
+ * biological, so it gets named rather than pretended away.
+ *
+ * Morning and afternoon point at the *same domain* most days (see `WEEK`),
+ * so there's no cold restart mid-afternoon and "what's today?" has a
+ * one-word answer. `Loose Ends` is the deliberate exception: after the 5pm
+ * meal break it works the coverage backlog — one otherwise-homeless stage
+ * per weekday.
+ *
+ * Sleep runs 23:30–07:00 — a genuinely later start than the rest of the day.
+ * `sortBlocks` in schedule.ts reads it as the day's last block regardless:
+ * the day's *reading order* starts at 07:00 (`DAY_STARTS_AT_MINUTES` there).
+ *
+ * Start and end are both explicit. The day is contiguous bar one gap —
+ * 09:15–09:30, between Study and Deep Work — which breaks up what would
+ * otherwise be ~5h of unbroken focus. Block times are the same all seven
+ * days; Sunday wanting its own shape is a known model gap (see
+ * docs/PLAN_SCHEDULE.md).
  */
 export const DAY = [
   { id: "blk-morning", label: "Morning Routine", start: "07:00", end: "08:00", type: "custom" },
-  // Weekdays, 15 minutes short of touching Deep Work. The frequency was
-  // dropped to 3x/week for a stretch, on the theory that five straight
-  // mornings of interview prep reads as job-hunt anxiety opening every day
-  // — reverted; back to daily. The 15-minute gap before Deep Work stayed:
-  // that fixed a different thing, the 5.5 unbroken hours of focus work
-  // (Deep Study straight into Deep Work) that were the single most
-  // strained stretch in the day, and it's unrelated to how often this runs.
-  { id: "blk-prep", label: "Deep Study", start: "08:00", end: "09:15", type: "focus", days: "mon-fri" },
+  // Product-sense practice — the job hunt is live, and this is the keystone
+  // that carries it. Mon–Sat: a weekday-only habit reads as anxiety opening
+  // every workday, but skipping it entirely on Saturday isn't the deal
+  // either. Sunday is off.
+  { id: "blk-study", label: "Study", start: "08:00", end: "09:15", type: "focus", days: "mon-sat" },
+  // The day's one guaranteed deep session, on the day's domain. Runs to the
+  // start of lunch; the 15-min gap before it is the one break in the morning.
   { id: "blk-deep", label: "Deep Work", start: "09:30", end: "13:00", type: "focus" },
   { id: "blk-lunch", label: "Lunch", start: "13:00", end: "13:30", type: "buffer" },
-  // End held at 14:30 rather than shifting the afternoon: only the start
-  // moved, so the block that shrank is genuinely this one, not a relabelled
-  // hour taken from Reset.
-  { id: "blk-admin", label: "Admin", start: "13:30", end: "14:30", type: "admin" },
-  // Deliberately light: it lands in the post-lunch slump and lunch sometimes
-  // runs to 2pm, so it holds reading and practice, never heavy work.
-  { id: "blk-reset", label: "Reset", start: "14:30", end: "15:30", type: "buffer" },
-  // Owned work, placed where energy is back and where outreach gets answered.
-  { id: "blk-push", label: "Second Push", start: "15:30", end: "17:00", type: "execution" },
-  { id: "blk-ctp", label: "CTP", start: "17:00", end: "19:00", type: "thinking" },
-  { id: "blk-dinner", label: "Dinner", start: "19:00", end: "20:00", type: "buffer" },
-  { id: "blk-hobbies", label: "Hobbies", start: "20:00", end: "21:00", type: "hobby" },
+  // Post-lunch recovery — ~2h, pointed at `rest` because that's what it is.
+  // Rest/Reflection reading as heavily covered is correct, not a leak: it's
+  // a Sustain area, not a bet the rollup needs shielding from.
+  { id: "blk-decompress", label: "Decompress", start: "13:30", end: "15:30", type: "hobby" },
+  // Self-directed building. Default target is the Side Project; client work
+  // preempts it whenever a build or deadline is live that week (see the
+  // override note in docs/PLAN_SCHEDULE.md).
+  { id: "blk-build", label: "Build", start: "15:30", end: "17:00", type: "execution" },
+  // The 5pm meal break — out of the house, a real context switch, which is
+  // why nothing heavy is scheduled after it.
+  { id: "blk-break", label: "Break", start: "17:00", end: "17:45", type: "buffer" },
+  // The coverage backlog gets a home here: one otherwise-unscheduled stage
+  // per weekday (scoping, aftercare, scripting, posting, DP listing, side
+  // ideation). Days are swappable; the point is the set gets covered.
+  { id: "blk-loose", label: "Loose Ends", start: "17:45", end: "19:00", type: "admin" },
+  { id: "blk-dinner", label: "Dinner", start: "19:00", end: "19:30", type: "buffer" },
+  // Light work only — editing, admin, design, people. Nothing that needs the
+  // tank full.
+  { id: "blk-evening", label: "Evening", start: "19:30", end: "21:00", type: "admin" },
   { id: "blk-exercise", label: "Exercise", start: "21:00", end: "22:00", type: "custom" },
-  // Genuinely unassigned on purpose — no WEEK entry below. Opened up by
-  // moving sleep earlier; nothing pointed at it yet (crosswords, mostly).
-  { id: "blk-free", label: "Free Time", start: "22:00", end: "23:30", type: "hobby" },
-  { id: "blk-winddown", label: "Wind-down", start: "23:30", end: "00:00", type: "hobby" },
-  { id: "blk-sleep", label: "Sleep", start: "00:00", end: "07:00", type: "custom" },
+  // Genuinely down. Sunday carries the week's one real reading session.
+  { id: "blk-winddown", label: "Wind-down", start: "22:00", end: "23:30", type: "hobby" },
+  { id: "blk-sleep", label: "Sleep", start: "23:30", end: "07:00", type: "custom" },
 ] as const satisfies readonly DayBlock[];
 
 export type BlockId = (typeof DAY)[number]["id"];
@@ -77,102 +95,74 @@ type Slot =
  * a `note` overrides both, for the days where what you're doing is more
  * specific than any standing task.
  *
- * Life-support blocks — morning routine, lunch, sleep — appear nowhere here.
- * They carry no area on purpose: counting sleep as capacity spent on a bet
- * would drown every rollup.
+ * Life-support blocks — morning routine, lunch, the 5pm break, dinner,
+ * sleep — appear nowhere here. They carry no area on purpose: counting a
+ * meal as capacity spent on a bet would drown every rollup.
+ *
+ * The week has a theme a day: Mon/Wed/Fri Websites, Tue/Thu Wave, Sat
+ * Content, Sun Review. Deep Work and Build point at that theme; Loose Ends
+ * works the off-theme backlog; the Evening carries the theme's admin tail.
  */
 export const WEEK = {
-  "blk-prep": {
-    all: { node: "career.prep", do: ["technical"] },
+  "blk-study": {
+    "mon-sat": { node: "career.prep", do: ["product"] },
   },
 
   "blk-deep": {
-    mon: { node: "web.build", note: "Client build — clear the week's deadlines" },
-    "tue thu": { node: "side.dev", do: ["mvp"] },
-    wed: { node: "web.build", do: ["dev"] },
-    fri: { node: "web.build", note: "Client wrap-up + handover" },
-    sat: { node: "brand.shoot", label: "Content", note: "Skit filming — needs daylight" },
-    sun: { node: "side.ideation", note: "Optional — brainstorm, else rest" },
-  },
-
-  "blk-admin": {
-    // Was also Monday — the same job-application task touching the day
-    // twice. One weekly session, kept on Thursday since it already paired
-    // sending with tracking; Monday's Admin is now genuinely open rather
-    // than immediately refilled, so clustering the career work actually
-    // nets out to less of it, not just a rescheduled version of the same
-    // amount.
-    tue: { node: "web.aftercare", do: ["checkin"] },
-    // Posting grows the page, but this slot is aimed at moving products.
-    wed: { node: "brand.growth", do: ["post"], serves: "dp" },
-    thu: { node: "career.apply", do: ["send", "track"] },
-    fri: { node: "web.payment", do: ["invoice", "chase"] },
-    sat: { node: "lifeadmin", do: ["errands"], label: "Life Admin" },
-    sun: { node: "financial", do: ["trading"], label: "Financial Health" },
-  },
-
-  "blk-reset": {
-    mon: { node: "learning", note: "Reading: startup-SaaS strategy" },
-    tue: { node: "psych.confidence", note: "Speaking practice out loud" },
-    wed: { node: "learning", note: "Reading: web design / client trends" },
-    thu: { node: "psych.fluency", do: ["explainsimple"] },
-    fri: { node: "learning", note: "Reading: creator economy craft" },
-    // Was Friday CTP. Sunday's Reset had no assignment (only weekdays did),
-    // so the week's close-out lands on an already-open slot rather than
-    // displacing something else.
-    sun: { node: "rest", do: ["review"], label: "Review" },
-    // Saturday afternoon was four and a half hours fully open (Reset,
-    // Second Push, and the Free/Flex CTP block, back to back) — one light
-    // landmark rather than a total blank, and the other two stay open on
-    // purpose.
-    sat: { node: "rest", do: ["hobbies"] },
-  },
-
-  "blk-push": {
-    mon: { node: "web.pipeline", do: ["outreach", "followup"] },
+    mon: { node: "web.build", do: ["dev"], note: "Client build — clear this week's deadlines" },
     tue: { node: "wave.outreach", do: ["batch"] },
-    wed: { node: "web.pipeline", do: ["referral", "followup"] },
-    thu: { node: "wave.outreach", do: ["followup"] },
-    fri: { label: "Catch-up" },
+    wed: { node: "web.build", do: ["dev"] },
+    thu: { node: "wave.system", do: ["script", "review"] },
+    fri: { node: "web.pipeline", do: ["outreach", "referral"], note: "Line up next month's work" },
+    sat: { node: "brand.shoot", do: ["film"], label: "Filming", note: "Skits — needs daylight" },
+    sun: { node: "rest", do: ["review"], label: "Weekly Review" },
   },
 
-  "blk-ctp": {
-    mon: { node: "brand.script", do: ["ideas"] },
-    tue: { node: "wave.system", do: ["script", "review"] },
-    wed: { node: "web.scoping", do: ["discovery", "proposal"] },
-    // Same pipeline, different purpose: Thursday's script is marketing.
-    thu: { node: "brand.script", note: "Scripting + competitor research", serves: "wave" },
-    // Provisional — this slot's old content (the week's review) moved to
-    // Sunday's Reset. Side-project ideation is the placeholder: it answers
-    // "when do I actually plan the side project", which had no home before
-    // Sunday's optional, easily-skipped Deep Work slot. Swap it for whatever
-    // you actually want Friday evenings for.
-    fri: { node: "side.ideation", do: ["brainstorm"], label: "Ideas" },
-    sat: { label: "Free/Flex" },
-    sun: { node: "relationships", label: "Relationships" },
+  // Post-lunch recovery. Rest is genuinely what happens here, so it's named
+  // rather than left blank — which also makes the block link somewhere.
+  "blk-decompress": {
+    all: { node: "rest", do: ["hobbies"] },
   },
 
-  "blk-dinner": {
-    sat: { node: "rest", do: ["hobbies"], label: "Hobbies" },
-    sun: { node: "relationships", label: "Relationships" },
+  "blk-build": {
+    mon: { node: "web.build", do: ["dev", "debug"] },
+    tue: { node: "side.dev", do: ["mvp"] },
+    wed: { node: "web.build", do: ["dev"] },
+    thu: { node: "side.dev", do: ["mvp"] },
+    fri: { node: "side.dev", do: ["mvp"], label: "Build / Catch-up" },
+    sat: { node: "lifeadmin", do: ["errands"], label: "Life Admin" },
+    sun: { node: "financial", do: ["trading"], label: "Financial" },
   },
 
-  "blk-hobbies": {
-    mon: { node: "dp.design", do: ["make"] },
-    tue: { node: "brand.edit", do: ["cut"] },
-    wed: { node: "rest", do: ["hobbies"] },
-    thu: { node: "brand.edit", do: ["cut"], serves: "wave" },
+  // The coverage backlog, one stage a weekday. Sunday is left open — it
+  // wants its own day shape, which the model can't express yet.
+  "blk-loose": {
+    mon: { node: "web.scoping", do: ["proposal", "pricing"] },
+    tue: { node: "brand.growth", do: ["post"], label: "Post & engage" },
+    wed: { node: "web.aftercare", do: ["checkin", "upsell"] },
+    thu: { node: "brand.script", do: ["ideas"], label: "Scripting" },
     fri: { node: "dp.listing", do: ["publish"] },
+    sat: { node: "side.ideation", do: ["brainstorm"], label: "Ideas" },
+  },
+
+  "blk-evening": {
+    mon: { node: "dp.design", do: ["make"] },
+    tue: { node: "career.apply", do: ["send", "track"], label: "Applications" },
+    wed: { node: "brand.edit", do: ["cut"] },
+    // Wave day: the machine gets sharpened in the morning, so running a batch
+    // of follow-ups here keeps the loop closed without needing deep energy.
+    thu: { node: "wave.outreach", do: ["followup"], label: "Outreach follow-ups" },
+    fri: { node: "web.payment", do: ["invoice", "chase"], label: "Invoicing + wrap-up" },
     sat: { node: "rest", do: ["hobbies"] },
     sun: { node: "relationships", label: "Relationships" },
   },
 
   "blk-exercise": {
-    all: "health",
+    all: { node: "health", do: ["workout"] },
   },
 
   "blk-winddown": {
-    all: { note: "Book reading" },
+    sun: { node: "learning", do: ["reading"], label: "Reading" },
   },
 } as const satisfies Week &
   Partial<Readonly<Record<BlockId, Readonly<Record<string, Slot>>>>>;

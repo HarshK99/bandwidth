@@ -294,12 +294,12 @@ export function getDaySchedule(
     };
   });
 
-  // Adjacent blocks that touch and say the exact same thing - Sunday's CTP,
-  // Dinner and Hobbies can all resolve to "Relationships / Protected
-  // family/friends time" - read as an error repeated three times, not as
-  // three facts. Blank every repeat, so TimelineRow's own fallback promotes
-  // each block's name into the lead: the run says what it is once, at its
-  // head, and just names itself after that.
+  // Adjacent blocks that touch and say the exact same thing - a Sunday
+  // evening where Dinner and the block after it both resolve to
+  // "Relationships / Protected family/friends time" - read as an error
+  // repeated, not as two facts. Blank every repeat, so TimelineRow's own
+  // fallback promotes each block's name into the lead: the run says what it
+  // is once, at its head, and just names itself after that.
   //
   // Content is compared against the head of the run (not blanked, even
   // across several repeats), but adjacency is checked against the immediate

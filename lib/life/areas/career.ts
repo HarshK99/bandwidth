@@ -15,8 +15,9 @@ export const career = {
     {
       id: "prep",
       label: "Preparation",
-      about: "Getting good enough to pass: technical practice, stories, mock interviews.",
+      about: "Getting good enough to pass: product sense, technical practice, stories, mock interviews.",
       tasks: {
+        product: "Product sense practice",
         technical: "Interview technical prep",
         behavioural: "Resume tailoring / STAR stories / mock interviews",
       },

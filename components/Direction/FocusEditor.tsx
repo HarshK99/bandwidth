@@ -5,7 +5,7 @@ import { getAreaLabel, getAreaOptions } from "@/lib/direction/nodes";
 import { cx, FAINT, FIELD, LABEL_XS, MUTED } from "./ui";
 
 interface FocusEditorProps {
-  /** Context line, e.g. "Monday · Second Push". */
+  /** Context line, e.g. "Monday · Build". */
   title: string;
   nodeId: string;
   onCommit: (nodeId: string) => void;

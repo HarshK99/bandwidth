@@ -47,9 +47,9 @@ export const sustain = {
     {
       id: "learning",
       label: "Learning (general)",
-      about: "Non-domain-specific reading/learning — buffer rotation.",
+      about: "Non-domain-specific reading/learning — one real session a week, with the Sunday review.",
       url: "https://linkshelf-three.vercel.app/",
-      tasks: { reading: "Reading rotation (day-themed)" },
+      tasks: { reading: "Reading (Sunday, with review)" },
     },
     {
       id: "psych",

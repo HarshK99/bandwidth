@@ -30,9 +30,9 @@ export interface TimeBlock {
    * The days this block actually runs. Omitted — the normal case — means all
    * seven.
    *
-   * Before this existed, "weekdays only" could only be said by leaving the
-   * weekend cells unassigned, which is a different statement: the block still
-   * stood there on Saturday, empty, as if something were missing. Prep on a
+   * Before this existed, "Mon–Sat only" could only be said by leaving the
+   * Sunday cell unassigned, which is a different statement: the block still
+   * stood there on Sunday, empty, as if something were missing. Study on a
    * Sunday isn't unplanned, it doesn't happen.
    *
    * Assignments for a day the block no longer runs are kept, not deleted:
@@ -59,10 +59,9 @@ export interface WeekAssignment {
    * week grid as `do: ["outreach", "followup"]`, relative to `nodeId`.
    *
    * This is the same move as `nodeId` one level down: stop typing what you
-   * can point at. It also replaces the prose calendar slots that used to sit
-   * on every task ("Second push (Mon/Wed)") — a second, unchecked copy of the
-   * schedule living inside the hierarchy. Still not a task list: nothing here
-   * can be completed, reordered or checked off.
+   * can point at, rather than keeping a second copy of the schedule as prose
+   * inside the hierarchy. Still not a task list: nothing here can be
+   * completed, reordered or checked off.
    */
   tasks?: string[];
   /**
@@ -102,11 +101,16 @@ export interface DateOverride {
 
 /**
  * The shape this build writes. Bumped whenever a stored plan needs changing
- * to be read correctly — see the migration ladder in storage.ts. Cheap to
- * carry now, impossible to add retroactively: without it, an old plan and a
- * new one are indistinguishable.
+ * to be read correctly — see `migrate()` in storage.ts. Cheap to carry now,
+ * impossible to add retroactively: without it, an old plan and a new one are
+ * indistinguishable.
+ *
+ * Each bump so far has reshaped the seed day enough that a stored plan from
+ * before it can't be carried forward field-by-field — v3 rebuilt every
+ * block, v4 retimed them and added the meal break + `Loose Ends`. So
+ * `migrate()` just swaps any pre-current plan for the seed.
  */
-export const PLAN_VERSION = 2;
+export const PLAN_VERSION = 4;
 
 /** Everything the feature persists, as one object. */
 export interface DirectionPlan {

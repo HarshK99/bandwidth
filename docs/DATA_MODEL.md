@@ -70,30 +70,29 @@ import, so a broken reference fails at startup rather than months later.
 
 ```ts
 DAY = [
-  { id: "blk-prep", label: "Deep Study", start: "08:00", end: "09:30", type: "focus", days: "mon-fri" },
+  { id: "blk-study", label: "Study", start: "08:00", end: "09:15", type: "focus", days: "mon-sat" },
 ]
 
 WEEK = {
-  "blk-prep": { all: { node: "career.prep", do: ["technical"] } },
-  "blk-push": {
-    "mon": { node: "web.pipeline", do: ["outreach", "followup"] },
-    "tue thu": "wave.outreach",
-    "fri": { label: "Catch-up" },
+  "blk-study": { "mon-sat": { node: "career.prep", do: ["product"] } },
+  "blk-build": {
+    "mon": { node: "web.build", do: ["dev", "debug"] },
+    "tue thu": "side.dev",
+    "fri": { label: "Build / Catch-up" },
   },
 }
 ```
 
 - **Start and end are both explicit.** The day is usually contiguous, but a
-  real gap is a real thing to be able to say — Deep Study is weekdays only, so
-  weekends genuinely have nothing between 08:00 and 09:30.
+  real gap is a real thing to be able to say — Study is Mon–Sat, so Sunday
+  genuinely has nothing between 08:00 and 09:30.
 - **Day specs** are `mon`, `mon wed`, `mon-fri`, `weekends`, or `all`. `all`
-  means every day *the block runs*, so Deep Study needs one line rather than five
-  identical ones.
+  means every day *the block runs*, so a daily block needs one line rather
+  than seven identical ones.
 - **A bare string** is shorthand for `{ node }`, which is most cells.
-- **`do`** names the node's own tasks instead of retyping them as prose. It
-  replaced a `meta` field that carried the schedule in prose on 41 tasks
-  ("Second push (Mon/Wed)") — a second, unchecked copy pointing the opposite
-  direction.
+- **`do`** names the node's own tasks instead of retyping them as prose,
+  rather than keeping a second, unchecked copy of the schedule inside the
+  tree.
 - **`note`** overrides both, for days where what you're doing is more specific
   than any standing task.
 
