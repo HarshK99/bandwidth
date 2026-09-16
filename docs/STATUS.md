@@ -2,11 +2,11 @@
 
 ## Current state
 
-Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Browser height/fit remains unmeasured; app code unchanged.
+Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Browser height/fit remains unmeasured; header implementation belongs to Phase 2.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
-The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. The five-phase plan is written; no implementation phase has started. Application code and stored app data remain unchanged.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phase 1 Coverage is implemented. Today and Week still use the old schedule; stored app data remains unchanged.
 
 New-chat reading order:
 
@@ -22,11 +22,11 @@ New-chat reading order:
 - master: existing app/main branch. No merge or push unless the user explicitly asks.
 - main_new: integration/main branch for the new version. User explicitly authorized each new split to merge back here.
 - proposal/direction-coverage: preview/specification branch, fast-forwarded into main_new during planning at commit 01722de.
-- plan/phased-rebuild: plan-authoring branch. Plan commit f142c8c was fast-forwarded into main_new. This final handoff update follows the same branch/integration workflow. No implementation phase has started.
+- plan/phased-rebuild: plan-authoring branch. Plan commit f142c8c was fast-forwarded into main_new. Planning handoffs followed the same branch/integration workflow.
 - Each phase starts from current main_new, uses its named phase branch, and merges back before stopping. Read the master plan for resuming an existing branch safely.
 - User explicitly permits destructive replacement of outdated app docs and old app data on rebuild branches. Do not preserve redundant data or backward compatibility by default.
 - No remote push or merge to the original master/main branch is authorized or performed. Local integration into main_new is authorized.
-- Current work is documentation and cleanup. Application code/data replacement belongs to forthcoming implementation phases.
+- Phase 1 replaces Coverage only. Schedule/data replacement begins in Phase 2.
 
 ## Recorded decisions
 
@@ -54,7 +54,7 @@ New-chat reading order:
 - Read the original system document, current HTML and task data, previous handoff, README, and old documentation inventory.
 - No build commands, test commands, or code review authorized or performed.
 - Browser appearance/behaviour has not been verified with browser tooling. The user viewed and iteratively approved the HTML; that is not an automated check.
-- No application implementation, browser-data reset, deployment, or original-main change performed. Local main_new integration of the existing specification was performed.
+- Planning performed no application implementation, browser-data reset, deployment, or original-main change. Phase implementation is recorded below.
 - Planning-only source reads mapped components and their dependencies; local Next.js navigation/search-parameter docs and relevant skills were read. UI/UX Pro Max returned keyboard navigation and visible-focus guidance, used in the phase requirements. No app command checks were run.
 
 ## Planning defaults and outstanding preferences
@@ -71,7 +71,7 @@ New-chat reading order:
 
 | Phase | Status | Output / next starting point |
 | --- | --- | --- |
-| 1 — Coverage | Not started | New work modes/catalogue and compact filtered Coverage |
+| 1 — Coverage | Implemented; unverified | New work modes/catalogue and compact filtered Coverage; next: Phase 2 |
 | 2 — Direction | Not started | Replace schedule/storage; update Today and coherent basic Week |
 | 3 — Week | Not started | Add time/name edits, add/remove/copy day, mobile editing |
 | 4 — Integration | Not started | Calendar boundary, retained navigation, polish, obsolete-code cleanup |
@@ -81,10 +81,14 @@ At each phase end update its row and one compact entry: status, changed files/ar
 
 ## Check authorization ledger
 
+Phase 1: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available in this session.
+
 Planning task: builds not authorized; tests not authorized; code review not authorized. None performed. Each Phase 1–5 starts with no command-based check or code-review authorization; record any explicit current-phase permission before using it. Manual browser walkthroughs are separate; phase instructions explain what to observe, and unavailable evidence must remain recorded as unavailable.
 
-## Next starting point and stopping point
+## Phase 1 handoff
 
-Next: in a fresh chat, say `start phase 1`. Load the Phase 1 instructions and execute only that phase. The numbering is 1–5; there is no Phase 0.
-
-The plan and original source reference are integrated into main_new. Stop here; start Phase 1 in a new chat. No phase implementation, build, test, code review, remote push, or original-main merge was performed.
+Phase 1: implementation complete, unverified; rebuild/phase-1-coverage → main_new.
+Changed: lib/work/{types,modes,catalog}.ts, lib/direction/coverage.ts, CoverageView.tsx, app/coverage/page.tsx, app/globals.css; independent area/effort filters, compact expandable activity list, no scheduled-hours accounting.
+Checks: source/dependency and installed Next.js guide reads only; builds, tests, code review, and browser walkthrough not performed.
+Open: browser appearance, keyboard interaction, and runtime behaviour unverified. Today/Week retain the old schedule; old type= links intentionally do not select the new effort filter. Back uses /direction until Phase 2.
+Next: in a fresh chat, say start phase 2; replace schedule/storage and update Today/basic Week. Stop after Phase 1 integration; no remote push or master/main merge.

@@ -50,11 +50,12 @@
      types above (different page, different vocabulary: this is *what a row
      is structurally*, not what kind of time it gets). Fainter than the block
      washes on purpose: many rows sit adjacent in one scrolling list, so the
-     tint only needs to say "container" vs "leaf" at a glance, never compete
-     with the state colours (gap/inherited/covered) already carried by text. */
+     tint only needs to say "container" vs "leaf" at a glance. */
   --kind-area-fill: rgba(59, 130, 246, 0.035);
   --kind-stage-fill: rgba(217, 119, 6, 0.035);
   --kind-task-fill: rgba(219, 39, 119, 0.022);
+  --kind-group-fill: var(--kind-stage-fill);
+  --kind-activity-fill: var(--kind-task-fill);
 }
 
 @theme inline {
@@ -109,6 +110,87 @@
     --kind-stage-fill: rgba(251, 191, 36, 0.06);
     --kind-task-fill: rgba(244, 114, 182, 0.04);
   }
+}
+
+/* Coverage keeps the existing panel, font and structural colour washes. */
+.coverage-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  background: var(--background);
+}
+
+.coverage-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.coverage-view .coverage-select {
+  width: auto;
+  max-width: 100%;
+  min-height: 36px;
+  font-size: 12px;
+}
+
+.coverage-view .coverage-back {
+  min-width: 36px;
+  min-height: 36px;
+  font-size: 18px;
+}
+
+.coverage-branch {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.coverage-area { background: var(--kind-area-fill); }
+.coverage-group {
+  background: var(--kind-group-fill);
+  font-size: 12px;
+  font-weight: 500;
+}
+.coverage-children { padding-left: 14px; }
+.coverage-activity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  min-height: 28px;
+  padding: 5px 8px;
+  background: var(--kind-activity-fill);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.coverage-efforts { max-width: 100%; font-size: 10px; }
+.coverage-branch,
+.coverage-activity { border-bottom: 1px solid color-mix(in srgb, var(--foreground) 7%, transparent); }
+.coverage-branch:hover { background: color-mix(in srgb, var(--foreground) 5%, transparent); }
+.coverage-view :is(button, a, select):focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .coverage-children { padding-left: 10px; }
+  .coverage-filters { flex-basis: 100%; }
+  .coverage-view .coverage-select { flex: 1; min-width: 0; }
+}
+@media (pointer: coarse) {
+  .coverage-view :is(.coverage-select, .coverage-back, .coverage-branch) { min-height: 44px; }
+  .coverage-view .coverage-back { min-width: 44px; }
 }
 
 body {
