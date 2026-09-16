@@ -2,11 +2,11 @@
 
 ## Current state
 
-Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Phase 2 implements the header; browser height/fit remains unmeasured.
+Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. No goal tracking/model. Phase 5 observed readable fit at 360px and measured a 122px header; comparison with the pre-rebuild height remains unavailable.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
-The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1–4 are implemented, unverified. Today and the editable weekly template share the v2 schedule; Calendar now follows the same local 07:00 day. Next: Phase 5 manual walkthrough.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1–4 are implemented; Phase 5 exercised core browser journeys and fixed rapid Coverage filter changes. Phase 5 remains awaiting the connected Calendar walkthrough and remaining checks in [REBUILD_RESULTS.md](REBUILD_RESULTS.md). Resume that phase, not completed scenarios.
 
 New-chat reading order:
 
@@ -75,11 +75,13 @@ New-chat reading order:
 | 2 — Direction | Implemented; unverified | New schedule/storage, Today, and basic Week; next: Phase 3 |
 | 3 — Week | Implemented; unverified | Name/time/mode editing, add/remove/copy day, mobile selected-day view; next: Phase 4 |
 | 4 — Integration | Implemented; unverified | Calendar boundary/cache range, panel scroll return/Now, focus polish and cleanup; next: Phase 5 |
-| 5 — Walkthrough | Not started | Manual journeys, fixes, REBUILD_RESULTS.md, honest final handoff |
+| 5 — Walkthrough | In progress; awaiting remaining walkthrough | Core Chromium journeys observed; rapid-filter fix integrated; resume Calendar failure and omissions in REBUILD_RESULTS.md |
 
 At each phase end update its row and one compact entry: status, changed files/areas, checks, open issues, next phase. Add only necessary decisions. Include it in the phase commit; no additional handoff-only/self-hash commits. Record a precise resume point if interrupted.
 
 ## Check authorization ledger
+
+Phase 5: user explicitly said “you can use chromium to test.” Used Edge/Chromium with temporary Playwright browser-control scripts for interactions, screenshots, clock controls, and isolated storage scenarios against the existing development server. Builds, repository test commands, lint/type checks, and code review not authorized or run. No real-account Calendar access or user acceptance recorded.
 
 Phase 4: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available. Calendar connection and live sync were not exercised.
 
@@ -123,3 +125,11 @@ Changed: Calendar helpers/store/useCalendar/EventsLane/Settings; Today open-time
 Checks: implementation source/dependency reads, installed Next.js guidance, targeted keyboard-focus guidance, and Git bookkeeping only; builds, tests, code review, and browser walkthrough not performed. No browser tool, live Calendar connection, remote push, or master/main merge used.
 Open: prior browser checks remain; verify 07:00/midnight/daylight-saving boundaries, empty/open days, overlapping event columns, cached/failed/date-changing sync, panel return/Now, keyboard/dialog focus, 360px/zoom/light-dark fit, and unchanged header footprint in Phase 5. No observed runtime or visual success claimed.
 Next: start phase 5 in a fresh chat for the manual walkthrough and REBUILD_RESULTS.md; builds/tests/code review still need separate explicit authorization.
+
+## Phase 5 handoff
+
+Phase 5: in progress, awaiting remaining walkthrough; partial results/fix on rebuild/phase-5-walkthrough → main_new.
+Changed: CoverageView preserves both rapid filter selections; REBUILD_RESULTS.md records scenarios/evidence/omissions; README and STATUS reflect actual browser progress.
+Checks: Chromium core Today/Coverage/Week journeys, clock boundaries, copy/cancel/reload, keyboard, light/dark layout, isolated reset/save failure, retained route rendering; no builds, repository test commands, or code review.
+Open: user's screenshot shows Calendar refresh failure; connected sync/event geometry/state preservation, live transitions/daylight-saving, actual zoom and remaining checks are unverified. User acceptance not given.
+Next: resume start phase 5 on its existing branch; begin with connected Calendar settings/status, then remaining REBUILD_RESULTS scenarios. Keep master/main, remotes, and deployment untouched.

@@ -68,12 +68,13 @@ export default function CoverageView() {
   const fromDate = validDate(searchParams.get("fromDate"));
 
   const setFilter = (key: keyof CoverageFilter, value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    // Read the latest URL so quick changes keep the other filter's new value.
+    const params = new URLSearchParams(window.location.search);
     if (value) params.set(key, value);
     else params.delete(key);
     params.delete("type");
     const query = params.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    window.history.replaceState(null, "", query ? `${pathname}?${query}` : pathname);
   };
 
   return (
