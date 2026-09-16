@@ -56,11 +56,12 @@ export default function WeekView() {
   };
   const apply = (operation: (current: DirectionPlan) => PlanChange, message: string): PlanIssue[] => {
     let issues: PlanIssue[] = [];
-    update((current) => {
+    const accepted = update((current) => {
       const change = operation(current);
       if (!change.ok) { issues = change.issues; return current; }
       return change.plan;
     });
+    if (!accepted) return [{ field: "plan", message: "Another tab saved a newer schedule while this tab has unsaved changes. Your edits are still here. Copy any changes you want to keep before reloading the latest schedule." }];
     if (!issues.length) { setNotice(message); dismiss(); }
     return issues;
   };

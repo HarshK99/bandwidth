@@ -106,6 +106,8 @@ New storage key: `bandwidth.direction.plan.v2`. Old key: `bandwidth.direction.pl
 
 Maintain calendar lane inputs `DayEntry.block` and `[data-timeline-box]` attributes. Do necessary compile-facing adjustments in Phase 2; complete operational-day calendar filtering in Phase 4.
 
+Post-review storage correction: `readStoredPlan()` reads and validates saved data without writing or clearing the save-failure flag. The plan store reconciles on its first subscription and before an update, so navigation away cannot leave later edits based on a stale plan. `updatePlan` returns false when unsaved local work conflicts with newer stored data; Week keeps the editor open with an explanation. Failed-save work is not silently discarded on cross-tab events. Successful saves update the comparison baseline.
+
 ## Phase 3: editing
 
 ```ts

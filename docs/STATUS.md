@@ -81,6 +81,10 @@ At each phase end update its row and one compact entry: status, changed files/ar
 
 ## Check authorization ledger
 
+Focused review: user accepted the proposed review of rebuild changes with a 20,000-token budget. Scope: data loss, Calendar sign-in, navigation, and scheduling; no cosmetic pass or repeated build. Review only, with findings reported before app fixes. No new repository test/build command authorization inferred.
+
+Post-rebuild build check: user requested “do npm build” and explicitly said not to perform code review. Ran the repository's `npm run build`; exit 0, production compilation and TypeScript completed, all 10 static pages generated. No separate tests or code review performed. This records build success only, not full behavioral verification.
+
 Phase 5: user explicitly said “you can use chromium to test,” then “sync worked; proceed.” Used Edge/Chromium with temporary Playwright browser-control scripts for interactions, screenshots, clock controls, isolated storage/Calendar fixtures, and cross-tab scenarios against the existing development server. Builds, repository test commands, lint/type checks, and code review not authorized or run. Live sync success is user-reported; no agent real-account access or overall user acceptance recorded.
 
 Phase 4: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available. Calendar connection and live sync were not exercised.
@@ -157,3 +161,21 @@ Changed: Calendar access guard, reconnect store status, Today/Calendar messages,
 Checks: isolated Chromium with simulated Google sign-in/API responses: open/reload/settings made zero access requests; valid access refreshed events quietly; expired access kept cached events; only explicit Connect/Sync now requested access; cancelling did not trigger another request on Today. No captured page errors. Builds, repository tests, and code review not run.
 Open: real-account sign-in was not exercised by the agent; user's live confirmation remains separate from the simulated browser evidence.
 Next: user checks opening Direction without a popup; no remote push or deployment.
+
+## Focused code review
+
+Status: partial; 20,000-token budget reached during source inspection. Findings recorded in CODE_REVIEW.md; no app fixes performed.
+Changed: review report and this authorization/results handoff only; prior uncommitted build record preserved.
+Checks: source-level review of schedule/storage/editor, Today/Coverage navigation, Calendar coordination/access/geometry, activity filtering. No new build, repository tests, or browser reproduction.
+Open: three findings need browser confirmation: missed cross-tab plan updates can overwrite saves; cross-tab Calendar changes do not invalidate pending responses; Coverage return can pin Today across 07:00. Broader review remains incomplete.
+Next: user authorizes confirmation/fixes or additional review budget; no commit, push, or deployment performed for this review.
+
+Review finding 1 follow-up: user explicitly requested confirmation only (“yeah check 1”). Reproduced in two isolated Chromium tabs: A missed B's Monday edit while on Coverage, then A's unrelated Wednesday save erased B's saved Monday name; reloading B confirmed the loss. Updated CODE_REVIEW.md; no app code, real-user data, builds, or repository tests changed/run. Findings 2–3 remain source-level only. Next: authorize a fix for confirmed finding 1.
+
+## Fix: cross-tab Week saves
+
+Status: finding 1 fixed after “nice; fix it”; fix/week-cross-tab-saves → main_new.
+Changed: storage read helper, plan-store reconciliation on subscribe/before save, unsaved-conflict guard and Week message; contracts/review results updated. Prior build/review notes retained.
+Checks: original isolated two-tab Chromium sequence now preserves both Monday/Wednesday edits after reload; simulated failed-save conflict retains local work, blocks overwrite, and preserves the newer saved plan. No builds, repository tests, or additional code review run.
+Open: truly simultaneous writes are not made transactional; findings 2–3 remain unconfirmed in browser and unfixed. No real user schedule touched by checks.
+Next: user's choice on remaining findings; no remote push or deployment.

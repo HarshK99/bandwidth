@@ -35,6 +35,15 @@ function isPlan(value: unknown): value is DirectionPlan {
 function removeOldPlan(): void {
   try { window.localStorage.removeItem(OLD_PLAN_KEY); } catch { /* Retry after the next successful save. */ }
 }
+/** Read saved changes without resetting data or clearing an unsaved warning. */
+export function readStoredPlan(): DirectionPlan | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(PLAN_STORAGE_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return isPlan(parsed) ? parsed : null;
+  } catch { return null; }
+}
 export function loadPlan(): DirectionPlan {
   if (typeof window === "undefined") return createDefaultPlan();
   try {
