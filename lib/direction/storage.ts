@@ -1,6 +1,7 @@
 ﻿import { createDefaultPlan } from "../life";
 import { BLOCK_TYPES } from "./block-types";
-import { blockDurationMinutes, operationalMinute, sortBlocks, toMinutes, WEEK_DAYS } from "./schedule";
+import { toMinutes, WEEK_DAYS } from "./schedule";
+import { validateDay } from "./plan-ops";
 import type { BlockType, DirectionPlan, TimeBlock } from "./types";
 
 export const PLAN_STORAGE_KEY = "bandwidth.direction.plan.v2";
@@ -27,15 +28,7 @@ function isPlan(value: unknown): value is DirectionPlan {
   for (const day of WEEK_DAYS) {
     const blocks: unknown = value.week[day];
     if (!Array.isArray(blocks) || !blocks.every(isBlock)) return false;
-    const ids = new Set<string>();
-    let previousEnd = 0;
-    for (const block of sortBlocks(blocks)) {
-      const start = operationalMinute(block.start);
-      const duration = blockDurationMinutes(block);
-      if (ids.has(block.id) || duration <= 0 || start < previousEnd || start + duration > 1440) return false;
-      ids.add(block.id);
-      previousEnd = start + duration;
-    }
+    if (validateDay(blocks).length) return false;
   }
   return true;
 }

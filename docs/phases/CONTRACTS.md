@@ -109,7 +109,7 @@ Maintain calendar lane inputs `DayEntry.block` and `[data-timeline-box]` attribu
 ## Phase 3: editing
 
 ```ts
-// Extend direction/plan-ops.ts; these do not exist until Phase 3.
+// direction/plan-ops.ts (implemented in Phase 3).
 export function upsertBlock(plan: DirectionPlan, day: DayOfWeek, block: TimeBlock): PlanChange;
 export function removeBlock(plan: DirectionPlan, day: DayOfWeek, blockId: string): PlanChange;
 export function copyDay(plan: DirectionPlan, source: DayOfWeek, target: DayOfWeek): PlanChange;
@@ -117,6 +117,8 @@ export function validateDay(blocks: readonly TimeBlock[]): PlanIssue[];
 ```
 
 Block form fields: name, start, end, mode (including Break). Work-mode names default to WORK_MODES labels when choosing a mode; protected blocks retain useful names like Exercise and Sleep. Do not offer area/task/goal fields. Validate required name, strict HH:MM, unique IDs, positive intervals within the operational day, and overlaps. Keep invalid drafts in the editor with field-level errors; no partial mutation. Copying a day replaces only the chosen destination after an explicit in-app confirmation naming that day. Cancel changes nothing. This confirmation is for the product's destructive action, not a permission question to the coding agent.
+
+`validateDay` reports indexed fields (`blocks.0.start`, for example); `upsertBlock` maps the edited block's issues to form fields (`name`, `start`, `end`, `type`, `id`). Stored days use the same validator. Equal start/end clocks are rejected, including 07:00–07:00. The desktop grid and mobile selected-day list share the editor in WeekView; Popover uses a native dialog for keyboard containment. No reset control existed in the Phase 2 Week view, so Phase 3 does not add one.
 
 ## Navigation and return behaviour
 

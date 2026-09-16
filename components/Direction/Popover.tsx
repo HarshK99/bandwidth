@@ -1,85 +1,66 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { cx, SURFACE } from "./ui";
 
-const WIDTH = 244;
-/** Rough panel height, used only to decide whether to flip above the anchor. */
-const ESTIMATED_HEIGHT = 190;
-const GAP = 6;
-const MARGIN = 12;
-
 interface PopoverProps {
-  /** The element the panel hangs off. null closes it. */
   anchor: HTMLElement | null;
-  /** Outside click, Escape, or a scroll — the caller decides what that means. */
+  label: string;
   onDismiss: () => void;
   children: ReactNode;
 }
 
-/**
- * Small panel anchored to an element, rendered in a portal and positioned
- * fixed. The portal matters: the week grid scrolls horizontally, and a panel
- * inside that container would be clipped by it.
- */
-export default function Popover({ anchor, onDismiss, children }: PopoverProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!anchor) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (panelRef.current?.contains(target) || anchor.contains(target)) return;
-      onDismiss();
+/** Native dialog supplies keyboard containment and Escape handling. */
+export default function Popover({ anchor, label, onDismiss, children }: PopoverProps) {
+  const panelRef = useRef<HTMLDialogElement>(null);
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!anchor || !panel) return;
+    const position = () => {
+      const viewport = window.visualViewport;
+      const leftEdge = (viewport?.offsetLeft ?? 0) + 12;
+      const topEdge = (viewport?.offsetTop ?? 0) + 12;
+      const width = (viewport?.width ?? window.innerWidth) - 24;
+      const height = (viewport?.height ?? window.innerHeight) - 24;
+      panel.style.width = `${Math.min(320, width)}px`;
+      panel.style.maxHeight = `${height}px`;
+      const rect = anchor.getBoundingClientRect();
+      const size = panel.getBoundingClientRect();
+      panel.style.left = `${Math.max(leftEdge, Math.min(rect.left, leftEdge + width - size.width))}px`;
+      const preferredTop = rect.bottom + 6 + size.height <= topEdge + height ? rect.bottom + 6 : rect.top - size.height - 6;
+      panel.style.top = `${Math.max(topEdge, Math.min(preferredTop, topEdge + height - size.height))}px`;
     };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onDismiss();
-    };
-    // Fixed positioning is measured once, so any scroll detaches the panel.
-    const onScroll = () => onDismiss();
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", onScroll, true);
-    window.addEventListener("resize", onScroll);
+    panel.showModal();
+    position();
+    const observer = new ResizeObserver(position);
+    observer.observe(panel);
+    window.addEventListener("resize", position);
+    window.visualViewport?.addEventListener("resize", position);
+    window.visualViewport?.addEventListener("scroll", position);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onScroll);
+      observer.disconnect();
+      window.removeEventListener("resize", position);
+      window.visualViewport?.removeEventListener("resize", position);
+      window.visualViewport?.removeEventListener("scroll", position);
+      document.body.style.overflow = previousOverflow;
+      panel.close();
     };
-  }, [anchor, onDismiss]);
+  }, [anchor]);
 
-  // Never rendered on the server: an anchor only exists after a real click.
   if (!anchor) return null;
-
-  const rect = anchor.getBoundingClientRect();
-  const flipUp =
-    rect.bottom + GAP + ESTIMATED_HEIGHT > window.innerHeight &&
-    rect.top > ESTIMATED_HEIGHT;
-
-  const left = Math.max(
-    MARGIN,
-    Math.min(rect.left, window.innerWidth - WIDTH - MARGIN)
-  );
-  const top = flipUp ? rect.top - GAP : rect.bottom + GAP;
-
   return createPortal(
-    <div
-      ref={panelRef}
-      style={{
-        position: "fixed",
-        left,
-        top,
-        width: WIDTH,
-        transform: flipUp ? "translateY(-100%)" : undefined,
+    <dialog ref={panelRef} aria-label={label}
+      onCancel={(event) => { event.preventDefault(); onDismiss(); }}
+      onClick={(event) => {
+        if (event.target !== event.currentTarget) return;
+        const rect = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onDismiss();
       }}
-      className={cx(SURFACE, "z-50 p-3")}
-    >
+      className={cx(SURFACE, "fixed inset-auto m-0 max-w-none overflow-y-auto p-4 text-foreground backdrop:bg-black/10")}>
       {children}
-    </div>,
-    document.body
+    </dialog>, document.body,
   );
 }

@@ -6,7 +6,7 @@ Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/mont
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
-The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1 Coverage and 2 Direction are implemented, unverified. Today and basic Week now share the v2 schedule; browser initialization replaces the old schedule with the reference week.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1 Coverage, 2 Direction, and 3 Week are implemented, unverified. Today and the editable weekly template share the v2 schedule; browser initialization replaces the old schedule with the reference week.
 
 New-chat reading order:
 
@@ -72,14 +72,16 @@ New-chat reading order:
 | Phase | Status | Output / next starting point |
 | --- | --- | --- |
 | 1 — Coverage | Implemented; unverified | New work modes/catalogue and compact filtered Coverage; next: Phase 2 |
-| 2 — Direction | Not started | Replace schedule/storage; update Today and coherent basic Week |
-| 3 — Week | Not started | Add time/name edits, add/remove/copy day, mobile editing |
+| 2 — Direction | Implemented; unverified | New schedule/storage, Today, and basic Week; next: Phase 3 |
+| 3 — Week | Implemented; unverified | Name/time/mode editing, add/remove/copy day, mobile selected-day view; next: Phase 4 |
 | 4 — Integration | Not started | Calendar boundary, retained navigation, polish, obsolete-code cleanup |
 | 5 — Walkthrough | Not started | Manual journeys, fixes, REBUILD_RESULTS.md, honest final handoff |
 
 At each phase end update its row and one compact entry: status, changed files/areas, checks, open issues, next phase. Add only necessary decisions. Include it in the phase commit; no additional handoff-only/self-hash commits. Record a precise resume point if interrupted.
 
 ## Check authorization ledger
+
+Phase 3: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available.
 
 Phase 2: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available.
 
@@ -103,3 +105,11 @@ Checks: implementation dependency searches and installed Next.js guide reads onl
 Open: header/card fit, date boundaries, return scroll/focus, persistence failures, cross-tab updates, and basic Week interactions unverified in browser; Calendar overnight filtering remains Phase 4.
 Next: start phase 3 in a fresh chat; extend the existing per-day grid and BlockEditor with name/time/add/remove/copy controls. Keep build/test/review permission separate.
 Decisions: reference week is Monday?Saturday with Sunday work gaps; local day starts at 07:00. Missing/invalid v2 loads fresh defaults, never migrates v1; successful v2 storage removes only the old plan key. Formatting/ruler signatures retained; operationalMinute added for shared time positioning.
+
+## Phase 3 handoff
+
+Phase 3: implementation complete, unverified; rebuild/phase-3-week → main_new.
+Changed: plan-ops/storage share day validation; WeekView/WeekGrid/BlockEditor/Popover provide local name/start/end/mode drafts, field errors, add/remove, confirmed source-to-destination copy, mobile selected-day gaps, and keyboard focus return; CONTRACTS updated. Existing not-saved warning retained; no Week reset control existed.
+Checks: source/dependency and installed Next.js guide reads, targeted form-accessibility guidance only; builds, tests, code review, and browser walkthrough not performed. No browser tool available; no remote push or master/main merge.
+Open: editing, overnight/overlap validation, copy cancellation, mobile fit, keyboard/focus, and reload/save-failure behaviour remain unverified in browser. Phase 2's outstanding checks remain; stale Phase 2 progress row corrected using its existing handoff and integration history.
+Next: start phase 4 in a fresh chat for Calendar boundaries, retained navigation, polish, and cleanup; keep check permission separate.

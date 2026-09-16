@@ -20,14 +20,14 @@ Use interface-design for existing patterns, ui-ux-pro-max for compact accessible
 
 ## Tasks
 
-- [ ] Complete all Phase 3 mutation contracts. Validate before writing; return precise PlanIssue values. Keep valid block IDs stable and copy arrays independently. Removing a block leaves open time, not an invented replacement.
-- [ ] Extend the existing BlockEditor with name, start, end, and mode fields. Use existing field/button/popover styling. No area, task, target, notes, or done controls. Keep draft changes local until Save. Cancel/escape discards the draft and returns focus to the trigger.
-- [ ] Reject empty name, malformed HH:MM, duplicate IDs, zero duration, overlaps, and blocks crossing the 07:00 boundary. Permit midnight crossings within an operational day. Show the error beside its field; preserve typed values so the user can fix them.
-- [ ] Add compact Add block and Remove controls, with the destination day clear. Preserve chronological ordering after saves. Do not require a drag-and-drop system; editing times is sufficient.
-- [ ] Add Copy day with explicit source and destination. Explain in the product confirmation that the destination day's blocks will be replaced. Do not touch other days or any Calendar events.
-- [ ] Make Week usable on mobile through a selected-day view while retaining the existing desktop week comparison. Reuse the same BlockEditor and mutation functions in both. Avoid horizontal page overflow or separate mobile data.
-- [ ] Make the recurring nature explicit with one short label such as Weekly template. Editing Wednesday affects future Wednesdays, not a history record. Keep the existing reset-to-defaults action if present; name its scope clearly and confirm replacement of the whole template.
-- [ ] Ensure save failures are visible and in-memory edits remain accessible. Do not silently claim persistence. Document the exact fields and behaviours in STATUS, commit, merge, and stop.
+- [x] Complete all Phase 3 mutation contracts. Validate before writing; return precise PlanIssue values. Keep valid block IDs stable and copy arrays independently. Removing a block leaves open time, not an invented replacement.
+- [x] Extend the existing BlockEditor with name, start, end, and mode fields. Use existing field/button/popover styling. No area, task, target, notes, or done controls. Keep draft changes local until Save. Cancel/escape discards the draft and returns focus to the trigger.
+- [x] Reject empty name, malformed HH:MM, duplicate IDs, zero duration, overlaps, and blocks crossing the 07:00 boundary. Permit midnight crossings within an operational day. Show the error beside its field; preserve typed values so the user can fix them.
+- [x] Add compact Add block and Remove controls, with the destination day clear. Preserve chronological ordering after saves. Do not require a drag-and-drop system; editing times is sufficient.
+- [x] Add Copy day with explicit source and destination. Explain in the product confirmation that the destination day's blocks will be replaced. Do not touch other days or any Calendar events.
+- [x] Make Week usable on mobile through a selected-day view while retaining the existing desktop week comparison. Reuse the same BlockEditor and mutation functions in both. Avoid horizontal page overflow or separate mobile data.
+- [x] Make the recurring nature explicit with one short label such as Weekly template. Editing Wednesday affects future Wednesdays, not a history record. Keep the existing reset-to-defaults action if present; name its scope clearly and confirm replacement of the whole template.
+- [x] Ensure save failures are visible and in-memory edits remain accessible. Do not silently claim persistence. Document the exact fields and behaviours in STATUS, commit, merge, and stop.
 
 ## Manual walkthrough scenarios
 
