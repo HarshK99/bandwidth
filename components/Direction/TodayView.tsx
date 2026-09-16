@@ -37,7 +37,7 @@ export default function TodayView() {
   const timelineRef = useRef<HTMLOListElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const timelineSpaceRef = useRef<HTMLDivElement>(null);
-  const positionedDate = useRef<string | null>(null);
+  const openingPosition = useRef<{ date: string; record: ReturnType<typeof readTodayReturn> } | null>(null);
 
   useEffect(() => { if (date) syncCalendar(date); }, [syncCalendar, date]);
 
@@ -65,23 +65,31 @@ export default function TodayView() {
   const isToday = Boolean(date && now && isSameDate(date, getOperationalDate(now)));
 
   useLayoutEffect(() => {
-    if (!ready || !dateISO || positionedDate.current === dateISO) return;
+    if (!ready || !dateISO) return;
     const scroller = sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]");
     const space = timelineSpaceRef.current;
     const timeline = timelineRef.current;
     if (!scroller || !space || !timeline) return;
-    positionedDate.current = dateISO;
     const headerHeight = sectionRef.current?.querySelector("[data-day-bar]")?.getBoundingClientRect().height ?? 0;
     const visibleHeight = Math.max(0, scroller.clientHeight - headerHeight);
     const current = timeline.querySelector<HTMLElement>("[data-current] [data-timeline-box]");
-    // Leave room to center even the first/last block, without moving the header.
-    const firstHeight = timeline.firstElementChild?.getBoundingClientRect().height ?? 0;
-    const lastHeight = timeline.lastElementChild?.getBoundingClientRect().height ?? 0;
-    space.style.paddingTop = isToday && current ? `${Math.max(0, (visibleHeight - firstHeight) / 2)}px` : "";
-    space.style.paddingBottom = isToday && current ? `${Math.max(0, (visibleHeight - lastHeight) / 2)}px` : "";
+    // Only add space when a boundary would otherwise prevent centering.
+    space.style.paddingTop = "";
+    space.style.paddingBottom = "";
+    if (isToday && current) {
+      const block = current.getBoundingClientRect();
+      const top = scroller.scrollTop + block.top - scroller.getBoundingClientRect().top - headerHeight - (visibleHeight - block.height) / 2;
+      space.style.paddingTop = `${Math.max(0, -top)}px`;
+      space.style.paddingBottom = `${Math.max(0, top - (scroller.scrollHeight - scroller.clientHeight))}px`;
+    }
 
     const returning = window.location.hash === "#restore-block" || window.history.state?.bandwidthTodayReturn === dateISO;
-    const record = returning ? readTodayReturn(dateISO) : null;
+    // Keep the return intent during React's repeated layout setup, even after
+    // consuming its URL marker. Do not skip positioning on setup/re-entry.
+    if (openingPosition.current?.date !== dateISO || returning) {
+      openingPosition.current = { date: dateISO, record: returning ? readTodayReturn(dateISO) : null };
+    }
+    const record = openingPosition.current.record;
     if (!record) {
       const block = current?.getBoundingClientRect();
       const top = isToday && block

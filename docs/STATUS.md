@@ -141,3 +141,11 @@ Changed: TodayView positioning/boundary space; DayBar/DayNav optional Now; Direc
 Checks: Chromium at 360×800 and 1280×900; middle/first/last blocks centered within 0.5px, gap stays at top, explicit and browser Back restore exact scroll/focus, Week → Today recenters, Now absent, no captured page errors. Builds, repository tests, and code review not authorized or run for this follow-up.
 Open: existing REBUILD_RESULTS limitations remain; no new issue observed in these browser scenarios.
 Next: user's visual acceptance or separately requested build/review; no remote push or deployment.
+
+## Follow-up: excess space above Today
+
+Status: fixed after user screenshot; fix/today-centering-space → main_new.
+Changed: TodayView adds only the minimum boundary space needed for centering; layout setup no longer skips positioning when repeated, and retains Coverage return intent after consuming the marker.
+Checks: Chromium mobile/desktop, first/middle/last blocks, gaps, Week re-entry, explicit/browser Coverage return; 350×900 at 20:07 showed Dinner centered with zero added top padding. No captured errors in the opening scenarios; builds, repository tests, and code review not run.
+Open: user's live screenshot was not independently reproduced in their profile; corrected layout inspected in isolated Chromium.
+Next: user checks the corrected view; no remote push or deployment.
