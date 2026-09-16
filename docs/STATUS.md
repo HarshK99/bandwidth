@@ -149,3 +149,11 @@ Changed: TodayView adds only the minimum boundary space needed for centering; la
 Checks: Chromium mobile/desktop, first/middle/last blocks, gaps, Week re-entry, explicit/browser Coverage return; 350×900 at 20:07 showed Dinner centered with zero added top padding. No captured errors in the opening scenarios; builds, repository tests, and code review not run.
 Open: user's live screenshot was not independently reproduced in their profile; corrected layout inspected in isolated Chromium.
 Next: user checks the corrected view; no remote push or deployment.
+
+## Follow-up: Google popup on Direction open
+
+Status: fixed; fix/calendar-explicit-signin → main_new. User approved the proposed no-automatic-sign-in plan including Chromium checks.
+Changed: Calendar access guard, reconnect store status, Today/Calendar messages, manual recovery of missing calendar list; source of truth and contracts updated. Saved events and connection remain intact.
+Checks: isolated Chromium with simulated Google sign-in/API responses: open/reload/settings made zero access requests; valid access refreshed events quietly; expired access kept cached events; only explicit Connect/Sync now requested access; cancelling did not trigger another request on Today. No captured page errors. Builds, repository tests, and code review not run.
+Open: real-account sign-in was not exercised by the agent; user's live confirmation remains separate from the simulated browser evidence.
+Next: user checks opening Direction without a popup; no remote push or deployment.

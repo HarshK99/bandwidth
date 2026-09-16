@@ -6,14 +6,14 @@
 import { fetchEvents, listCalendars } from "./api";
 import { operationalBounds } from "./day-events";
 import { addDays, getOperationalDate } from "../direction/schedule";
-import { getAccessToken, isCalendarConfigured, revokeAccess } from "./gis";
+import { CalendarReconnectRequired, getAccessToken, isCalendarConfigured, revokeAccess } from "./gis";
 import type { CalendarEvent, CalendarOption } from "./types";
 
 const STORAGE_KEY = "bandwidth.calendar.v1";
 const WINDOW_DAYS = 8;
 const SYNC_THROTTLE_MS = 60_000;
 
-export type SyncStatus = "idle" | "syncing" | "error";
+export type SyncStatus = "idle" | "syncing" | "error" | "reconnect";
 
 export interface CalendarSnapshot {
   /** NEXT_PUBLIC_GOOGLE_CLIENT_ID is set. */
@@ -203,15 +203,18 @@ async function runSync(force: boolean, interactive: boolean): Promise<void> {
   set({ status: "syncing", error: null });
   try {
     const token = await getAccessToken(interactive);
+    // Manual sync also recovers a missing calendar list after reconnecting.
+    const calendars = interactive && snapshot.calendars.length === 0
+      ? await listCalendars(token) : null;
     const { timeMin, timeMax } = syncWindow(date);
     const events = await fetchEvents(token, calendarId, timeMin, timeMax);
     if (version !== requestVersion) return;
-    set({ events, timeMinMs: timeMin.getTime(), timeMaxMs: timeMax.getTime(), lastSyncedMs: Date.now(), status: "idle", error: null });
+    set({ ...(calendars ? { calendars } : {}), events, timeMinMs: timeMin.getTime(), timeMaxMs: timeMax.getTime(), lastSyncedMs: Date.now(), status: "idle", error: null });
     persist();
   } catch (error) {
     if (version !== requestVersion) return;
     // Keep the last cache; Today and Settings disclose the failed refresh.
-    set({ status: "error", error: messageOf(error, "Sync failed") });
+    set({ status: error instanceof CalendarReconnectRequired ? "reconnect" : "error", error: messageOf(error, "Sync failed") });
   } finally {
     // Navigation during a request must still fetch the newly visible day.
     if (version === requestVersion && requestedDate &&
@@ -244,7 +247,7 @@ export async function connect(): Promise<void> {
       : (calendars.find((c) => c.primary)?.id ?? calendars[0]?.id ?? "primary");
     set({ connected: true, calendars, calendarId, status: "idle", error: null });
     persist();
-    await runSync(true, true);
+    await runSync(true, false);
   } catch (error) {
     set({ status: "error", error: messageOf(error, "Could not connect") });
   }
@@ -273,7 +276,7 @@ export async function refreshCalendars(): Promise<void> {
     set({ calendars: await listCalendars(token) });
     persist();
   } catch (error) {
-    set({ status: "error", error: messageOf(error, "Could not list calendars") });
+    set({ status: error instanceof CalendarReconnectRequired ? "reconnect" : "error", error: messageOf(error, "Could not list calendars") });
   }
 }
 

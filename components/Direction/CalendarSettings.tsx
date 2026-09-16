@@ -34,7 +34,8 @@ export default function CalendarSettings() {
   if (!state) return null;
 
   const syncedLine =
-    state.status === "error"
+    state.status === "reconnect" ? "Calendar needs reconnecting. Use Sync now."
+    : state.status === "error"
       ? state.lastSyncedMs && now
         ? `Sync failed · last ok ${formatSyncedAgo(state.lastSyncedMs, now.getTime())}`
         : "Sync failed"
@@ -97,7 +98,7 @@ export default function CalendarSettings() {
                 </li>
               ))}
               {calendarCount === 0 && (
-                <li className={cx("text-[12px]", MUTED)}>{state.status === "error" ? "Calendars could not be loaded." : "Loading calendars…"}</li>
+                <li className={cx("text-[12px]", MUTED)}>{state.status === "reconnect" ? "Use Sync now to load your calendars." : state.status === "error" ? "Calendars could not be loaded." : "Loading calendars…"}</li>
               )}
             </ul>
           </div>

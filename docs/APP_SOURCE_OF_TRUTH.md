@@ -204,6 +204,8 @@ Keep the restrained existing visual system: neutral backgrounds, subtle surfaces
 
 The HTML uses a system-font fallback to remain standalone. That is not a request to remove the app's font.
 
+Calendar sign-in must never open automatically on entering Direction, changing dates, opening Calendar settings, or reloading. Automatic sync may reuse valid access already held in the tab; missing/expired access preserves saved events and shows a quiet reconnect message. Only an explicit Connect or Sync now click may request fresh Google access. Access remains temporary and is not persisted in browser storage.
+
 Week, Calendar, Time, and Upgrades remain visible but disabled in the prototype because they were not prototyped. Never ship those disabled placeholders. The phased plan updates Week and retains Calendar, Time, and Upgrades as an explicit default pending the user's feature preference. Calendar's operational-day boundary may need adaptation; the retained surfaces are not being redesigned.
 
 Reuse and adapt the existing components instead of building the UI from scratch; the user explicitly requested this when authorizing the phased plan.

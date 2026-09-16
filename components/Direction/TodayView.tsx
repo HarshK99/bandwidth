@@ -123,6 +123,7 @@ export default function TodayView() {
     calendarState.timeMinMs <= bounds.startMs && calendarState.timeMaxMs >= bounds.endMs;
   const calendarMessage = !calendarState?.connected ? null
     : !calendarState.configured ? "Calendar connection is unavailable. Showing saved events."
+    : calendarState.status === "reconnect" ? "Calendar needs reconnecting. Showing saved events. Use Sync now in Calendar."
     : calendarState.status === "error" ? "Calendar refresh failed. Saved events may be out of date."
     : calendarState.status === "syncing" ? "Refreshing Calendar…"
     : !calendarCovered ? "Calendar has not synced this day yet."
