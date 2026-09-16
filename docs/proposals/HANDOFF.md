@@ -9,14 +9,16 @@ Status: HTML proposal created for discussion; not accepted or implemented in the
 
 ## Accepted scope
 - `founder_operating_system_latest.md` guides generic work categories; Bandwidth does not represent the whole operating system.
-- Bandwidth answers what block is happening now, with a broad focus and suitable kinds of effort.
+- Bandwidth answers what block is happening now and the suitable kind of effort. Latest correction: blocks must not assign Wave Link or freelance; the external bottleneck determines which business/task deserves attention.
 - Coverage holds nested, reusable tasks. No niche-specific work such as dental positioning; generic positioning is appropriate.
 - App does not know the current actual task. No targets, journal, evidence capture, or results tracking.
-- Clicking a Direction card opens the chosen focus with an option to widen the view.
+- Clicking a Direction card opens all areas filtered by its effort. An optional compact area filter narrows the list; this supersedes the earlier chosen-focus default.
 - User requested a single lightweight HTML preview before changing app code.
 
 ## Proposed, not yet agreed
-- Filter by both broad focus and effort; widen either independently.
+- Compact area and effort dropdowns on one Coverage toolbar; no introductory text, extra action buttons, or repeated effort labels when effort is already filtered.
+- Direction cards show the block name and current/next state, with remaining time for the current block. Remove the in-card time range, browse-tasks caption, business names, and navigation arrows. The time ruler remains.
+- Coverage uses one compact nested list with area/stage/task backgrounds inspired by the existing app. Matching tasks expand when a filter is active; unrestricted browsing starts with stages collapsed.
 - Tree: Wave Link, Freelance, Content, Exploration, Jobs, Recovery and life, Tools and learning.
 - Effort: deep work, low-energy work, recovery. Assignments are suggestions; actual work can require different effort.
 - Optional branches without scheduled time are not automatically gaps.
@@ -34,4 +36,4 @@ Status: HTML proposal created for discussion; not accepted or implemented in the
 - Original source-of-truth file was already untracked at task start; preserve its contents.
 
 ## Next starting point
-Open `today-final-view.html` with the user to discuss the intended final Today appearance; use the first HTML for the broader data proposal. The user explicitly wants the timeline retained. Discuss tree/task wording and filtering behaviour and refine the proposal. Do not implement app changes until the user authorizes them. Scheduling behaviour and whether existing ancillary sections change remain undecided.
+Open the updated `today-final-view.html` with the user to discuss the intended final Today appearance. The first HTML is historical and still contains the superseded focus-first behaviour. The user liked the second preview and requested the corrections now recorded above. The timeline stays. Discuss tree/task wording and filtering behaviour and refine the proposal. Do not implement app changes until the user authorizes them. Scheduling behaviour and whether existing ancillary sections change remain undecided. Latest HTML edits have not been checked in a browser; no builds, tests, or code review performed.
