@@ -36,7 +36,7 @@
 <div class="daybar"><div class="barrow"><span class="eyebrow"><span class="weekday" id="weekday"></span></span><button class="now-button" id="jump-now">Jump to now</button></div><div class="barrow"><h1 id="date"></h1><span class="clock" id="clock"></span></div><div class="progress" aria-hidden="true"><div id="day-progress"></div></div></div>
 <ol class="timeline" id="timeline" aria-label="Today's timeline"></ol><div class="timeline-end">07:00 · Next morning</div>
 </section>
-<section id="coverage-view" hidden><div class="coverage-toolbar"><button class="back" id="back" aria-label="Back to Today" title="Back to Today">←</button><h1 id="coverage-title" tabindex="-1">Coverage</h1><select id="focus-filter" aria-label="Filter by area"></select><select id="effort-filter" aria-label="Filter by effort"><option value="all">All efforts</option><option value="deep">Deep work</option><option value="low">Light work</option><option value="execution">Execution</option><option value="recovery">Recovery</option></select></div>
+<section id="coverage-view" hidden><div class="coverage-toolbar"><button class="back" id="back" aria-label="Back to Today" title="Back to Today">←</button><h1 id="coverage-title" tabindex="-1">Coverage</h1><select id="focus-filter" aria-label="Filter by area"></select><select id="effort-filter" aria-label="Filter by effort"><option value="all">All efforts</option><option value="deep">Deep work</option><option value="low">Light work</option><option value="execution">Production</option><option value="recovery">Recovery</option></select></div>
 <p class="sr-only" id="filter-summary" role="status"></p><div class="tree" id="tree"></div></section>
 </div>
 <nav class="bottom-nav" aria-label="App sections"><div class="bottom-inner"><button id="nav-today" aria-pressed="true">Direction</button><button id="nav-coverage" aria-pressed="false">Coverage</button><button disabled title="Unchanged; outside this Today-only preview">Time</button><button disabled title="Unchanged; outside this Today-only preview">Upgrades</button></div></nav>
@@ -84,8 +84,8 @@ const areas = [
   {name:'Life admin and finances',children:[task('Pay bills and review finances','low'),task('Run errands','low')]}
  ]}
 ];
-const names={deep:'Deep work',low:'Light work',execution:'Execution',recovery:'Recovery'};
-const activityGuides={deep:'Discovery · Positioning · Sales · Decisions',low:'Lead research · Posting · Admin',execution:'Production · Editing · Revisions'};
+const names={deep:'Deep work',low:'Light work',execution:'Production',recovery:'Recovery'};
+const activityGuides={deep:'Think · Solve · Decide · Discuss',low:'Research · Post · Follow up · Admin',execution:'Build · Write · Edit · Refine'};
 
 const $=id=>document.getElementById(id);
 // Blocks describe effort only. The current bottleneck and business choice stay external.
@@ -95,7 +95,7 @@ const blocks=[
  {start:660,end:780,name:'Deep work',type:'deep'},
  {start:780,end:840,name:'Lunch',type:'buffer'},
  {start:840,end:930,name:'Light work',type:'low'},
- {start:930,end:1020,name:'Execution',type:'execution'},
+ {start:930,end:1020,name:'Production',type:'execution'},
  {start:1020,end:1080,name:'Break',type:'buffer'},
  {start:1080,end:1170,name:'Deep work',type:'deep'},
  {start:1170,end:1260,name:'Dinner and downtime',type:'recovery'},
@@ -160,7 +160,7 @@ function appendNodes(container,nodes,effort,focus){
    if(!list){list=document.createElement('ul');list.className='tasks';container.append(list);}
    const item=document.createElement('li'),label=document.createElement('span');label.textContent=node.name;item.append(label);
    if(effort==='all'){
-    const tag=document.createElement('small');tag.textContent=node.efforts.map(type=>({deep:'Deep',low:'Light',execution:'Execution',recovery:'Recovery'})[type]).join(' / ');
+    const tag=document.createElement('small');tag.textContent=node.efforts.map(type=>({deep:'Deep',low:'Light',execution:'Production',recovery:'Recovery'})[type]).join(' / ');
     tag.setAttribute('aria-label',node.efforts.map(type=>names[type]).join(' or '));item.append(tag);
    }
    list.append(item);
