@@ -1,231 +1,87 @@
-"use client";
+﻿"use client";
 
 import { BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import {
-  assignmentKey,
-  blockRunsOn,
-  dayName,
-  formatRange,
-  indexAssignments,
-  shortDayName,
-  sortBlocks,
-  WEEK_DAYS,
+  blockDurationMinutes, dayName, formatRange, operationalMinute, shortDayName, sortBlocks, WEEK_DAYS,
 } from "@/lib/direction/schedule";
-import { getNode } from "@/lib/direction/nodes";
-import { setAssignment } from "@/lib/direction/plan-ops";
 import type { DayOfWeek, DirectionPlan } from "@/lib/direction/types";
-import FocusEditor from "./FocusEditor";
-import Popover from "./Popover";
-import { CARD, cx, FAINT, LABEL, LABEL_XS, MUTED, NUM } from "./ui";
+import { CARD, cx, LABEL_XS, MUTED, NUM } from "./ui";
 
-export interface EditingCell {
-  blockId: string;
-  day: DayOfWeek;
-  /** The clicked cell, so the popover can anchor to it. */
-  anchor: HTMLElement;
-}
-
+export interface EditingCell { blockId: string; day: DayOfWeek; anchor: HTMLElement }
 interface WeekGridProps {
   plan: DirectionPlan;
   today: DayOfWeek | null;
   editing: EditingCell | null;
   onEdit: (cell: EditingCell | null) => void;
-  update: (fn: (plan: DirectionPlan) => DirectionPlan) => void;
 }
-
-/**
- * The week as a rhythm, not a calendar: rows are the recurring blocks,
- * columns are days, and a cell holds one thing — the area that block points
- * at. No durations, no proportional heights, no events.
- */
-export default function WeekGrid({
-  plan,
-  today,
-  editing,
-  onEdit,
-  update,
-}: WeekGridProps) {
-  const days = WEEK_DAYS;
-  const blocks = sortBlocks(plan.blocks);
-  const index = indexAssignments(plan.assignments);
-
-  const columns = `minmax(8rem, 1fr) repeat(${days.length}, minmax(6rem, 1fr))`;
-
-  const editingBlock = editing
-    ? (blocks.find((block) => block.id === editing.blockId) ?? null)
-    : null;
-  const editingNodeId = editing
-    ? (index.get(assignmentKey(editing.day, editing.blockId))?.nodeId ?? "")
-    : "";
-
-  const commit = (blockId: string, day: DayOfWeek, nodeId: string) => {
-    update((current) => setAssignment(current, day, blockId, nodeId));
-    onEdit(null);
-  };
+export default function WeekGrid({ plan, today, editing, onEdit }: WeekGridProps) {
+  // Shared time lines align the week; each column still owns its own blocks.
+  const boundaries = new Set([0, 1440]);
+  for (const day of WEEK_DAYS) {
+    for (const block of plan.week[day]) {
+      const start = operationalMinute(block.start);
+      boundaries.add(start);
+      boundaries.add(start + blockDurationMinutes(block));
+    }
+  }
+  const lines = [...boundaries].sort((a, b) => a - b);
+  const columns = "3.5rem repeat(7, minmax(0, 1fr))";
+  const rows = lines.slice(0, -1).map((start, index) =>
+    `minmax(${Math.min(96, Math.max(32, (lines[index + 1] - start) * 0.5))}px, auto)`).join(" ");
 
   return (
-    <div className="-mx-5 overflow-x-auto px-5 sm:-mx-8 sm:px-8">
-      <div className={cx(CARD, "min-w-[52rem] overflow-hidden")}>
-        {/* Day header. Sticky on both axes: it pins to the top of the
-            scrolling section as the grid's many rows pass underneath it, and
-            the grid itself scrolls horizontally past a fixed nav — without a
-            day name in view, a cell three columns in is unreadable. */}
-        <div
-          className="sticky top-0 z-20 grid border-b border-black/[0.07] bg-surface px-1 pt-3 pb-2.5 dark:border-white/[0.08]"
-          style={{ gridTemplateColumns: columns }}
-        >
-          {/* The corner: sticky on its own left edge too, so it stays put
-              through both scroll directions at once — otherwise a day name
-              would slide out from under the row headers as the grid pans. */}
-          <div className="sticky left-0 z-10 bg-surface" />
-          {days.map((day) => {
-            const isToday = day === today;
-            const isWeekend = day === 0 || day === 6;
-            return (
-              <div
-                key={day}
-                className={cx(
-                  LABEL_XS,
-                  "px-2.5",
-                  isToday
-                    ? "text-accent"
-                    : isWeekend
-                      ? FAINT
-                      : "text-zinc-600 dark:text-zinc-400"
-                )}
-              >
-                {shortDayName(day)}
-              </div>
-            );
-          })}
+    <div className="hidden lg:block">
+      <div className={cx(CARD, "overflow-hidden")}>
+        <div className="sticky top-0 z-20 grid border-b border-black/[0.07] bg-surface py-3 dark:border-white/[0.08]"
+          style={{ gridTemplateColumns: columns }}>
+          <span className="sticky left-0 bg-surface" />
+          {WEEK_DAYS.map((day) => (
+            <h2 key={day} className={cx(LABEL_XS, "px-2.5", today === day ? "text-zinc-900 dark:text-zinc-100" : MUTED)}>
+              {shortDayName(day)}
+            </h2>
+          ))}
         </div>
-
-        {/* One row per block */}
-        {blocks.map((block) => {
-          const meta = BLOCK_TYPE_META[block.type];
-          return (
-            <div
-              key={block.id}
-              className="grid border-b border-black/[0.05] px-1 last:border-b-0 dark:border-white/[0.07]"
-              style={{ gridTemplateColumns: columns }}
-            >
-              {/* Same hairline as Today, turned on its side — type reads the
-                  same way in both views. Sticky-left so which block a row is
-                  survives scrolling right to the weekend columns. */}
-              <div
-                className="sticky left-0 z-10 border-l-2 bg-surface py-3.5 pr-4 pl-2.5"
-                style={{ borderColor: meta.border }}
-              >
-                <div className={cx(NUM, "text-[11px] font-medium", FAINT)}>
-                  {formatRange(block)}
-                </div>
-                <div
-                  className={cx(
-                    LABEL,
-                    "mt-1",
-                    meta.tone === "relaxed" && "font-normal tracking-[0.13em]",
-                    meta.emphasis === "strong"
-                      ? "text-zinc-700 dark:text-zinc-300"
-                      : MUTED
-                  )}
-                >
-                  {block.name}
-                </div>
-                {block.days && (
-                  <div className={cx(LABEL_XS, "mt-1", FAINT)}>
-                    {days
-                      .filter((day) => blockRunsOn(block, day))
-                      .map(shortDayName)
-                      .join(" ")}
-                  </div>
-                )}
-              </div>
-
-              {days.map((day) => {
-                // A day this block doesn't run isn't an empty cell to fill —
-                // there is nothing there to point at.
-                if (!blockRunsOn(block, day)) {
-                  return (
-                    <div
-                      key={day}
-                      aria-label={`${dayName(day)} — no ${block.name}`}
-                      className="border-l border-black/[0.04] bg-black/[0.015] dark:border-white/[0.06] dark:bg-white/[0.02]"
-                    />
-                  );
-                }
-
-                const assignment = index.get(assignmentKey(day, block.id));
-                // The stage itself is the cell — the domain is implied by
-                // the hierarchy and would only crowd a 6rem column.
-                const focus = assignment?.nodeId
-                  ? (getNode(assignment.nodeId)?.label ?? "")
-                  : "";
-                // A day that renames the slot says so, quietly, above the
-                // area — that difference is part of the week's shape.
-                const label =
-                  assignment?.label && assignment.label !== block.name
-                    ? assignment.label
-                    : null;
-                const isToday = day === today;
-                const isOpen =
-                  editing?.blockId === block.id && editing.day === day;
-
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={(event) =>
-                      onEdit(
-                        isOpen
-                          ? null
-                          : { blockId: block.id, day, anchor: event.currentTarget }
-                      )
-                    }
-                    aria-label={`${dayName(day)}, ${block.name} — ${focus || "unassigned"}`}
-                    className={cx(
-                      "group h-full min-h-[3.75rem] rounded-lg px-2.5 py-3.5 text-left text-[13px] leading-snug transition-colors",
-                      "border-l border-black/[0.04] dark:border-white/[0.06]",
-                      isOpen
-                        ? "bg-accent/10"
-                        : isToday
-                          ? "bg-accent/[0.045] hover:bg-accent/[0.08]"
-                          : "hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
-                    )}
-                  >
-                    {label && (
-                      <span className={cx(LABEL_XS, "block pb-0.5", FAINT)}>
-                        {label}
-                      </span>
-                    )}
-                    {focus ? (
-                      <span className="text-zinc-800 dark:text-zinc-200">{focus}</span>
-                    ) : label ? null : (
-                      <span className="text-transparent transition-colors group-hover:text-zinc-400 dark:group-hover:text-zinc-600">
-                        ·
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+        <div className="grid" style={{ gridTemplateColumns: columns, gridTemplateRows: rows }}>
+          {lines.slice(0, -1).map((minute, index) => {
+            const clock = (minute + 420) % 1440;
+            const label = `${String(Math.floor(clock / 60)).padStart(2, "0")}:${String(clock % 60).padStart(2, "0")}`;
+            return <div key={minute} className={cx(NUM, MUTED, "sticky left-0 z-10 border-t border-black/5 bg-surface px-1 py-2 text-[11px] dark:border-white/5")}
+              style={{ gridColumn: 1, gridRow: index + 1 }}>{label}</div>;
+          })}
+          {WEEK_DAYS.map((day, column) => (
+            <div key={day} className="border-l border-black/[0.04] dark:border-white/[0.06]"
+              style={{ gridColumn: column + 2, gridRow: `1 / ${lines.length}` }}>
+              {plan.week[day].length === 0 && <p className={cx(MUTED, "px-2.5 py-3 text-[12px]")}>Open day</p>}
             </div>
-          );
-        })}
+          ))}
+          {WEEK_DAYS.flatMap((day, column) => sortBlocks(plan.week[day]).map((block) => {
+            const start = operationalMinute(block.start);
+            const meta = BLOCK_TYPE_META[block.type];
+            const isOpen = editing?.day === day && editing.blockId === block.id;
+            return (
+              <button key={`${day}:${block.id}`} type="button"
+                style={{
+                  gridColumn: column + 2,
+                  gridRow: `${lines.indexOf(start) + 1} / ${lines.indexOf(start + blockDurationMinutes(block)) + 1}`,
+                  backgroundColor: meta.fill, borderColor: meta.border,
+                }}
+                aria-label={`${dayName(day)}, ${formatRange(block)}, ${block.name}, mode ${meta.label}`}
+                aria-expanded={isOpen}
+                aria-haspopup="dialog"
+                onClick={(event) => onEdit(isOpen ? null : { blockId: block.id, day, anchor: event.currentTarget })}
+                className={cx(
+                  "relative m-px min-h-11 min-w-0 break-words rounded-lg border-l-2 px-2.5 py-2 text-left text-[12px] leading-snug transition-colors",
+                  "hover:ring-1 hover:ring-black/15 focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 dark:hover:ring-white/20",
+                  isOpen && "ring-1 ring-black/30 dark:ring-white/30",
+                )}>
+                <span className={cx(NUM, MUTED, "mb-1 block text-[11px]")}>{formatRange(block)}</span>
+                <span className="block break-words text-zinc-800 dark:text-zinc-200">{block.name}</span>
+                {block.name !== meta.label && <span className={cx(MUTED, "mt-1 block text-[11px]")}>{meta.label}</span>}
+              </button>
+            );
+          }))}
+        </div>
       </div>
-
-      {/* One panel for the whole grid — it portals out, so it doesn't need
-          to live in the cell it points at. */}
-      <Popover anchor={editing?.anchor ?? null} onDismiss={() => onEdit(null)}>
-        {editingBlock && editing && (
-          <FocusEditor
-            key={`${editing.blockId}:${editing.day}:${editingNodeId}`}
-            title={`${dayName(editing.day)} · ${editingBlock.name}`}
-            nodeId={editingNodeId}
-            onCommit={(next) => commit(editing.blockId, editing.day, next)}
-            onClear={() => commit(editing.blockId, editing.day, "")}
-            onCancel={() => onEdit(null)}
-          />
-        )}
-      </Popover>
     </div>
   );
 }

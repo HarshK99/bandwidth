@@ -1,7 +1,7 @@
 // lib/calendar/gis.ts
 // Google Identity Services — the token half only. No client secret, no
 // server, no refresh token. The access token lives here in a module
-// variable and is never persisted (see docs/CALENDAR.md).
+// variable and is never persisted (see docs/APP_SOURCE_OF_TRUTH.md).
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
 const SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
@@ -102,20 +102,19 @@ async function getClient(): Promise<TokenClient> {
   return client;
 }
 
-/**
- * A valid access token. Returns the cached one until it's within 60s of
- * expiry, then asks GIS for a new one.
- *
- * `interactive` must be true only when there's a real user gesture behind the
- * call (the Connect button, Sync now). Everything else — the sync on open,
- * the calendar list refresh — passes false, which uses `prompt: "none"`: GIS
- * renews silently through a hidden iframe if the Google session is alive, and
- * rejects (no UI) if it isn't. That's the difference between "auth once" and
- * a popup on every refresh.
- */
+export class CalendarReconnectRequired extends Error {
+  constructor() {
+    super("Calendar needs reconnecting. Use Sync now in Calendar.");
+    this.name = "CalendarReconnectRequired";
+  }
+}
+
+/** Background callers may only reuse existing access. Google's token flow
+ * can open a popup, so only Connect and Sync now may request fresh access. */
 export async function getAccessToken(interactive = false): Promise<string> {
   if (!isCalendarConfigured) throw new Error("Calendar is not configured");
   if (accessToken && expiresAt - 60_000 > Date.now()) return accessToken;
+  if (!interactive) throw new CalendarReconnectRequired();
   if (inflight) return inflight;
 
   inflight = (async () => {
@@ -123,7 +122,7 @@ export async function getAccessToken(interactive = false): Promise<string> {
       const tokenClient = await getClient();
       return await new Promise<string>((resolve, reject) => {
         pending = { resolve, reject };
-        tokenClient.requestAccessToken({ prompt: interactive ? "" : "none" });
+        tokenClient.requestAccessToken({ prompt: "" });
       });
     } finally {
       inflight = null;

@@ -25,13 +25,14 @@ export default function DirectionNav() {
           <Link
             key={link.href}
             href={link.href}
+            scroll={link.href === "/direction" ? false : undefined}
             aria-current={active ? "page" : undefined}
             className={cx(
               LABEL_XS,
-              "relative flex min-h-11 items-center transition-colors",
+              "relative flex min-h-11 items-center transition-colors focus-visible:outline-2 focus-visible:outline-offset-2",
               active
                 ? "text-zinc-900 dark:text-zinc-100"
-                : "text-zinc-400 hover:text-zinc-700 dark:text-zinc-500 dark:hover:text-zinc-300"
+                : "text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300"
             )}
           >
             {link.label}

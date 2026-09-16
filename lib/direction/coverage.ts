@@ -1,156 +1,31 @@
-// lib/direction/coverage.ts
-// "Does everything have a place?" — the hierarchy walked top to bottom with
-// the week's hours attached, so a gap is something you can see rather than
-// something you have to remember to look for.
-//
-// Three states, because two would lie. A task under a scheduled stage does
-// get time — it just isn't named by any block — and calling that a gap would
-// bury the real gaps in noise.
+﻿import { ACTIVITY_AREAS } from "../work/catalog";
+import { WORK_MODES } from "../work/modes";
+import type { ActivityArea, ActivityNode, CoverageFilter, Effort } from "../work/types";
 
-import { hierarchy, type HierarchyNode } from "../life";
-import {
-  blockDurationMinutes,
-  blockRunsOn,
-  sortBlocks,
-  WEEK_DAYS,
-} from "./schedule";
-import type { BlockType, DayOfWeek, DirectionPlan } from "./types";
-
-type CoverageState =
-  /** This node, or something beneath it, has scheduled time. */
-  | "covered"
-  /** Nothing here or below, but an ancestor is scheduled — it happens inside that. */
-  | "inherited"
-  /** No time anywhere in its chain. */
-  | "gap";
-
-export interface CoverageRow {
-  node: HierarchyNode;
-  /** The parent *within this list* — null for the top rows. */
-  parentId: string | null;
-  depth: number;
-  hasChildren: boolean;
-  minutes: number;
-  /**
-   * Minutes that *serve* this node from elsewhere in the tree — content shot
-   * under Personal Brand but aimed at Wave. Kept apart from `minutes`: it is
-   * real investment, but it isn't this branch's own time.
-   */
-  viaMinutes: number;
-  state: CoverageState;
-  /** Where it is scheduled, e.g. "Mon Wed · Build". Empty unless named. */
-  slots: string[];
-  /**
-   * The block types among this node's own slots — "admin" if it's directly
-   * assigned to an admin-type block anywhere, whatever the day. Same
-   * attribution as `slots`/`minutes`: a stage named by a `do:` list carries
-   * this, its individual tasks don't (they read it via being shown as a
-   * match's descendants — see CoverageView's filter).
-   */
-  slotTypes: BlockType[];
+function filterNodes(nodes: readonly ActivityNode[], effort: Effort | null): ActivityNode[] {
+  return nodes.flatMap((node): ActivityNode[] => {
+    if (node.kind === "activity") {
+      return effort === null || node.efforts.includes(effort) ? [node] : [];
+    }
+    const children = filterNodes(node.children, effort);
+    return children.length ? [{ ...node, children }] : [];
+  });
 }
 
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/** Flat, in depth-first order — the view handles expansion by filtering. */
-export function getCoverageRows(plan: DirectionPlan): CoverageRow[] {
-  const childrenOf = new Map<string | null, HierarchyNode[]>();
-  for (const node of hierarchy) {
-    const list = childrenOf.get(node.parentId) ?? [];
-    list.push(node);
-    childrenOf.set(node.parentId, list);
-  }
-
-  const blocks = new Map(sortBlocks(plan.blocks).map((b) => [b.id, b]));
-
-  // Minutes credited to a node and every ancestor of it.
-  const minutes = new Map<string, number>();
-  const via = new Map<string, number>();
-  const namedHere = new Set<string>();
-  const slotsByNode = new Map<string, Map<string, Set<DayOfWeek>>>();
-  const slotTypesByNode = new Map<string, Set<BlockType>>();
-
-  const parentOf = new Map(hierarchy.map((n) => [n.id, n.parentId]));
-
-  for (const assignment of plan.assignments) {
-    const block = blocks.get(assignment.blockId);
-    if (!block || !assignment.nodeId) continue;
-    // An assignment on a day its block doesn't run is dormant, not scheduled:
-    // counting it would credit hours that never happen.
-    if (!blockRunsOn(block, assignment.day)) continue;
-    namedHere.add(assignment.nodeId);
-
-    const perBlock = slotsByNode.get(assignment.nodeId) ?? new Map();
-    const days = perBlock.get(block.name) ?? new Set<DayOfWeek>();
-    days.add(assignment.day);
-    perBlock.set(block.name, days);
-    slotsByNode.set(assignment.nodeId, perBlock);
-
-    const types = slotTypesByNode.get(assignment.nodeId) ?? new Set<BlockType>();
-    types.add(block.type);
-    slotTypesByNode.set(assignment.nodeId, types);
-
-    const span = blockDurationMinutes(block);
-    let id: string | null | undefined = assignment.nodeId;
-    while (id) {
-      minutes.set(id, (minutes.get(id) ?? 0) + span);
-      id = parentOf.get(id) ?? null;
-    }
-
-    let servedId: string | null | undefined = assignment.serves;
-    while (servedId) {
-      via.set(servedId, (via.get(servedId) ?? 0) + span);
-      servedId = parentOf.get(servedId) ?? null;
-    }
-  }
-
-  const rows: CoverageRow[] = [];
-  const walk = (node: HierarchyNode, depth: number, ancestorNamed: boolean) => {
-    const total = minutes.get(node.id) ?? 0;
-    const children = childrenOf.get(node.id) ?? [];
-
-    const perBlock = slotsByNode.get(node.id);
-    const slots = perBlock
-      ? [...perBlock.entries()].map(([blockName, days]) => {
-          const ordered = WEEK_DAYS.filter((day) => days.has(day));
-          const weekdays =
-            ordered.length === 5 && ordered.every((day) => day >= 1 && day <= 5);
-          const when =
-            ordered.length === 7
-              ? "Daily"
-              : weekdays
-                ? "Weekdays"
-                : ordered.map((day) => DAY_NAMES[day]).join(" ");
-          return `${when} · ${blockName}`;
-        })
-      : [];
-
-    rows.push({
-      node,
-      parentId: depth === 0 ? null : node.parentId,
-      depth,
-      hasChildren: children.length > 0,
-      minutes: total,
-      viaMinutes: via.get(node.id) ?? 0,
-      // State follows owned time only: hours aimed *at* a goal don't mean its
-      // own stages are covered.
-      state: total > 0 ? "covered" : ancestorNamed ? "inherited" : "gap",
-      slots,
-      slotTypes: [...(slotTypesByNode.get(node.id) ?? [])],
-    });
-
-    for (const child of children) {
-      walk(child, depth + 1, ancestorNamed || namedHere.has(node.id));
-    }
-  };
-
-  // Build and Sustain are the roots — there is no node above them.
-  for (const top of childrenOf.get(null) ?? []) walk(top, 0, false);
-  return rows;
+export function filterActivities(
+  areas: readonly ActivityArea[],
+  filter: CoverageFilter,
+): ActivityArea[] {
+  return areas.flatMap((area) => {
+    if (filter.area !== null && area.id !== filter.area) return [];
+    const children = filterNodes(area.children, filter.effort);
+    return children.length ? [{ ...area, children }] : [];
+  });
 }
 
-/** "7h", "1.5h" — the one place weekly minutes get formatted for display. */
-export function formatHours(minutes: number): string {
-  const value = minutes / 60;
-  return `${Number.isInteger(value) ? value : value.toFixed(1)}h`;
+export function parseCoverageFilter(params: URLSearchParams): CoverageFilter {
+  const area = ACTIVITY_AREAS.find((item) => item.id === params.get("area"))?.id ?? null;
+  const effort = (Object.keys(WORK_MODES) as Effort[])
+    .find((item) => item === params.get("effort")) ?? null;
+  return { area, effort };
 }

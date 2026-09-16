@@ -16,7 +16,7 @@ import {
 
 /**
  * Connect one Google Calendar, read-only. Its events show as a layer over
- * Today — never merged into the plan. See docs/CALENDAR.md.
+ * Today — never merged into the plan. See docs/APP_SOURCE_OF_TRUTH.md.
  */
 export default function CalendarSettings() {
   const { state, connect, disconnect, forceSync, refreshCalendars, setCalendarId } =
@@ -34,7 +34,8 @@ export default function CalendarSettings() {
   if (!state) return null;
 
   const syncedLine =
-    state.status === "error"
+    state.status === "reconnect" ? "Calendar needs reconnecting. Use Sync now."
+    : state.status === "error"
       ? state.lastSyncedMs && now
         ? `Sync failed · last ok ${formatSyncedAgo(state.lastSyncedMs, now.getTime())}`
         : "Sync failed"
@@ -48,11 +49,7 @@ export default function CalendarSettings() {
 
       {!state.configured ? (
         <p className={cx("mt-3 text-[13px]", MUTED)}>
-          Set{" "}
-          <code className="rounded bg-black/[0.05] px-1 py-0.5 text-[12px] dark:bg-white/[0.08]">
-            NEXT_PUBLIC_GOOGLE_CLIENT_ID
-          </code>{" "}
-          to pull external events onto Today.
+          Calendar connection is not available in this app yet. Your schedule still works.
         </p>
       ) : !connected ? (
         <div className="mt-3">
@@ -63,6 +60,7 @@ export default function CalendarSettings() {
           <button
             type="button"
             onClick={() => void connect()}
+            disabled={state.status === "syncing"}
             className={cx(BUTTON_INLINE, "mt-3")}
           >
             {state.status === "syncing"
@@ -89,9 +87,7 @@ export default function CalendarSettings() {
                       className="accent-[var(--accent)]"
                     />
                     <span
-                      className={
-                        state.calendarId === calendar.id ? STRONG : MUTED
-                      }
+                      className={cx("min-w-0 break-words", state.calendarId === calendar.id ? STRONG : MUTED)}
                     >
                       {calendar.summary}
                     </span>
@@ -102,7 +98,7 @@ export default function CalendarSettings() {
                 </li>
               ))}
               {calendarCount === 0 && (
-                <li className={cx("text-[12px]", FAINT)}>Loading calendars…</li>
+                <li className={cx("text-[12px]", MUTED)}>{state.status === "reconnect" ? "Use Sync now to load your calendars." : state.status === "error" ? "Calendars could not be loaded." : "Loading calendars…"}</li>
               )}
             </ul>
           </div>
@@ -111,11 +107,12 @@ export default function CalendarSettings() {
             <button
               type="button"
               onClick={() => void forceSync()}
+              disabled={state.status === "syncing"}
               className={BUTTON_INLINE}
             >
               {state.status === "syncing" ? "Syncing…" : "Sync now"}
             </button>
-            <span className={cx("text-[12px]", FAINT)}>{syncedLine}</span>
+            <span role="status" className={cx("text-[12px]", MUTED)}>{syncedLine}</span>
           </div>
 
           {state.error && state.status === "error" && (

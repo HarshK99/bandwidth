@@ -1,6 +1,6 @@
 // lib/upgrades.ts
 // Upgrades — the internal problems being worked through, one at a time.
-// See docs/UPGRADES.md. Static data, edited here; no store, no localStorage.
+// Retained Upgrades content. Static data, edited here; no store, no localStorage.
 //
 // State is which list an entry sits in, never a field on the entry:
 //   past    completed, chronological (oldest → newest)

@@ -4,33 +4,38 @@
 
 import type { CalendarEvent } from "./types";
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** Local midnight of a date. */
-function startOfDay(date: Date): number {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+/** Local 07:00 boundaries, using calendar dates across daylight-saving changes. */
+export function operationalBounds(date: Date): { startMs: number; endMs: number } {
+  return {
+    startMs: new Date(date.getFullYear(), date.getMonth(), date.getDate(), 7).getTime(),
+    endMs: new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1, 7).getTime(),
+  };
 }
 
 /**
- * The events that touch a given calendar day, earliest first. Uses local
- * midnight-to-midnight — an interview or seminar is never in the small hours,
- * so the timeline's 07:00 day-start isn't worth modelling here yet.
+ * Events intersecting the visible 07:00-to-next-07:00 day, earliest first.
+ * Keep original instants; only the lane's geometry is clipped.
  */
-export function eventsForDate(
+export function eventsForOperationalDate(
   events: CalendarEvent[],
   date: Date
 ): CalendarEvent[] {
-  const dayStart = startOfDay(date);
-  const dayEnd = dayStart + DAY_MS;
+  const { startMs: dayStart, endMs: dayEnd } = operationalBounds(date);
   return events
     .filter((event) => event.startMs < dayEnd && event.endMs > dayStart)
     .sort((a, b) => a.startMs - b.startMs || a.endMs - b.endMs);
 }
 
-/** Minutes from local midnight of `date` for an instant, clamped to [0, 1440]. */
-export function minutesInto(date: Date, ms: number): number {
-  const offset = (ms - startOfDay(date)) / 60_000;
-  return Math.max(0, Math.min(24 * 60, offset));
+/** Wall-clock minutes on the schedule ruler, clamped to the visible day. */
+export function operationalMinutesInto(date: Date, instantMs: number): number {
+  const { startMs, endMs } = operationalBounds(date);
+  if (instantMs <= startMs) return 0;
+  if (instantMs >= endMs) return 1440;
+  const instant = new Date(instantMs);
+  const nextDate = instant.getFullYear() !== date.getFullYear() ||
+    instant.getMonth() !== date.getMonth() || instant.getDate() !== date.getDate();
+  return (nextDate ? 1440 : 0) + instant.getHours() * 60 + instant.getMinutes() +
+    instant.getSeconds() / 60 - 420;
 }
 
 const TIME_OPTS: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit" };
@@ -40,8 +45,12 @@ export function formatEventStart(ms: number): string {
 }
 
 export function formatEventRange(startMs: number, endMs: number): string {
-  const start = new Date(startMs).toLocaleTimeString(undefined, TIME_OPTS);
-  const end = new Date(endMs).toLocaleTimeString(undefined, TIME_OPTS);
+  const startDate = new Date(startMs);
+  const endDate = new Date(endMs);
+  const sameDate = startDate.toDateString() === endDate.toDateString();
+  const options: Intl.DateTimeFormatOptions = sameDate ? TIME_OPTS : { ...TIME_OPTS, month: "short", day: "numeric" };
+  const start = startDate.toLocaleString(undefined, options);
+  const end = endDate.toLocaleString(undefined, options);
   return `${start} – ${end}`;
 }
 

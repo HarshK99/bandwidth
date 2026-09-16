@@ -1,5 +1,5 @@
 // lib/calendar/types.ts
-// External calendar events — see docs/CALENDAR.md. These never enter the
+// External calendar events — see docs/APP_SOURCE_OF_TRUTH.md. These never enter the
 // DirectionPlan; they're a read-only layer merged only in Today.
 
 /** One timed event, normalised from the Google Calendar API. */

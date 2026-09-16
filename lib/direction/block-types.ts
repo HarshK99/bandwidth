@@ -1,93 +1,13 @@
-// lib/direction/block-types.ts
-// The one place block type → presentation is decided. Kept tiny on purpose:
-// a type shifts emphasis and mood, it never gets its own colour.
-
+﻿import { WORK_MODES } from "../work/modes";
 import type { BlockType } from "./types";
 
-interface BlockTypeMeta {
-  label: string;
-  /**
-   * "strong" = work the day is built around (full-contrast block name),
-   * "soft"   = supporting time (recedes).
-   */
-  emphasis: "strong" | "soft";
-  /**
-   * "structured" = tight, tracked, deliberate.
-   * "relaxed"    = lighter weight and looser leading — thinking and hobby
-   * time shouldn't read as an obligation.
-   */
-  tone: "structured" | "relaxed";
-  /**
-   * CSS variable holding this type's hairline colour (see app/globals.css).
-   * Named rather than classed so Tailwind has nothing to purge, and so the
-   * whole ramp is tuned in one place.
-   */
-  border: string;
-  /**
-   * The same hue as a wash for the block's own surface. A hairline alone
-   * turned out not to be enough to tell blocks apart at a glance — the eye
-   * reads fills long before it reads edges — so on Today the type colours
-   * the whole box. Kept faint enough to sit where the plain grey did.
-   */
-  fill: string;
-}
+interface BlockTypeMeta { label: string; border: string; fill: string }
 
-/**
- * An unassigned block renders empty — the app never invents an area for it.
- * A block with nothing pointed at it *is* open time, and saying so in
- * hardcoded copy ("Available capacity") reads as content when it isn't.
- * If a block should carry a phrase, assign it one in Week.
- */
 export const BLOCK_TYPE_META: Record<BlockType, BlockTypeMeta> = {
-  focus: {
-    label: "Focus",
-    emphasis: "strong",
-    tone: "structured",
-    border: "var(--type-focus)",
-    fill: "var(--type-focus-fill)",
-  },
-  execution: {
-    label: "Execution",
-    emphasis: "strong",
-    tone: "structured",
-    border: "var(--type-execution)",
-    fill: "var(--type-execution-fill)",
-  },
-  thinking: {
-    label: "Thinking",
-    emphasis: "strong",
-    tone: "relaxed",
-    border: "var(--type-thinking)",
-    fill: "var(--type-thinking-fill)",
-  },
-  admin: {
-    label: "Admin",
-    emphasis: "soft",
-    tone: "structured",
-    border: "var(--type-admin)",
-    fill: "var(--type-admin-fill)",
-  },
-  buffer: {
-    label: "Buffer",
-    emphasis: "soft",
-    tone: "relaxed",
-    border: "var(--type-buffer)",
-    fill: "var(--type-buffer-fill)",
-  },
-  hobby: {
-    label: "Hobby",
-    emphasis: "soft",
-    tone: "relaxed",
-    border: "var(--type-hobby)",
-    fill: "var(--type-hobby-fill)",
-  },
-  custom: {
-    label: "Custom",
-    emphasis: "soft",
-    tone: "structured",
-    border: "var(--type-custom)",
-    fill: "var(--type-custom-fill)",
-  },
+  deep: { label: WORK_MODES.deep.label, border: "var(--type-deep)", fill: "var(--type-deep-fill)" },
+  production: { label: WORK_MODES.production.label, border: "var(--type-production)", fill: "var(--type-production-fill)" },
+  light: { label: WORK_MODES.light.label, border: "var(--type-light)", fill: "var(--type-light-fill)" },
+  recovery: { label: WORK_MODES.recovery.label, border: "var(--type-recovery)", fill: "var(--type-recovery-fill)" },
+  break: { label: "Break", border: "var(--type-break)", fill: "var(--type-break-fill)" },
 };
-
 export const BLOCK_TYPES = Object.keys(BLOCK_TYPE_META) as BlockType[];

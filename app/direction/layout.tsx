@@ -4,7 +4,7 @@ import DirectionNav from "@/components/Direction/DirectionNav";
 export const metadata: Metadata = {
   title: "Direction — Bandwidth",
   description:
-    "What kind of work belongs in the block you're in right now, and which area it should be aimed at.",
+    "See the current block and browse reusable activities that fit its effort.",
 };
 
 /**
@@ -17,7 +17,7 @@ export default function DirectionLayout({ children }: LayoutProps<"/direction">)
       <div className="shrink-0 border-b border-black/[0.09] px-3 dark:border-white/[0.12] sm:px-6">
         <DirectionNav />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 sm:px-6">{children}</div>
+      <div data-direction-scroll className="min-h-0 flex-1 overflow-y-auto px-3 sm:px-6">{children}</div>
     </div>
   );
 }

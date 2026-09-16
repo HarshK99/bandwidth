@@ -4,14 +4,16 @@
 // "connected" flag live in localStorage; the access token never does.
 
 import { fetchEvents, listCalendars } from "./api";
-import { getAccessToken, isCalendarConfigured, revokeAccess } from "./gis";
+import { operationalBounds } from "./day-events";
+import { addDays, getOperationalDate } from "../direction/schedule";
+import { CalendarReconnectRequired, getAccessToken, isCalendarConfigured, revokeAccess } from "./gis";
 import type { CalendarEvent, CalendarOption } from "./types";
 
 const STORAGE_KEY = "bandwidth.calendar.v1";
 const WINDOW_DAYS = 8;
 const SYNC_THROTTLE_MS = 60_000;
 
-export type SyncStatus = "idle" | "syncing" | "error";
+export type SyncStatus = "idle" | "syncing" | "error" | "reconnect";
 
 export interface CalendarSnapshot {
   /** NEXT_PUBLIC_GOOGLE_CLIENT_ID is set. */
@@ -23,6 +25,8 @@ export interface CalendarSnapshot {
   calendars: CalendarOption[];
   events: CalendarEvent[];
   lastSyncedMs: number | null;
+  timeMinMs: number | null;
+  timeMaxMs: number | null;
   status: SyncStatus;
   error: string | null;
 }
@@ -33,6 +37,8 @@ interface Persisted {
   calendars: CalendarOption[];
   events: CalendarEvent[];
   lastSyncedMs: number | null;
+  timeMinMs: number | null;
+  timeMaxMs: number | null;
 }
 
 function isCalendarOption(value: unknown): value is CalendarOption {
@@ -74,6 +80,8 @@ function load(): Persisted | null {
       events: Array.isArray(value.events) ? value.events.filter(isEvent) : [],
       lastSyncedMs:
         typeof value.lastSyncedMs === "number" ? value.lastSyncedMs : null,
+      timeMinMs: typeof value.timeMinMs === "number" ? value.timeMinMs : null,
+      timeMaxMs: typeof value.timeMaxMs === "number" ? value.timeMaxMs : null,
     };
   } catch {
     return null;
@@ -89,6 +97,8 @@ function persist(): void {
       calendars: snapshot.calendars,
       events: snapshot.events,
       lastSyncedMs: snapshot.lastSyncedMs,
+      timeMinMs: snapshot.timeMinMs,
+      timeMaxMs: snapshot.timeMaxMs,
     };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
   } catch {
@@ -105,12 +115,16 @@ function initial(): CalendarSnapshot {
     calendars: stored?.calendars ?? [],
     events: stored?.events ?? [],
     lastSyncedMs: stored?.lastSyncedMs ?? null,
+    timeMinMs: stored?.timeMinMs ?? null,
+    timeMaxMs: stored?.timeMaxMs ?? null,
     status: "idle",
     error: null,
   };
 }
 
 let snapshot: CalendarSnapshot = initial();
+let requestedDate: Date | null = null;
+let requestVersion = 0;
 const listeners = new Set<() => void>();
 
 function emit(): void {
@@ -132,6 +146,8 @@ function onStorage(event: StorageEvent): void {
     calendars: stored?.calendars ?? snapshot.calendars,
     events: stored?.events ?? [],
     lastSyncedMs: stored?.lastSyncedMs ?? null,
+    timeMinMs: stored?.timeMinMs ?? null,
+    timeMaxMs: stored?.timeMaxMs ?? null,
   };
   emit();
 }
@@ -161,39 +177,56 @@ function messageOf(error: unknown, fallback: string): string {
   return error instanceof Error && error.message ? error.message : fallback;
 }
 
-function syncWindow(): { timeMin: Date; timeMax: Date } {
-  const timeMin = new Date();
-  timeMin.setHours(0, 0, 0, 0);
-  const timeMax = new Date(timeMin.getTime() + WINDOW_DAYS * 24 * 60 * 60 * 1000);
+function syncWindow(date: Date): { timeMin: Date; timeMax: Date } {
+  const timeMin = new Date(operationalBounds(date).startMs);
+  const timeMax = new Date(operationalBounds(addDays(date, WINDOW_DAYS)).startMs);
   return { timeMin, timeMax };
 }
 
 async function runSync(force: boolean, interactive: boolean): Promise<void> {
   if (!snapshot.configured || !snapshot.connected) return;
   if (snapshot.status === "syncing") return;
+  const date = requestedDate ?? getOperationalDate(new Date());
+  const bounds = operationalBounds(date);
+  const covered = snapshot.timeMinMs !== null && snapshot.timeMaxMs !== null &&
+    snapshot.timeMinMs <= bounds.startMs && snapshot.timeMaxMs >= bounds.endMs;
   if (
-    !force &&
+    !force && covered &&
     snapshot.lastSyncedMs !== null &&
     Date.now() - snapshot.lastSyncedMs < SYNC_THROTTLE_MS
   ) {
     return;
   }
 
+  const version = requestVersion;
+  const calendarId = snapshot.calendarId;
   set({ status: "syncing", error: null });
   try {
     const token = await getAccessToken(interactive);
-    const { timeMin, timeMax } = syncWindow();
-    const events = await fetchEvents(token, snapshot.calendarId, timeMin, timeMax);
-    set({ events, lastSyncedMs: Date.now(), status: "idle", error: null });
+    // Manual sync also recovers a missing calendar list after reconnecting.
+    const calendars = interactive && snapshot.calendars.length === 0
+      ? await listCalendars(token) : null;
+    const { timeMin, timeMax } = syncWindow(date);
+    const events = await fetchEvents(token, calendarId, timeMin, timeMax);
+    if (version !== requestVersion) return;
+    set({ ...(calendars ? { calendars } : {}), events, timeMinMs: timeMin.getTime(), timeMaxMs: timeMax.getTime(), lastSyncedMs: Date.now(), status: "idle", error: null });
     persist();
   } catch (error) {
-    // Keep the last cache; only Settings ever mentions this.
-    set({ status: "error", error: messageOf(error, "Sync failed") });
+    if (version !== requestVersion) return;
+    // Keep the last cache; Today and Settings disclose the failed refresh.
+    set({ status: error instanceof CalendarReconnectRequired ? "reconnect" : "error", error: messageOf(error, "Sync failed") });
+  } finally {
+    // Navigation during a request must still fetch the newly visible day.
+    if (version === requestVersion && requestedDate &&
+      operationalBounds(requestedDate).startMs !== bounds.startMs) {
+      void runSync(false, false);
+    }
   }
 }
 
-/** Fired on every Today mount — throttled, and silent (no gesture behind it). */
-export function sync(): void {
+/** Follow the visible date, throttling only when its full day is already cached. */
+export function sync(date?: Date): void {
+  requestedDate = date ? new Date(date) : getOperationalDate(new Date());
   void runSync(false, false);
 }
 
@@ -214,19 +247,22 @@ export async function connect(): Promise<void> {
       : (calendars.find((c) => c.primary)?.id ?? calendars[0]?.id ?? "primary");
     set({ connected: true, calendars, calendarId, status: "idle", error: null });
     persist();
-    await runSync(true, true);
+    await runSync(true, false);
   } catch (error) {
     set({ status: "error", error: messageOf(error, "Could not connect") });
   }
 }
 
 export function disconnect(): void {
+  requestVersion += 1;
   revokeAccess();
   set({
     connected: false,
     calendars: [],
     events: [],
     lastSyncedMs: null,
+    timeMinMs: null,
+    timeMaxMs: null,
     status: "idle",
     error: null,
   });
@@ -240,13 +276,14 @@ export async function refreshCalendars(): Promise<void> {
     set({ calendars: await listCalendars(token) });
     persist();
   } catch (error) {
-    set({ status: "error", error: messageOf(error, "Could not list calendars") });
+    set({ status: error instanceof CalendarReconnectRequired ? "reconnect" : "error", error: messageOf(error, "Could not list calendars") });
   }
 }
 
 export function setCalendarId(id: string): void {
   if (id === snapshot.calendarId) return;
-  set({ calendarId: id, events: [], lastSyncedMs: null });
+  requestVersion += 1;
+  set({ calendarId: id, events: [], lastSyncedMs: null, timeMinMs: null, timeMaxMs: null, status: "idle", error: null });
   persist();
   void runSync(true, false);
 }

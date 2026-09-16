@@ -4,9 +4,7 @@ import CalendarSettings from "./CalendarSettings";
 
 /**
  * The one connection Direction owns: a read-only Google Calendar whose events
- * layer over Today. It used to be a section of a wider Settings screen; block
- * structure and single-date overrides are code-defined now (see
- * docs/PLAN_SCHEDULE.md), so the calendar link is all that screen had left.
+ * layer over Today. Schedule editing lives in Week.
  */
 export default function CalendarView() {
   return (

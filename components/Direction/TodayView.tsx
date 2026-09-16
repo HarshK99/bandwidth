@@ -1,17 +1,14 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { eventsForDate } from "@/lib/calendar/day-events";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { eventsForOperationalDate, operationalBounds } from "@/lib/calendar/day-events";
 import {
-  formatDuration,
-  getDayProgress,
-  getDayRuler,
-  getDaySchedule,
-  getDayTheme,
-  isSameDate,
-  toMinutes,
+  formatDuration, fromISODate, getDayRuler, getDaySchedule, getOperationalDate,
+  isSameDate, operationalMinute, toISODate,
 } from "@/lib/direction/schedule";
-import type { DayEntry } from "@/lib/direction/schedule";
+import { readTodayReturn, validDate } from "@/lib/direction/navigation";
+import type { DayEntry } from "@/lib/direction/types";
 import DayBar from "./DayBar";
 import EventsLane from "./EventsLane";
 import TimelineRow from "./TimelineRow";
@@ -20,125 +17,168 @@ import { useDirectionPlan } from "./useDirectionPlan";
 import { useNow } from "./useNow";
 import { cx, MUTED } from "./ui";
 
-/**
- * Whether two blocks share a boundary. Blocks that touch are drawn as one
- * run, so a visible gap on the timeline always means unstructured time.
- */
 function touches(a: DayEntry | undefined, b: DayEntry | undefined): boolean {
   return Boolean(a && b && a.block.end === b.block.start);
 }
-
-/**
- * Real elapsed minutes between two entries, when there's no block at all
- * covering that stretch — a genuinely open Tue/Thu morning, say. Used only
- * to size the gap the timeline draws, so it reads as "this much time is
- * unaccounted for" rather than the same thin sliver regardless of whether
- * it's fifteen minutes or ninety. Bounded and non-negative on purpose: this
- * is a rendering cue, not a promise to represent every wrap correctly.
- */
 function openMinutesBetween(a: DayEntry | undefined, b: DayEntry | undefined): number {
   if (!a || !b) return 0;
-  const gap = toMinutes(b.block.start) - toMinutes(a.block.end);
-  return gap > 0 && gap < 360 ? gap : 0;
+  const end = a.block.end === "07:00" ? 1440 : operationalMinute(a.block.end);
+  return Math.max(0, operationalMinute(b.block.start) - end);
 }
-
 export default function TodayView() {
   const { plan } = useDirectionPlan();
   const { state: calendarState, sync: syncCalendar } = useCalendar();
   const now = useNow();
-  const [selected, setSelected] = useState<Date | null>(null);
+  const router = useRouter();
+  const params = useSearchParams();
+  const selected = validDate(params.get("date"));
+  const dateISO = selected ?? (now ? toISODate(getOperationalDate(now)) : null);
+  const date = useMemo(() => dateISO ? fromISODate(dateISO) : null, [dateISO]);
   const timelineRef = useRef<HTMLOListElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const timelineSpaceRef = useRef<HTMLDivElement>(null);
+  const openingPosition = useRef<{ date: string; record: ReturnType<typeof readTodayReturn> } | null>(null);
 
-  // Pull external events on open — throttled to once a minute in the store.
+  useEffect(() => { if (date) syncCalendar(date); }, [syncCalendar, date]);
+
   useEffect(() => {
-    syncCalendar();
-  }, [syncCalendar]);
+    const scroller = sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]");
+    const header = sectionRef.current?.querySelector<HTMLElement>("[data-day-bar]");
+    if (!scroller || !header) return;
+    const measure = () => { scroller.style.scrollPaddingTop = `${header.offsetHeight + 16}px`; };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => { observer.disconnect(); scroller.style.scrollPaddingTop = ""; };
+  }, [dateISO, Boolean(plan && now)]);
 
-  const date = selected ?? now;
   const schedule = useMemo(
-    () => (plan && date ? getDaySchedule(plan, date, now) : null),
-    [plan, date, now]
+    () => plan && date && now ? getDaySchedule(plan, date, now) : null,
+    [plan, date, now],
   );
-  // Both read the day's own blocks, not the plan's: a block that doesn't run
-  // today must not put an hour on the ruler or stretch the progress bar.
-  const ruler = useMemo(
-    () => (schedule ? getDayRuler(schedule.blocks) : null),
-    [schedule]
-  );
-  const dayProgress = useMemo(
-    () =>
-      schedule && now && date && isSameDate(date, now)
-        ? getDayProgress(schedule.blocks, now)
-        : null,
-    [schedule, now, date]
-  );
+  const ruler = useMemo(() => schedule ? getDayRuler(schedule.blocks) : null, [schedule]);
   const dayEvents = useMemo(
-    () =>
-      calendarState?.connected && date
-        ? eventsForDate(calendarState.events, date)
-        : [],
-    [calendarState, date]
+    () => calendarState?.connected && date ? eventsForOperationalDate(calendarState.events, date) : [],
+    [calendarState, date],
   );
+  const ready = Boolean(schedule && now && date && ruler);
+  const isToday = Boolean(date && now && isSameDate(date, getOperationalDate(now)));
 
-  // Plan and clock both land after hydration; hold the space quietly.
-  if (!schedule || !now || !date || !ruler) return <div className="h-40" aria-hidden />;
+  useLayoutEffect(() => {
+    if (!ready || !dateISO) return;
+    const scroller = sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]");
+    const space = timelineSpaceRef.current;
+    const timeline = timelineRef.current;
+    if (!scroller || !space || !timeline) return;
+    const headerHeight = sectionRef.current?.querySelector("[data-day-bar]")?.getBoundingClientRect().height ?? 0;
+    const visibleHeight = Math.max(0, scroller.clientHeight - headerHeight);
+    const current = timeline.querySelector<HTMLElement>("[data-current] [data-timeline-box]");
+    // Only add space when a boundary would otherwise prevent centering.
+    space.style.paddingTop = "";
+    space.style.paddingBottom = "";
+    if (isToday && current) {
+      const block = current.getBoundingClientRect();
+      const top = scroller.scrollTop + block.top - scroller.getBoundingClientRect().top - headerHeight - (visibleHeight - block.height) / 2;
+      space.style.paddingTop = `${Math.max(0, -top)}px`;
+      space.style.paddingBottom = `${Math.max(0, top - (scroller.scrollHeight - scroller.clientHeight))}px`;
+    }
 
+    const returning = window.location.hash === "#restore-block" || window.history.state?.bandwidthTodayReturn === dateISO;
+    // Keep the return intent during React's repeated layout setup, even after
+    // consuming its URL marker. Do not skip positioning on setup/re-entry.
+    if (openingPosition.current?.date !== dateISO || returning) {
+      openingPosition.current = { date: dateISO, record: returning ? readTodayReturn(dateISO) : null };
+    }
+    const record = openingPosition.current.record;
+    if (!record) {
+      const block = current?.getBoundingClientRect();
+      const top = isToday && block
+        ? scroller.scrollTop + block.top - scroller.getBoundingClientRect().top - headerHeight - (visibleHeight - block.height) / 2
+        : 0;
+      // Position before paint; opening Today never animates or moves keyboard focus.
+      scroller.scrollTo({ top, behavior: "instant" });
+      return;
+    }
+    let cancelled = false;
+    const restore = () => {
+      if (cancelled) return;
+      const historyState = { ...window.history.state };
+      delete historyState.bandwidthTodayReturn;
+      window.history.replaceState(historyState, "", `/direction?date=${dateISO}`);
+      document.getElementById(`direction-block-${record.blockId}`)?.focus({ preventScroll: true });
+      scroller.scrollTo({ top: record.scrollY, behavior: "instant" });
+    };
+    restore();
+    // Font layout can settle after the timeline first appears.
+    void document.fonts.ready.then(restore);
+    return () => { cancelled = true; };
+  }, [ready, dateISO, isToday]);
+
+  if (!schedule || !now || !date || !dateISO || !ruler) return <div className="h-40" aria-hidden />;
   const { entries, current, next, minutesUntilNext } = schedule;
-  const isToday = isSameDate(date, now);
-  const theme = getDayTheme(entries);
-
-  // The one line the screen needs when no block is live.
-  const started = entries.some((entry) => entry.status === "past");
-  const gapMessage =
-    next && minutesUntilNext !== null
-      ? started
-        ? `Between blocks — ${next.name.toLowerCase()} in ${formatDuration(minutesUntilNext)}`
-        : `The day starts at ${next.block.start}, ${formatDuration(minutesUntilNext)} from now`
-      : "Outside your blocks. The day's structure is done.";
+  const firstStart = entries.length ? operationalMinute(entries[0].block.start) : 1440;
+  const lastEnd = entries.length ? (entries.at(-1)!.block.end === "07:00" ? 1440 : operationalMinute(entries.at(-1)!.block.end)) : 1440;
+  const bounds = operationalBounds(date);
+  const calendarCovered = calendarState?.timeMinMs != null && calendarState?.timeMaxMs != null &&
+    calendarState.timeMinMs <= bounds.startMs && calendarState.timeMaxMs >= bounds.endMs;
+  const calendarMessage = !calendarState?.connected ? null
+    : !calendarState.configured ? "Calendar connection is unavailable. Showing saved events."
+    : calendarState.status === "reconnect" ? "Calendar needs reconnecting. Showing saved events. Use Sync now in Calendar."
+    : calendarState.status === "error" ? "Calendar refresh failed. Saved events may be out of date."
+    : calendarState.status === "syncing" ? "Refreshing Calendar…"
+    : !calendarCovered ? "Calendar has not synced this day yet."
+    : null;
+  const gapMessage = next && minutesUntilNext !== null
+    ? `Open time — ${next.name} in ${formatDuration(minutesUntilNext)}.`
+    : "Open time. No more blocks today.";
 
   return (
-    <section className="mx-auto w-full max-w-2xl pb-16">
-      <DayBar
-        date={date}
-        now={now}
-        isToday={isToday}
-        theme={theme}
-        dayProgress={dayProgress}
-        gapMessage={isToday && !current ? gapMessage : null}
-        onChangeDate={setSelected}
+    <section ref={sectionRef} className="mx-auto w-full max-w-2xl pb-16">
+      <DayBar date={date} now={now} isToday={isToday}
+        onChangeDate={(nextDate) => router.replace(`/direction?date=${toISODate(nextDate)}`, { scroll: false })}
       />
-
-      {entries.length === 0 ? (
-        <p className={cx("mt-12 text-sm", MUTED)}>
-          Nothing runs on this day.
-        </p>
-      ) : (
-        <div className="relative mt-6 sm:mt-8">
-          <ol ref={timelineRef}>
-            {entries.map((entry, index) => (
-              <TimelineRow
-                key={entry.block.id}
-                entry={entry}
-                isNext={isToday && next?.block.id === entry.block.id}
-                isLast={index === entries.length - 1}
-                attachedAbove={touches(entries[index - 1], entry)}
-                attachedBelow={touches(entry, entries[index + 1])}
-                openMinutesAfter={openMinutesBetween(entry, entries[index + 1])}
-                ticks={ruler.get(entry.block.id) ?? []}
-              />
-            ))}
-          </ol>
-          {dayEvents.length > 0 && (
-            <EventsLane
-              events={dayEvents}
-              timelineRef={timelineRef}
-              entries={entries}
-              date={date}
-              nowMs={now.getTime()}
-            />
-          )}
-        </div>
+      {calendarMessage && <p role="status" className={cx("mt-3 text-[12px]", MUTED)}>{calendarMessage}</p>}
+      {entries.length === 0 && (
+        <p className={cx("mt-12 text-sm", MUTED)}>No blocks on this day. The time is open.</p>
       )}
+        <>
+          {entries.length > 0 && isToday && !current && <p role="status" className={cx("mt-4 text-[13px]", MUTED)}>{gapMessage}</p>}
+          <div ref={timelineSpaceRef}>
+          <div className={cx("relative mt-6 sm:mt-8", dayEvents.length > 0 && "pr-20")}>
+            <ol ref={timelineRef} aria-label="Day timeline">
+              {firstStart > 0 && <OpenTime start={0} end={firstStart} />}
+              {entries.map((entry, index) => (
+                <TimelineRow key={`${dateISO}:${entry.block.id}`} entry={entry} date={dateISO}
+                  isNext={isToday && next?.block.id === entry.block.id}
+                  isLast={index === entries.length - 1}
+                  attachedAbove={touches(entries[index - 1], entry)}
+                  attachedBelow={touches(entry, entries[index + 1])}
+                  openMinutesAfter={openMinutesBetween(entry, entries[index + 1])}
+                  ticks={ruler.get(entry.block.id) ?? []}
+                />
+              ))}
+              {lastEnd < 1440 && <OpenTime start={lastEnd} end={1440} />}
+            </ol>
+            {dayEvents.length > 0 && <EventsLane key={dateISO} events={dayEvents} timelineRef={timelineRef} entries={entries} date={date} nowMs={now.getTime()} />}
+          </div>
+          </div>
+        </>
     </section>
+  );
+}
+
+/** Real open time supplies geometry even when a day has no scheduled blocks. */
+function OpenTime({ start, end }: { start: number; end: number }) {
+  const clock = (minute: number) => {
+    const value = (minute + 420) % 1440;
+    return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+  };
+  return (
+    <li data-open-start={start} data-open-end={end}
+      className={cx("pl-13 py-3 text-[12px] sm:pl-15", MUTED)}
+      style={{ minHeight: Math.min(190, 48 + (end - start) * 0.28) }}>
+      <span className="block tabular-nums">{clock(start)} – {clock(end)}{end === 1440 ? " · next morning" : ""}</span>
+      Open time
+    </li>
   );
 }

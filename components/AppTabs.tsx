@@ -26,8 +26,10 @@ export default function AppTabs() {
           <Link
             key={tab.href}
             href={tab.href}
+            scroll={tab.href === "/direction" ? false : undefined}
+            aria-current={isActive ? "page" : undefined}
             className={
-              "flex min-h-14 flex-1 items-center justify-center text-sm font-medium " +
+              "flex min-h-14 min-w-0 flex-1 items-center justify-center px-1 text-sm font-medium focus-visible:outline-2 focus-visible:-outline-offset-4 " +
               (isActive
                 ? "text-zinc-950 dark:text-zinc-50"
                 : "text-zinc-500 hover:text-zinc-900 active:bg-black/5 dark:text-zinc-400 dark:hover:text-zinc-100 dark:active:bg-white/10")

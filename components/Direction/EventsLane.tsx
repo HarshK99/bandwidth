@@ -10,12 +10,13 @@ import {
 import {
   formatEventRange,
   formatEventStart,
-  minutesInto,
+  operationalMinutesInto,
 } from "@/lib/calendar/day-events";
 import type { CalendarEvent } from "@/lib/calendar/types";
-import { blockDurationMinutes, toMinutes } from "@/lib/direction/schedule";
-import type { DayEntry } from "@/lib/direction/schedule";
-import { cx, LABEL_XS, SURFACE } from "./ui";
+import { blockDurationMinutes, operationalMinute } from "@/lib/direction/schedule";
+import type { DayEntry } from "@/lib/direction/types";
+import { BUTTON, cx, LABEL_XS, MUTED } from "./ui";
+import Popover from "./Popover";
 
 interface EventsLaneProps {
   /** Events already filtered to the viewed day and sorted by start. */
@@ -38,36 +39,18 @@ interface Segment {
 
 interface Geometry {
   segments: Segment[];
-  /** Clock minutes at which the day (and the timeline) begins. */
-  dayStartMin: number;
-}
-
-const MINUTES_PER_DAY = 1440;
-
-/**
- * The timeline runs in reading order — from the day's first block round to
- * the same time next morning, not from midnight. So a 1pm event and an 11pm
- * block are both measured against that rotated clock; without it, anything
- * after the start time maps past the end of the day.
- */
-function readingOrder(clockMin: number, dayStartMin: number): number {
-  return (
-    (((clockMin - dayStartMin) % MINUTES_PER_DAY) + MINUTES_PER_DAY) %
-    MINUTES_PER_DAY
-  );
 }
 
 function measure(container: HTMLElement, entries: DayEntry[]): Geometry {
   const boxes = container.querySelectorAll<HTMLElement>("[data-timeline-box]");
   const base = container.getBoundingClientRect().top;
-  const dayStartMin = entries[0] ? toMinutes(entries[0].block.start) : 0;
 
   const segments: Segment[] = [];
   boxes.forEach((box, index) => {
     const entry = entries[index];
     if (!entry) return;
     const rect = box.getBoundingClientRect();
-    const startMin = readingOrder(toMinutes(entry.block.start), dayStartMin);
+    const startMin = operationalMinute(entry.block.start);
     segments.push({
       startMin,
       endMin: startMin + blockDurationMinutes(entry.block),
@@ -75,7 +58,12 @@ function measure(container: HTMLElement, entries: DayEntry[]): Geometry {
       bottom: rect.bottom - base,
     });
   });
-  return { segments, dayStartMin };
+  container.querySelectorAll<HTMLElement>("[data-open-start]").forEach((box) => {
+    const rect = box.getBoundingClientRect();
+    segments.push({ startMin: Number(box.dataset.openStart), endMin: Number(box.dataset.openEnd), top: rect.top - base, bottom: rect.bottom - base });
+  });
+  segments.sort((a, b) => a.startMin - b.startMin);
+  return { segments };
 }
 
 /**
@@ -118,7 +106,7 @@ export default function EventsLane({
   nowMs,
 }: EventsLaneProps) {
   const [geometry, setGeometry] = useState<Geometry | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<{ id: string; anchor: HTMLButtonElement } | null>(null);
 
   const remeasure = useCallback(() => {
     const container = timelineRef.current;
@@ -144,67 +132,66 @@ export default function EventsLane({
     };
   }, [timelineRef, remeasure]);
 
-  useEffect(() => {
-    if (!openId) return;
-    const close = () => setOpenId(null);
-    const timer = window.setTimeout(
-      () => document.addEventListener("click", close),
-      0
-    );
-    return () => {
-      window.clearTimeout(timer);
-      document.removeEventListener("click", close);
-    };
-  }, [openId]);
-
   const segments = geometry?.segments ?? [];
-  const dayStartMin = geometry?.dayStartMin ?? 0;
+  const selectedEvent = events.find((event) => event.id === selection?.id);
 
-  // Place each card by the map, then push any that would collide with the one
-  // above — under contention, legibility beats an exact vertical position.
-  const placed: { event: CalendarEvent; top: number; height: number }[] = [];
-  let lastBottom = -Infinity;
+  // Keep events inside the day. Colliding cards share columns instead of
+  // being pushed into a later block or beyond the timeline.
+  const placed: { event: CalendarEvent; top: number; height: number; column: number; columns: number }[] = [];
+  const dayBottom = segments.at(-1)?.bottom ?? 0;
   for (const event of events) {
-    const roStart = readingOrder(minutesInto(date, event.startMs), dayStartMin);
-    let roEnd = readingOrder(minutesInto(date, event.endMs), dayStartMin);
-    if (roEnd <= roStart) roEnd += MINUTES_PER_DAY;
+    const roStart = operationalMinutesInto(date, event.startMs);
+    const roEnd = operationalMinutesInto(date, event.endMs);
 
     const rawTop = yOf(roStart, segments);
     const rawBottom = yOf(roEnd, segments);
-    const height = Math.max(MIN_CARD_HEIGHT, rawBottom - rawTop);
-    const top = Math.max(rawTop, lastBottom + 3);
-    placed.push({ event, top, height });
-    lastBottom = top + height;
+    const height = Math.min(dayBottom, Math.max(MIN_CARD_HEIGHT, rawBottom - rawTop));
+    const top = Math.max(0, Math.min(rawTop, dayBottom - height));
+    placed.push({ event, top, height, column: 0, columns: 1 });
   }
+  placed.sort((a, b) => a.top - b.top || b.height - a.height);
+  let group: typeof placed = [];
+  let columnEnds: number[] = [];
+  const finishGroup = () => { for (const item of group) item.columns = columnEnds.length; };
+  for (const item of placed) {
+    if (columnEnds.length && item.top >= Math.max(...columnEnds)) {
+      finishGroup(); group = []; columnEnds = [];
+    }
+    const free = columnEnds.findIndex((end) => end <= item.top);
+    item.column = free < 0 ? columnEnds.length : free;
+    columnEnds[item.column] = item.top + item.height;
+    group.push(item);
+  }
+  finishGroup();
 
   return (
     <div className="pointer-events-none absolute top-0 right-0 bottom-0 z-10 w-[4.5rem]">
       {segments.length > 0 &&
-        placed.map(({ event, top, height }) => {
-          const open = openId === event.id;
+        placed.map(({ event, top, height, column, columns }) => {
+          const open = selection?.id === event.id;
           return (
             <div
               key={event.id}
-              className="pointer-events-auto absolute right-0 left-0"
-              style={{ top, height }}
+              className="pointer-events-auto absolute"
+              style={{ top, height, left: `${column / columns * 100}%`, width: `${100 / columns}%` }}
             >
               <button
                 type="button"
                 onClick={(clickEvent) => {
-                  clickEvent.stopPropagation();
-                  setOpenId(open ? null : event.id);
+                  setSelection({ id: event.id, anchor: clickEvent.currentTarget });
                 }}
+                aria-haspopup="dialog"
+                aria-expanded={open}
+                title={`${formatEventRange(event.startMs, event.endMs)} — ${event.title}`}
                 aria-label={`${formatEventRange(event.startMs, event.endMs)} — ${event.title}`}
                 className={cx(
-                  // Near-opaque surface + blur + dashed edge: reads as a card
-                  // laid on top of the block it overlaps, while the planned
-                  // block's text stays faintly legible behind it.
+                  // Dashed, neutral events sit beside the planned blocks.
                   "flex h-full w-full flex-col gap-0.5 overflow-hidden rounded-md border border-dashed px-1.5 py-1 text-left backdrop-blur-[2px]",
-                  "border-[var(--type-admin)] bg-surface/85",
+                  "border-[var(--type-light)] bg-surface focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1",
                   open && "ring-1 ring-black/15 dark:ring-white/20"
                 )}
               >
-                <span className="whitespace-nowrap text-[9px] font-semibold tabular-nums text-zinc-400 dark:text-zinc-500">
+                <span className={cx("whitespace-nowrap text-[9px] font-semibold tabular-nums", MUTED)}>
                   {formatEventStart(event.startMs)}
                 </span>
                 <span className="truncate text-[10px] leading-tight text-zinc-600 dark:text-zinc-300">
@@ -212,32 +199,23 @@ export default function EventsLane({
                 </span>
               </button>
 
-              {open && (
-                <div
-                  className={cx(
-                    SURFACE,
-                    "absolute top-0 right-full z-20 mr-2 w-52 max-w-[70vw] rounded-xl p-3"
-                  )}
-                >
-                  <p className="text-[13px] font-semibold text-zinc-900 dark:text-zinc-100">
-                    {event.title}
-                  </p>
-                  <p className="mt-1 text-[11px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                    {formatEventRange(event.startMs, event.endMs)}
-                  </p>
-                  <p
-                    className={cx(
-                      LABEL_XS,
-                      "mt-1.5 text-zinc-400 dark:text-zinc-500"
-                    )}
-                  >
-                    Google Calendar
-                  </p>
-                </div>
-              )}
             </div>
           );
         })}
+      {selectedEvent && selection && (
+        <Popover anchor={selection.anchor} label="Calendar event" onDismiss={() => {
+          selection.anchor.focus({ preventScroll: true });
+          setSelection(null);
+        }}>
+          <p className="break-words text-[13px] font-semibold">{selectedEvent.title}</p>
+          <p className={cx("mt-1 text-[12px] tabular-nums", MUTED)}>{formatEventRange(selectedEvent.startMs, selectedEvent.endMs)}</p>
+          <p className={cx(LABEL_XS, "mt-2", MUTED)}>Google Calendar · read-only</p>
+          <button type="button" className={cx(BUTTON, "mt-3 min-h-11")} onClick={() => {
+            selection.anchor.focus({ preventScroll: true });
+            setSelection(null);
+          }}>Close</button>
+        </Popover>
+      )}
     </div>
   );
 }
