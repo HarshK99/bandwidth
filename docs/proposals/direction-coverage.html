@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandwidth · Direction proposal</title>
+<style>
+:root{color-scheme:light dark;--bg:#fff;--fg:#171717;--surface:#fafafa;--muted:#62626b;--line:#e4e4e7;--accent:#1f6f52;--hero-from:#1d6b4f;--hero-to:#2f8a7a;--focus:rgba(99,102,241,.055);--low:rgba(13,148,160,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 Manrope,ui-sans-serif,system-ui,sans-serif}button,select,input{font:inherit;color:inherit}button,select{min-height:44px;cursor:pointer}button{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 16px}button:hover{border-color:var(--muted)}:focus-visible{outline:3px solid var(--accent);outline-offset:4px}header,main{max-width:1000px;margin:auto;padding:24px}header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line)}.brand{font-weight:700;letter-spacing:-.04em;font-size:23px}.caption{font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:600}.muted,small{color:var(--muted)}small{font-size:13px}h1{font-size:32px;line-height:1.2;letter-spacing:-.04em;margin:8px 0 12px}h2{font-size:22px;letter-spacing:-.025em;margin:0 0 8px}p{margin:8px 0 20px}nav{display:flex;gap:8px}nav button[aria-pressed=true]{background:var(--fg);color:var(--bg);border-color:var(--fg)}.notice{margin-bottom:28px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:14px}.columns{display:grid;grid-template-columns:1.3fr 1fr;gap:40px}.current{display:block;width:100%;text-align:left;border:0;border-radius:18px;background:linear-gradient(125deg,var(--hero-from),var(--hero-to));color:white;padding:28px;margin:20px 0}.current h2{font-size:30px;margin:24px 0 4px}.current .subtle{color:#e1eee9}.current .action{display:block;margin-top:28px;font-size:14px}.time{font-variant-numeric:tabular-nums}.block{display:block;width:100%;text-align:left;margin:10px 0;padding:16px 20px;border-radius:14px;background:var(--low)}.block strong,.block small{display:block}.block.rest{background:var(--surface)}.controls{display:flex;gap:16px;flex-wrap:wrap;margin:20px 0}.controls label{display:grid;gap:6px;font-size:13px;flex:1;min-width:160px}select,input{width:100%;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:10px}aside{padding-top:22px}aside p{font-size:14px;color:var(--muted)}.rule{padding:18px 0;border-top:1px solid var(--line)}.rule strong{display:block;font-size:14px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}.tree{margin-top:24px}details{border-top:1px solid var(--line);padding:8px 0}summary{cursor:pointer;padding:12px 4px;min-height:44px;font-weight:600}summary small{font-weight:400;margin-left:10px}.stages{padding-left:22px}.tasks{list-style:none;padding:0 0 10px 22px;margin:0}.tasks li{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.tasks small{white-space:nowrap}.context{font-size:14px;color:var(--muted)}.back{margin-bottom:20px}.empty{padding:24px;background:var(--surface);border-radius:12px}[hidden]{display:none!important}footer{margin:40px 0 16px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media(prefers-color-scheme:dark){:root{--bg:#0a0a0a;--fg:#ededed;--surface:#141414;--muted:#a1a1aa;--line:#303035;--accent:#6fb894;--low:rgba(45,212,191,.085)}}
+@media(max-width:680px){header,main{padding:20px}.columns{grid-template-columns:1fr;gap:4px}header{align-items:flex-start;flex-wrap:wrap}h1{font-size:28px}.tasks li{display:block}.tasks small{display:block;margin-top:4px}.stages{padding-left:12px}.current{padding:24px}}
+</style>
+</head>
+<body>
+<header><span class="brand">bandwidth</span><nav aria-label="Preview pages"><button id="nav-direction" aria-pressed="true">Direction</button><button id="nav-coverage" aria-pressed="false">Coverage</button></nav></header>
+<main>
+<div class="notice"><strong>Proposal preview.</strong> Sample day, paused at 09:30. Focus choices are examples. Nothing is saved; this is not your live schedule.</div>
+<section id="direction">
+<div class="caption muted">Direction · sample day</div><h1>What kind of work now?</h1>
+<div class="columns"><div>
+<button class="current" id="current-card"><span class="caption">Now · <span class="time">08:00–11:00</span></span><h2>Deep work</h2><span id="card-focus">Wave Link</span><span class="action">Browse relevant tasks →</span></button>
+<div class="controls"><label>Example focus for this block<select id="demo-focus"></select></label></div>
+<p class="context">The block sets the kind of effort and a broad focus. You choose the actual task outside Bandwidth.</p>
+<div class="caption muted">Later · illustrative blocks</div>
+<button class="block" data-area="freelance" data-effort="deep"><small class="time">11:00–13:00 · Deep work</small><strong>Freelance</strong><small>Browse relevant tasks →</small></button>
+<button class="block" data-area="freelance" data-effort="low"><small class="time">14:00–15:30 · Low-energy work</small><strong>Freelance</strong><small>Browse relevant tasks →</small></button>
+<button class="block" data-area="content" data-effort="low"><small class="time">15:30–17:00 · Low-energy work</small><strong>Content</strong><small>Browse relevant tasks →</small></button>
+<button class="block rest" data-area="recovery" data-effort="recovery"><small class="time">21:00–22:00 · Recovery</small><strong>Exercise</strong><small>Browse recovery activities →</small></button>
+</div><aside><h2>A guide, not a task assignment</h2><p>“Positioning” belongs here. The market, customer, live problem, and next action stay outside the app.</p>
+<div class="rule"><strong>Deep work</strong><p>Work where the quality of your thinking matters: discovery, positioning, sales, important decisions, and high-value writing.</p></div>
+<div class="rule"><strong>Low-energy work</strong><p>Researching leads, production, editing, posting, follow-ups, and routine admin. Task fit is a starting suggestion, not a rule.</p></div>
+<div class="rule"><strong>Recovery</strong><p>Protected time for sleep, exercise, meals, rest, and life outside work.</p></div>
+<div class="rule"><strong>Click → focus → widen</strong><p>A card opens its focus and effort filter together. Widen to all tasks in that focus, all matching-effort tasks, or the full map.</p></div>
+</aside></div>
+</section>
+<section id="coverage" hidden>
+<button class="back" id="back">← Direction</button><div class="caption muted">Coverage · proposed task map</div><h1 id="coverage-title" tabindex="-1">Browse the work</h1>
+<p class="context">Reusable activities, not a list of current commitments. Expand a branch to browse its tasks.</p>
+<div class="controls"><label>Focus<select id="focus-filter"></select></label><label>Kind of effort<select id="effort-filter"><option value="all">Any effort</option><option value="deep">Deep work</option><option value="low">Low-energy work</option><option value="recovery">Recovery</option></select></label></div>
+<div class="toolbar"><button id="widen-focus">All tasks in this focus</button><button id="widen-effort">This effort across all focuses</button><button id="show-all">Full task map</button><button id="expand">Expand all</button><button id="collapse">Collapse all</button></div>
+<p id="filter-summary" class="context" role="status"></p><div id="tree" class="tree"></div>
+<footer>Optional work can stay unscheduled. This proposal does not mark every branch without time as a gap. Task effort labels are editable classifications in the proposed app, not measures of your energy.</footer>
+</section>
+</main>
+<script>
+// Proposed reusable data: focus > work area > generic task + suitable effort.
+// No current task, niche, targets, completion, evidence, or journal fields.
+const areas = [
+{id:'wave',name:'Wave Link',role:'Strategic focus',stages:[
+['Customer understanding',[['Explore customer groups','deep'],['Understand customer problems','deep'],['Prepare discovery questions','deep'],['Have customer conversations','deep'],['Compare alternatives','deep']]],
+['Positioning',[['Clarify who the product serves','deep'],['Define the value proposition','deep'],['Refine messaging','deep']]],
+['Acquisition',[['Choose acquisition approaches','deep'],['Research prospects','low'],['Prepare outreach','deep'],['Send outreach and follow-ups','low']]],
+['Activation and retention',[['Understand first-use friction','deep'],['Understand reasons people return or leave','deep'],['Check routine usage information','low']]],
+['Product changes',[['Decide which product changes are necessary','deep'],['Implement defined changes','low'],['Resolve complex product problems','deep']]]]},
+{id:'freelance',name:'Freelance',role:'Income work',stages:[
+['Market understanding',[['Investigate potential niches','deep'],['Research businesses','low'],['Prepare discovery questions','deep'],['Have discovery conversations','deep']]],
+['Positioning and offer',[['Position the service','deep'],['Define the offer and scope','deep'],['Work through pricing','deep']]],
+['Client acquisition',[['Research leads and decision-makers','low'],['Prepare outreach messages','deep'],['Send outreach and follow-ups','low'],['Develop referral relationships','deep'],['Have sales conversations','deep']]],
+['Scoping and delivery',[['Understand client requirements','deep'],['Prepare proposals','deep'],['Plan website structure','deep'],['Build agreed website pages','low'],['Make routine revisions','low'],['Solve complex delivery problems','deep']]],
+['Payment and aftercare',[['Send invoices','low'],['Follow up on payments','low'],['Check in with past clients','low'],['Ask for referrals','low'],['Explore repeat work','deep']]]]},
+{id:'content',name:'Content',role:'Supports Wave Link and freelance',stages:[
+['Ideas and writing',[['Find useful insights from real work','deep'],['Develop an angle','deep'],['Write posts and scripts','deep'],['Prepare case studies','deep']]],
+['Production',[['Record or film','low'],['Edit video and images','low'],['Prepare website transformations','low']]],
+['Distribution',[['Publish content','low'],['Distribute relevant work','low'],['Reply and engage','low'],['Check content response','low']]]]},
+{id:'exploration',name:'Exploration',role:'Optional',stages:[
+['Ideas and small experiments',[['Explore an idea','deep'],['Define a small experiment','deep'],['Investigate demand and economics','deep'],['Make a small prototype','low'],['Decide whether to continue or park','deep']]]]},
+{id:'jobs',name:'Jobs',role:'Optional',stages:[
+['Selective opportunities',[['Browse relevant openings','low'],['Send a selective application','low'],['Prepare for an interview','deep'],['Attend an interview','deep']]]]},
+{id:'recovery',name:'Recovery and life',role:'Protected',stages:[
+['Physical recovery',[['Sleep','recovery'],['Exercise','recovery'],['Meals and breaks','recovery']]],
+['Rest and relationships',[['Hobbies and downtime','recovery'],['Evening wind-down','recovery'],['Time with family and friends','recovery']]],
+['Life admin',[['Handle bills and errands','low'],['Manage personal finances','low']]]]},
+{id:'tooling',name:'Tools and learning',role:'Only when needed',stages:[
+['Support the work',[['Identify a useful tool improvement','deep'],['Learn what a current problem requires','deep'],['Configure a tool or workflow','low']]]]}
+];
+const names={deep:'Deep work',low:'Low-energy work',recovery:'Recovery'};
+const $=id=>document.getElementById(id);
+for(const area of areas){$('demo-focus').add(new Option(area.name,area.id));}
+$('focus-filter').add(new Option('All focuses','all'));
+for(const area of areas){$('focus-filter').add(new Option(area.name,area.id));}
+function show(page){$('direction').hidden=page!=='direction';$('coverage').hidden=page!=='coverage';$('nav-direction').setAttribute('aria-pressed',page==='direction');$('nav-coverage').setAttribute('aria-pressed',page==='coverage');window.scrollTo(0,0);}
+function render(){
+ const focus=$('focus-filter').value,effort=$('effort-filter').value;
+ const area=areas.find(a=>a.id===focus);
+ $('coverage-title').textContent=area?area.name:'Browse the work';
+ $('filter-summary').textContent=(area?area.name:'All focuses')+' · '+(names[effort]||'Any effort');
+ $('tree').replaceChildren();
+ for(const a of areas.filter(a=>focus==='all'||a.id===focus)){
+  const stages=a.stages.map(([name,tasks])=>[name,tasks.filter(t=>effort==='all'||t[1]===effort)]).filter(s=>s[1].length);
+  if(!stages.length)continue;
+  const branch=document.createElement('details');branch.open=true;
+  const title=document.createElement('summary');title.textContent=a.name;
+  const role=document.createElement('small');role.textContent=a.role;title.append(role);branch.append(title);
+  const group=document.createElement('div');group.className='stages';
+  for(const [name,tasks] of stages){const stage=document.createElement('details');stage.open=focus!=='all';const heading=document.createElement('summary');heading.textContent=name;stage.append(heading);const list=document.createElement('ul');list.className='tasks';
+   for(const [text,type] of tasks){const row=document.createElement('li');const label=document.createElement('span');label.textContent=text;const tag=document.createElement('small');tag.textContent=names[type];row.append(label,tag);list.append(row);}stage.append(list);group.append(stage);}
+  branch.append(group);$('tree').append(branch);
+ }
+ if(!$('tree').children.length){const empty=document.createElement('p');empty.className='empty';empty.textContent='No tasks match this combination. Choose another effort or show all tasks in this focus.';$('tree').append(empty);}
+}
+function openCoverage(focus,effort){$('focus-filter').value=focus;$('effort-filter').value=effort;render();show('coverage');$('coverage-title').focus();}
+$('current-card').onclick=()=>openCoverage($('demo-focus').value,'deep');
+$('demo-focus').onchange=()=>{$('card-focus').textContent=areas.find(a=>a.id===$('demo-focus').value).name;};
+document.querySelectorAll('[data-area]').forEach(card=>card.onclick=()=>openCoverage(card.dataset.area,card.dataset.effort));
+$('nav-direction').onclick=()=>show('direction');$('back').onclick=()=>{show('direction');$('current-card').focus();};
+$('nav-coverage').onclick=()=>openCoverage('all','all');
+$('focus-filter').onchange=render;$('effort-filter').onchange=render;
+$('widen-focus').onclick=()=>{$('effort-filter').value='all';render();};
+$('widen-effort').onclick=()=>{$('focus-filter').value='all';render();};
+$('show-all').onclick=()=>{$('focus-filter').value='all';$('effort-filter').value='all';render();};
+$('expand').onclick=()=>document.querySelectorAll('#tree details').forEach(d=>d.open=true);
+$('collapse').onclick=()=>document.querySelectorAll('#tree details').forEach(d=>d.open=false);
+render();
+</script>
+</body>
+</html>
