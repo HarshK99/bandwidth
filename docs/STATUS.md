@@ -2,6 +2,10 @@
 
 ## Current state
 
+Latest preview adjustment: added fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders to the Today header, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; the separate weekday row and day-progress bar are removed. Current-block progress stays. HTML layout is for the user to inspect; no browser height/fit measurement performed. This display-only target exception has not yet been incorporated into the implementation specification/Phase 2 pending preview feedback. App code is unchanged.
+
+Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
+
 The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. The five-phase plan is written; no implementation phase has started. Application code and stored app data remain unchanged.
 
 New-chat reading order:
