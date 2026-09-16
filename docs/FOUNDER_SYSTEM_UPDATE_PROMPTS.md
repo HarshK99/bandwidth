@@ -33,7 +33,7 @@ These are menus, not mandatory habits, quotas, or new goals. Sleep, meals, break
 
 7. Retain the rule that tooling and learning earn time only when they remove a real bottleneck. Do not create a recurring tool-improvement goal.
 
-8. If explaining Bandwidth, use a short paragraph: it shows the current block and a reusable activity menu filtered by effort. It does not store strategy, targets, bottlenecks, specific assignments, journals, evidence, or results. Those broader operating practices remain outside the app. Their absence from Bandwidth does not remove them from the operating system.
+8. If explaining Bandwidth, use a short paragraph: it shows the current block and a reusable activity menu filtered by effort. Its header displays two fixed reminders—Wave Link +5% weekly active-user growth and income ≥₹60k/month—with “Work: advance a goal or tackle its blocker.” It does not manage goals, measure results, or store strategy, bottlenecks, specific assignments, journals, or evidence. Those broader practices remain outside the app. Their absence from Bandwidth does not remove them from the operating system. Recovery remains protected; the reminder applies to work.
 
 Edit only the necessary sections and keep terminology consistent. Preserve specific business strategy rather than replacing it with generic app labels. Do not remove practices merely because they do not appear in Coverage. Do not guess the dates behind “this week” or “next month”; flag those separately if needed.
 

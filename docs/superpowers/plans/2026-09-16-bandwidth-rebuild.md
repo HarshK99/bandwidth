@@ -14,10 +14,11 @@
 
 - Reuse and adapt TodayView, TimelineRow, DayBar, DayNav, WeekView, WeekGrid, CoverageView, Popover, AppTabs, and existing styles. Create a new helper/component only when it has a distinct responsibility.
 - Preserve the accepted HTML appearance. Do not replace the design system or invent a new visual direction.
-- Blocks name effort, never the current business or task. No journal, targets, completion tracking, evidence, or gap accounting.
+- Blocks name effort, never the current business or task. No journal, goal management, completion tracking, evidence, or gap accounting. The approved header shows two fixed goal reminders only; no tracking/model is added.
 - Destructive replacement of old app data and redundant code/docs is authorized. Delete only named app-owned storage keys, never localStorage.clear().
 - main_new is the integration branch for this version. Every phase branches from it and merges back into it. No remote pushes and no changes or merges to master/main without a separate explicit user instruction.
 - No builds, tests, or code review without explicit authorization for the current phase. Starting a phase, including Phase 5, does not authorize them. No blanket permission carries between phases.
+- The user intends to request npm test, npm run build, equivalent checks, or code review at the end. Do not run them pre-emptively or repeatedly ask during implementation.
 - Manual browser walkthroughs are distinct from test commands. Each phase lists useful walkthroughs; record performed versus omitted honestly.
 - Read the relevant local Next.js guides before implementation. Do not rely on old framework assumptions.
 
@@ -65,13 +66,25 @@ At phase start, inspect git status and current branch. Preserve unrelated user c
 At phase end:
 
 1. Complete only the phase's implementation and authorized checks.
-2. Update STATUS.md with decisions, exact files changed/deleted, check authorization and results/omissions, unresolved issues, and the next starting point.
-3. Commit only phase-owned changes on its branch. Use the actual phase commit in the final message; branch history records its relationship to main_new.
+2. Update the phase row and one compact STATUS.md entry: completion, changed files/areas, actual/omitted checks, open issues, next phase. Add only decisions needed by the next chat. Do not rewrite full history or unchanged requirements.
+3. Include that entry in the phase's implementation commit. No separate handoff-only commit or second commit just to write its own hash. Git history records the relationship to main_new; include a hash in the short final message only when useful.
 4. Switch to main_new and merge the phase branch. Prefer a fast-forward when possible. If main_new has advanced, resolve ordinary conflicts within the agreed scope; do not overwrite unrelated work or perform an unrequested code review.
 5. Record any unresolved validation as such. Implementation phases can merge with tests explicitly not run; do not call that verified. Phase 5 requires its walkthrough outcome or an honest pending handoff.
 6. Stop on main_new. Do not start the next phase, push remotely, or merge to master/main.
 
 The user has authorized merges into main_new; no repeated merge permission question is needed. Publication or a main-branch merge is a separate action, not part of any phase here.
+
+Compact handoff format (use actual outcomes):
+
+```text
+Phase N: complete; branch rebuild/phase-N-name → main_new
+Changed: affected files or concise file groups
+Checks: actual observations; builds/tests/review not run unless authorized
+Open: none, or the specific unresolved issue
+Next: start phase N+1
+```
+
+Add a Decisions line only when necessary for the next phase. On interruption, use In progress with an exact resume point. Never mark required work complete just to keep the handoff short. After the merge, give a short completion/next-phase response and stop; no repeated document rewriting or long reports.
 
 ## Skills
 
@@ -84,6 +97,6 @@ Announce a skill the first time it is used in each fresh chat and explain its pu
 
 ## Plan coverage
 
-Activity data, effort filtering, nested hobbies, compact Coverage: Phase 1. Schedule reset, current-time semantics, generic cards, click-through and return: Phase 2. Week changes and open Sunday: Phases 2–3. Preserved surfaces, calendar overlay, compact responsive UI, cleanup: Phase 4. Full user journey and known limitations: Phase 5. Shared status and main_new integration: every phase.
+Activity data, effort filtering, nested hobbies, compact Coverage: Phase 1. Schedule reset, current-time semantics, generic cards, fixed goal header, click-through and return: Phase 2. Week changes and open Sunday: Phases 2–3. Preserved surfaces, Calendar, compact responsive UI/header fit, cleanup: Phase 4. Full user journey and limitations: Phase 5. Compact status and main_new integration: every phase.
 
 No implementation phase has started as part of writing this plan.

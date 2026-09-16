@@ -2,7 +2,7 @@
 
 ## Current state
 
-Latest preview adjustment: added fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders to the Today header, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; the separate weekday row and day-progress bar are removed. Current-block progress stays. HTML layout is for the user to inspect; no browser height/fit measurement performed. This display-only target exception has not yet been incorporated into the implementation specification/Phase 2 pending preview feedback. App code is unchanged.
+Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Browser height/fit remains unmeasured; app code unchanged.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
@@ -36,7 +36,7 @@ New-chat reading order:
 - Generic card guides: Think · Solve · Decide · Discuss; Build · Write · Edit · Refine; Research · Post · Follow up · Admin.
 - Coverage opens across all areas filtered by effort, using compact controls and collapsed branches.
 - The task map is genuinely trimmed, including concrete hobbies, relationship, and life-admin choices.
-- Targets, bottlenecks, journals, completion, and results/evidence tracking are outside the app.
+- Goal management, bottleneck records, journals, completion, and results/evidence tracking are outside the app. Two fixed header goal reminders are the approved display-only exception.
 - The original founder system remains separate. Prompts let the user update it independently.
 
 ## Files and cleanup
@@ -77,7 +77,7 @@ New-chat reading order:
 | 4 — Integration | Not started | Calendar boundary, retained navigation, polish, obsolete-code cleanup |
 | 5 — Walkthrough | Not started | Manual journeys, fixes, REBUILD_RESULTS.md, honest final handoff |
 
-At each phase end append: branch/commit, files changed, decisions, actual checks, omitted checks, unresolved issues, and next start. Record partial progress here before stopping unexpectedly.
+At each phase end update its row and one compact entry: status, changed files/areas, checks, open issues, next phase. Add only necessary decisions. Include it in the phase commit; no additional handoff-only/self-hash commits. Record a precise resume point if interrupted.
 
 ## Check authorization ledger
 

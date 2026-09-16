@@ -34,6 +34,8 @@ URLs: `/coverage?effort=production`, optionally `&area=freelance`. Omitted/unkno
 
 ## Phase 2: schedule and storage
 
+DayBar includes fixed presentation copy: `Wave Link · +5%/week` / `Active users`, `Income · ≥₹60k/month` / `Reliable income`, then `Work: advance a goal or tackle its blocker.` Keep this in the existing DayBar; no goal type, storage, editable values, or tracking. Replace the separate weekday row and whole-day progress bar with this compact layout; preserve current-block rail progress.
+
 Replace the contents of `lib/direction/types.ts` and `lib/life/life.ts`; reduce `lib/life/index.ts` to new schedule exports. Work data lives only in lib/work.
 
 ```ts
@@ -85,7 +87,7 @@ export function toISODate(date: Date): string;
 export function fromISODate(value: string): Date;
 export function addDays(date: Date, count: number): Date;
 export function isSameDate(a: Date, b: Date): boolean;
-// Keep the existing getDayRuler, formatting, and getDayProgress export names
+// Keep the existing getDayRuler and formatting export names
 // where their signatures still fit. Record any changed signatures in STATUS.
 // direction/storage.ts
 export function loadPlan(): DirectionPlan;

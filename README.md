@@ -2,7 +2,7 @@
 
 A personal tool for seeing the current time block and browsing activities that fit its kind of effort.
 
-The founder chooses the actual work from the current bottleneck outside the app. Bandwidth shows Deep work, Production, Light work, and protected recovery time. It does not assign a business or track goals and results.
+The founder chooses the actual work from the current bottleneck outside the app. Bandwidth shows Deep work, Production, Light work, and protected recovery time. Its compact header reminds the founder of Wave Link's +5% weekly active-user growth and ≥₹60k monthly income goals. It does not assign a business or track goal progress/results.
 
 ## Rebuild reference
 

@@ -19,7 +19,7 @@ The founder chooses the business and actual task from the current bottleneck out
 - A block shows Deep work, Production, Light work, or a protected activity. It does not assign Wave Link, freelance, or both.
 - The app does not know the current task, customer, niche, client, or bottleneck.
 - Reusable activities are not individual assignments: Positioning is valid; positioning a dental website offer is too specific.
-- No targets, scoreboards, bottleneck records, experiment results, evidence logs, journal, weekly review forms, client pipeline, completion tracking, or productivity scoring.
+- No target management, scoreboards, bottleneck records, experiment results, evidence logs, journal, weekly review forms, client pipeline, completion tracking, or productivity scoring. The only goal exception is the two fixed header reminders below: display copy, not tracked data.
 - No daily logging is required to make the app useful.
 - Coverage is a menu, not a checklist. Optional work receiving no scheduled hours is fine.
 
@@ -46,16 +46,33 @@ Production is a refinement adopted during the app discussion. The original docum
 
 Retain the existing timeline-based structure, not a separate dashboard.
 
-- Date, clock, compact day header, and Jump to now.
+- One compact row for weekday/date, clock, and Now (accessible label: Jump to the current block).
 - Vertical time ruler and a continuous sequence of blocks. Real gaps should read as open time.
 - Quiet past/future blocks, next-block indication, and one green current-block card.
-- Current-block remaining time and subtle time progress. These measure passing time, not work completion.
+- Current-block remaining time and the rail's subtle time progress. These measure passing time, not work completion. Remove the whole-day progress bar from the header.
 - Block name as the main text, followed by the exact generic work-mode guide above.
 - No business assignments, current task, repeated in-card time range, “Browse relevant tasks” line, or decorative link arrows.
 
 Preserve card dimensions and readable text. Guide lines may wrap naturally; do not clip, truncate, hide words, or enlarge every block to fit explanatory prose. Browser fit has not been verified; the HTML's size calculations are a reference, not evidence that all viewports work.
 
 Clicking a work card opens Coverage with its effort selected, All areas selected, and area branches collapsed. No automatic business filter. Returning to Today preserves the scroll position. Recovery cards may open Recovery activities; lunch and break cards need not open a list. Rest does not require choosing a task.
+
+### Fixed goal reminder in the header
+
+The latest HTML header is approved:
+
+| Left column | Right column |
+| --- | --- |
+| Wave Link · +5%/week | Income · ≥₹60k/month |
+| Active users | Reliable income |
+
+Below the columns: **Work: advance a goal or tackle its blocker.**
+
+These are standing reminders, not measured results. Do not imply growth was achieved, income was received, or the app knows a blocker. No inputs, progress calculations, goal storage, actual values, warning badges, or goal-management screens.
+
+The line applies to work. Recovery, hobbies, and relationships remain protected rather than having to justify themselves against either number.
+
+Fit within the existing top header footprint: combine weekday/date/clock/Now, remove the separate weekday row and whole-day progress bar, and use compact side-by-side goal columns. Keep the timeline and current-block progress. No extra card, unreadably small text, or clipped words. Browser height/fit remains to be checked during a manual walkthrough. The reminder does not assign a business to a block.
 
 ## Reference day
 
@@ -196,5 +213,7 @@ Reuse and adapt the existing components instead of building the UI from scratch;
 - main_new is the integration/main branch for this new version. Phase branches split from it and merge back into it; the user explicitly authorized this workflow.
 - No merge or push to the original master/main branch without the user's explicit instruction. No remote pushes or deployments are authorized by this plan.
 - No build commands, test commands, or code review without explicit authorization for the current task/phase. Starting a phase does not grant it.
+- The user intends to request builds/tests/code review at the end. Do not run npm test, npm run build, equivalents, or indirect checks without that explicit request, including in Phase 5.
+- Phase handoffs are compact: one STATUS entry with completion, changed files/areas, actual checks, open issues, and next phase. Add only decisions needed to resume. Update once before the phase commit; no repeated history, separate handoff-only commit, or lengthy final recap.
 - Read the relevant local Next.js guide before writing Next.js code, as AGENTS.md requires.
 - Execute the [master plan](superpowers/plans/2026-09-16-bandwidth-rebuild.md), Phases 1–5, one fresh chat per phase. `start phase N` is sufficient; load the relevant instructions and prior outputs and stop after that phase. There is no Phase 0.
