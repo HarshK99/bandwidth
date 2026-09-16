@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bandwidth · Today proposal</title>
+<style>
+:root{color-scheme:light dark;--background:#fff;--foreground:#171717;--surface:#fafafa;--muted:#666670;--faint:#74747e;--line:#e4e4e7;--accent:#1f6f52;--hero-from:#1d6b4f;--hero-to:#2f8a7a;--focus:rgba(99,102,241,.055);--focus-edge:rgba(99,102,241,.30);--low:rgba(13,148,160,.06);--low-edge:rgba(13,148,160,.30);--rest:rgba(219,39,119,.045);--rest-edge:rgba(219,39,119,.24);--buffer:rgba(120,113,108,.055)}
+*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font:14px/1.5 Manrope,ui-sans-serif,system-ui,sans-serif}button,select{font:inherit;color:inherit}button{cursor:pointer;background:transparent;border:0;min-height:44px;padding:8px 12px}button:hover:not(:disabled){background:var(--buffer)}button:disabled{color:var(--faint);cursor:default}button:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:4px}button,select{border-radius:8px}.preview{padding:10px 20px;text-align:center;background:var(--surface);border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}.shell{max-width:720px;padding:0 24px 110px;margin:auto}.top{display:flex;align-items:center;justify-content:space-between;padding:22px 0 12px}.brand{font-size:20px;font-weight:700;letter-spacing:-.04em}.quiet{color:var(--muted);font-size:12px}.subnav{display:flex;gap:24px;border-bottom:1px solid var(--line)}.subnav button{padding:8px 0;border-radius:0;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}.subnav .selected{border-bottom:1px solid var(--accent)}.daybar{position:sticky;top:0;z-index:3;background:var(--background);padding:18px 0 16px;border-bottom:1px solid var(--line)}.barrow{display:flex;justify-content:space-between;align-items:center;gap:12px}.eyebrow{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}.weekday{color:var(--accent)}h1{font-size:16px;letter-spacing:-.015em;font-weight:500;margin:10px 0 4px}.clock{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}.now-button{border:1px solid var(--line);border-radius:24px;padding:6px 16px;font-size:12px}.progress{height:3px;border-radius:4px;background:var(--line);margin-top:16px;overflow:hidden}.progress div{height:100%;background:var(--accent)}.timeline{list-style:none;padding:0;margin:32px 0 0}.row{display:grid;grid-template-columns:42px 16px minmax(0,1fr);position:relative}.ruler{position:relative;font-variant-numeric:tabular-nums;font-size:11px;color:var(--muted)}.tick{position:absolute;right:5px;transform:translateY(-50%)}.rail{position:relative;display:flex;justify-content:center}.rail:before{content:'';position:absolute;inset:0 auto;width:1px;background:var(--line)}.dot{position:absolute;top:0;width:7px;height:7px;border:1px solid var(--faint);border-radius:50%;background:var(--background);transform:translateY(-50%)}.past .dot{background:var(--faint)}.rail-fill{position:absolute;top:0;width:3px;background:var(--accent);border-radius:3px}.block{width:100%;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:16px 20px;border:1px solid var(--line);border-radius:0;background:var(--buffer);position:relative}.row:first-child .block{border-radius:16px 16px 0 0}.row:last-child .block{border-radius:0 0 16px 16px}.row+.row .block{border-top:0}.block.deep{background:var(--focus);border-color:var(--focus-edge)}.block.low{background:var(--low);border-color:var(--low-edge)}.block.recovery{background:var(--rest);border-color:var(--rest-edge)}button.block:hover{filter:brightness(.97);background:var(--surface)}.block .meta{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.block .lead{font-size:18px;font-weight:600;line-height:1.3;letter-spacing:-.02em;margin:7px 0}.block .caption{font-size:12px;color:var(--muted)}.block .arrow{position:absolute;right:18px;bottom:16px;color:var(--muted)}.past .block .lead{color:var(--muted)}.current .block{border-radius:16px!important;border:0;background:linear-gradient(125deg,var(--hero-from),var(--hero-to));color:#fff;z-index:1;box-shadow:0 10px 30px -12px #0005;padding:24px}.current .block .lead{font-size:28px;font-weight:750;margin:14px 0 8px}.current .block .meta,.current .block .caption,.current .block .arrow{color:#e1eee9}.current .ruler{color:var(--accent)}.current .block:hover{background:linear-gradient(125deg,var(--hero-from),var(--hero-to));filter:brightness(1.04)}.current .block .now-label{color:#fff}.remaining{font-variant-numeric:tabular-nums;text-transform:none;letter-spacing:0;font-weight:400}.timeline-end{padding:12px 0 0 58px;color:var(--muted);font-size:12px}.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:5;border-top:1px solid var(--line);background:var(--background);padding-bottom:env(safe-area-inset-bottom)}.bottom-inner{display:flex;max-width:720px;margin:auto}.bottom-inner button{flex:1;min-height:60px;color:var(--muted);font-weight:500}.bottom-inner button[aria-pressed=true]{color:var(--foreground);font-weight:700}.coverage-head{padding:24px 0 12px}.coverage-head h1{font-size:26px;font-weight:650}.filters{display:flex;gap:14px;margin:20px 0}.filters label{flex:1;font-size:12px;color:var(--muted)}select{display:block;width:100%;min-height:44px;margin-top:6px;padding:8px;background:var(--surface);border:1px solid var(--line)}.actions{display:flex;flex-wrap:wrap;gap:8px}.actions button{font-size:12px;border:1px solid var(--line)}.tree{margin-top:24px}details{border-top:1px solid var(--line)}summary{padding:14px 4px;min-height:44px;cursor:pointer;font-weight:600}summary small{display:inline-block;margin-left:8px;color:var(--muted);font-weight:400;font-size:11px}.stages{padding-left:18px}.tasks{margin:0;padding:0 0 16px 18px;list-style:none}.tasks li{display:flex;justify-content:space-between;gap:16px;padding:12px 0;font-size:14px;border-bottom:1px solid var(--line)}.tasks small{font-size:11px;color:var(--muted);white-space:nowrap}.context{color:var(--muted);font-size:13px}.endnote{padding:24px 0;color:var(--muted);font-size:12px}.empty{padding:24px;background:var(--surface);border-radius:12px}.back{padding-left:0;color:var(--muted)}[hidden]{display:none!important}@media(prefers-color-scheme:dark){:root{--background:#0a0a0a;--foreground:#ededed;--surface:#141414;--muted:#a1a1aa;--faint:#92929b;--line:#303035;--accent:#6fb894;--focus:rgba(129,140,248,.10);--low:rgba(45,212,191,.085);--rest:rgba(244,114,182,.085);--buffer:rgba(168,162,158,.07)}}@media(max-width:480px){.shell{padding:0 16px 100px}.row{grid-template-columns:35px 12px minmax(0,1fr)}.block{padding:14px}.current .block{padding:20px}.current .block .lead{font-size:25px}.filters{flex-wrap:wrap}.filters label{min-width:130px}.tasks li{display:block}.tasks small{display:block;margin-top:4px}.preview{font-size:11px}.timeline-end{padding-left:47px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="preview">Today view proposal · Live India clock · Illustrative schedule, not your saved plan</div>
+<div class="shell">
+<div class="top"><span class="brand">bandwidth</span><span class="quiet">A place for what matters.</span></div>
+<section id="today-view">
+<nav class="subnav" aria-label="Direction views"><button class="selected" aria-current="page">Today</button><button disabled title="Not included in this Today-only preview">Week</button><button disabled title="Not included in this Today-only preview">Calendar</button></nav>
+<div class="daybar"><div class="barrow"><span class="eyebrow"><span class="weekday" id="weekday"></span> · Wave Link + Freelance</span><button class="now-button" id="jump-now">Jump to now</button></div><div class="barrow"><h1 id="date"></h1><span class="clock" id="clock"></span></div><div class="progress" aria-hidden="true"><div id="day-progress"></div></div></div>
+<ol class="timeline" id="timeline" aria-label="Today's timeline"></ol><div class="timeline-end">07:00 · Next morning</div>
+<p class="endnote">Work cards open tasks for their focus and kind of effort. Your specific task stays outside Bandwidth.</p>
+</section>
+<section id="coverage-view" hidden><div class="coverage-head"><button class="back" id="back">← Back to Today</button><div class="eyebrow">Coverage</div><h1 id="coverage-title" tabindex="-1">The work</h1><p class="context">Browse the activities that fit this block.</p></div>
+<div class="filters"><label>Focus<select id="focus-filter"></select></label><label>Kind of effort<select id="effort-filter"><option value="all">Any effort</option><option value="deep">Deep work</option><option value="low">Low-energy work</option><option value="recovery">Recovery</option></select></label></div>
+<div class="actions"><button id="all-focus">All tasks in this focus</button><button id="all-effort">This effort, all focuses</button><button id="all-tasks">Full task map</button></div><p class="context" id="filter-summary" role="status"></p><div class="tree" id="tree"></div><p class="endnote">These are reusable activities, not current assignments. Optional work does not need a slot in every week.</p></section>
+</div>
+<nav class="bottom-nav" aria-label="App sections"><div class="bottom-inner"><button id="nav-today" aria-pressed="true">Direction</button><button id="nav-coverage" aria-pressed="false">Coverage</button><button disabled title="Unchanged; outside this Today-only preview">Time</button><button disabled title="Unchanged; outside this Today-only preview">Upgrades</button></div></nav>
+<script>
+const areas = [
+{id:'wave',name:'Wave Link',role:'Strategic focus',stages:[
+['Customer understanding',[['Explore customer groups','deep'],['Understand customer problems','deep'],['Prepare discovery questions','deep'],['Have customer conversations','deep'],['Compare alternatives','deep']]],
+['Positioning',[['Clarify who the product serves','deep'],['Define the value proposition','deep'],['Refine messaging','deep']]],
+['Acquisition',[['Choose acquisition approaches','deep'],['Research prospects','low'],['Prepare outreach','deep'],['Send outreach and follow-ups','low']]],
+['Activation and retention',[['Understand first-use friction','deep'],['Understand reasons people return or leave','deep'],['Check routine usage information','low']]],
+['Product changes',[['Decide which product changes are necessary','deep'],['Implement defined changes','low'],['Resolve complex product problems','deep']]]]},
+{id:'freelance',name:'Freelance',role:'Income work',stages:[
+['Market understanding',[['Investigate potential niches','deep'],['Research businesses','low'],['Prepare discovery questions','deep'],['Have discovery conversations','deep']]],
+['Positioning and offer',[['Position the service','deep'],['Define the offer and scope','deep'],['Work through pricing','deep']]],
+['Client acquisition',[['Research leads and decision-makers','low'],['Prepare outreach messages','deep'],['Send outreach and follow-ups','low'],['Develop referral relationships','deep'],['Have sales conversations','deep']]],
+['Scoping and delivery',[['Understand client requirements','deep'],['Prepare proposals','deep'],['Plan website structure','deep'],['Build agreed website pages','low'],['Make routine revisions','low'],['Solve complex delivery problems','deep']]],
+['Payment and aftercare',[['Send invoices','low'],['Follow up on payments','low'],['Check in with past clients','low'],['Ask for referrals','low'],['Explore repeat work','deep']]]]},
+{id:'content',name:'Content',role:'Supports Wave Link and freelance',stages:[
+['Ideas and writing',[['Find useful insights from real work','deep'],['Develop an angle','deep'],['Write posts and scripts','deep'],['Prepare case studies','deep']]],
+['Production',[['Record or film','low'],['Edit video and images','low'],['Prepare website transformations','low']]],
+['Distribution',[['Publish content','low'],['Distribute relevant work','low'],['Reply and engage','low'],['Check content response','low']]]]},
+{id:'exploration',name:'Exploration',role:'Optional',stages:[
+['Ideas and small experiments',[['Explore an idea','deep'],['Define a small experiment','deep'],['Investigate demand and economics','deep'],['Make a small prototype','low'],['Decide whether to continue or park','deep']]]]},
+{id:'jobs',name:'Jobs',role:'Optional',stages:[
+['Selective opportunities',[['Browse relevant openings','low'],['Send a selective application','low'],['Prepare for an interview','deep'],['Attend an interview','deep']]]]},
+{id:'recovery',name:'Recovery and life',role:'Protected',stages:[
+['Physical recovery',[['Sleep','recovery'],['Exercise','recovery'],['Meals and breaks','recovery']]],
+['Rest and relationships',[['Hobbies and downtime','recovery'],['Evening wind-down','recovery'],['Time with family and friends','recovery']]],
+['Life admin',[['Handle bills and errands','low'],['Manage personal finances','low']]]]},
+{id:'tooling',name:'Tools and learning',role:'Only when needed',stages:[
+['Support the work',[['Identify a useful tool improvement','deep'],['Learn what a current problem requires','deep'],['Configure a tool or workflow','low']]]]}
+];
+const names={deep:'Deep work',low:'Low-energy work',recovery:'Recovery'};
+
+const $=id=>document.getElementById(id);
+// Broad example focuses only: the app does not infer a specific live task.
+const blocks=[
+ {start:420,end:480,name:'Morning routine',focus:'Ease into the day',type:'recovery'},
+ {start:480,end:660,name:'Deep work',focus:'Wave Link',area:'wave',type:'deep'},
+ {start:660,end:780,name:'Deep work',focus:'Freelance',area:'freelance',type:'deep'},
+ {start:780,end:840,name:'Lunch',focus:'Meals and a pause',type:'buffer'},
+ {start:840,end:930,name:'Low-energy work',focus:'Freelance',area:'freelance',type:'low'},
+ {start:930,end:1020,name:'Low-energy work',focus:'Wave Link',area:'wave',type:'low'},
+ {start:1020,end:1080,name:'Break',focus:'Step away',type:'buffer'},
+ {start:1080,end:1170,name:'Deep work',focus:'Wave Link',area:'wave',type:'deep'},
+ {start:1170,end:1260,name:'Dinner and downtime',focus:'Space to switch off',type:'recovery'},
+ {start:1260,end:1320,name:'Exercise',focus:'Move and recharge',area:'recovery',type:'recovery'},
+ {start:1320,end:1440,name:'Wind-down',focus:'Hobbies, rest, light planning',area:'recovery',type:'recovery'},
+ {start:1440,end:1860,name:'Sleep',focus:'Rest until 07:00',type:'recovery'}
+];
+const timeLabel=n=>String(Math.floor(n/60)%24).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
+const timeOptions={timeZone:'Asia/Kolkata'};
+let lastMinute='',lastTrigger=null,scrollPosition=0;
+function updateClock(){
+ const now=new Date();const parts=new Intl.DateTimeFormat('en-GB',{...timeOptions,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(now);const hour=Number(parts.find(p=>p.type==='hour').value),minute=Number(parts.find(p=>p.type==='minute').value);let minutes=hour*60+minute;if(minutes<420)minutes+=1440;
+ const date=new Date(now);if(hour<7)date.setUTCDate(date.getUTCDate()-1);
+ $('weekday').textContent=new Intl.DateTimeFormat('en-GB',{...timeOptions,weekday:'long'}).format(date);
+ $('date').textContent=new Intl.DateTimeFormat('en-GB',{...timeOptions,day:'numeric',month:'long',year:'numeric'}).format(date);
+ $('clock').textContent=new Intl.DateTimeFormat('en-GB',{...timeOptions,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now)+' IST'+(hour<7?' · next morning':'');
+ $('day-progress').style.width=((minutes-420)/1440*100)+'%';
+ if(lastMinute!==String(minutes)){renderTimeline(minutes);lastMinute=String(minutes);}
+}
+function renderTimeline(now){
+ const focusedId=document.activeElement?.id;
+ $('timeline').replaceChildren();
+ const current=blocks.findIndex(b=>now>=b.start&&now<b.end);
+ blocks.forEach((b,i)=>{
+  const live=i===current,past=b.end<=now;const row=document.createElement('li');row.className='row'+(live?' current':past?' past':'');row.id='row-'+i;
+  const height=live?210:Math.round(Math.min(190,62+.62*(b.end-b.start)));
+  const ruler=document.createElement('div');ruler.className='ruler';ruler.setAttribute('aria-hidden','true');
+  const marks=[b.start];for(let n=Math.ceil((b.start+1)/60)*60;n<b.end;n+=60)marks.push(n);
+  for(const n of marks){const tick=document.createElement('span');tick.className='tick';tick.textContent=timeLabel(n);tick.style.top=(n-b.start)/(b.end-b.start)*100+'%';ruler.append(tick);}
+  const rail=document.createElement('div');rail.className='rail';rail.setAttribute('aria-hidden','true');const dot=document.createElement('span');dot.className=live?'rail-fill':'dot';if(live)dot.style.height=(now-b.start)/(b.end-b.start)*100+'%';rail.append(dot);
+  const card=document.createElement(b.area?'button':'div');card.className='block '+b.type;card.style.minHeight=height+'px';card.id='block-'+i;
+  const meta=document.createElement('span');meta.className='meta';const name=document.createElement('span');name.textContent=b.name;meta.append(name);
+  if(live){const label=document.createElement('span');label.className='now-label';label.textContent='Now';const remaining=document.createElement('span');remaining.className='remaining';const left=b.end-now;remaining.textContent=(Math.floor(left/60)?Math.floor(left/60)+'h ':'')+(left%60?left%60+'m ':'')+'left';meta.append(label,remaining);}
+  else if(i===current+1){const next=document.createElement('span');next.textContent='Next';meta.append(next);}
+  const lead=document.createElement('span');lead.className='lead';lead.textContent=b.focus;
+  const caption=document.createElement('span');caption.className='caption';caption.textContent=timeLabel(b.start)+'–'+timeLabel(b.end)+(b.area?' · Browse relevant tasks':'');
+  card.append(meta,lead,caption);
+  if(b.area){const arrow=document.createElement('span');arrow.className='arrow';arrow.textContent='↗';arrow.setAttribute('aria-hidden','true');card.append(arrow);card.setAttribute('aria-label',b.name+', '+b.focus+', '+timeLabel(b.start)+' to '+timeLabel(b.end)+'. Browse relevant tasks');card.onclick=()=>openCoverage(b.area,b.type,card.id);}
+  row.append(ruler,rail,card);$('timeline').append(row);
+ });
+ if(focusedId?.startsWith('block-'))$(focusedId)?.focus({preventScroll:true});
+}
+$('focus-filter').add(new Option('All focuses','all'));for(const a of areas)$('focus-filter').add(new Option(a.name,a.id));
+function renderTree(){const focus=$('focus-filter').value,effort=$('effort-filter').value;const area=areas.find(a=>a.id===focus);$('coverage-title').textContent=area?area.name:'The work';$('filter-summary').textContent=(area?area.name:'All focuses')+' · '+(names[effort]||'Any effort');$('tree').replaceChildren();
+ for(const a of areas.filter(a=>focus==='all'||a.id===focus)){const stages=a.stages.map(([name,tasks])=>[name,tasks.filter(t=>effort==='all'||t[1]===effort)]).filter(s=>s[1].length);if(!stages.length)continue;const branch=document.createElement('details');branch.open=true;const heading=document.createElement('summary');heading.textContent=a.name;const role=document.createElement('small');role.textContent=a.role;heading.append(role);branch.append(heading);const group=document.createElement('div');group.className='stages';for(const [name,tasks] of stages){const stage=document.createElement('details');stage.open=focus!=='all';const title=document.createElement('summary');title.textContent=name;stage.append(title);const list=document.createElement('ul');list.className='tasks';for(const [text,type] of tasks){const item=document.createElement('li'),label=document.createElement('span'),tag=document.createElement('small');label.textContent=text;tag.textContent=names[type];item.append(label,tag);list.append(item);}stage.append(list);group.append(stage);}branch.append(group);$('tree').append(branch);}
+ if(!$('tree').children.length){const p=document.createElement('p');p.className='empty';p.textContent='No matching tasks. Widen the effort filter to browse this focus.';$('tree').append(p);}}
+function openCoverage(focus,effort,trigger){scrollPosition=window.scrollY;lastTrigger=trigger;$('focus-filter').value=focus;$('effort-filter').value=effort;renderTree();$('today-view').hidden=true;$('coverage-view').hidden=false;$('nav-today').setAttribute('aria-pressed','false');$('nav-coverage').setAttribute('aria-pressed','true');window.scrollTo(0,0);$('coverage-title').focus({preventScroll:true});}
+function back(){if(!$('today-view').hidden)return;$('today-view').hidden=false;$('coverage-view').hidden=true;$('nav-today').setAttribute('aria-pressed','true');$('nav-coverage').setAttribute('aria-pressed','false');window.scrollTo(0,scrollPosition);if(lastTrigger)$(lastTrigger)?.focus({preventScroll:true});}
+$('back').onclick=back;$('nav-today').onclick=back;$('nav-coverage').onclick=()=>{if($('coverage-view').hidden)openCoverage('all','all',null);};
+$('focus-filter').onchange=renderTree;$('effort-filter').onchange=renderTree;
+$('all-focus').onclick=()=>{$('effort-filter').value='all';renderTree();};$('all-effort').onclick=()=>{$('focus-filter').value='all';renderTree();};$('all-tasks').onclick=()=>{$('focus-filter').value='all';$('effort-filter').value='all';renderTree();};
+$('jump-now').onclick=()=>{const row=document.querySelector('.row.current');if(row){const top=row.getBoundingClientRect().top+window.scrollY-document.querySelector('.daybar').offsetHeight-16;window.scrollTo({top,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}};
+updateClock();setInterval(updateClock,1000);
+</script>
+</body>
+</html>

@@ -25,6 +25,7 @@ Status: HTML proposal created for discussion; not accepted or implemented in the
 
 ## Files and checks
 - Added `docs/proposals/direction-coverage.html`: standalone HTML with embedded styles, proposed task data, and focus/effort filtering.
+- Added `docs/proposals/today-final-view.html` after the user requested a second preview showing the proposed final Today layout. Preserves the vertical time ruler, continuous blocks, current-block card, Today navigation, and bottom tabs. Embeds the generic task map and working Coverage filters in the same file. Uses the live Asia/Kolkata clock, with the day running 07:00 to the next 07:00. The illustrated schedule is not an approved or saved plan. Week, Calendar, Time, and Upgrades controls are visibly disabled in this Today-only preview.
 - Added this handoff.
 - No existing application source files changed.
 - Read current branch/status, app colour tokens, Direction types, schedule, task tree, and relevant prior product documents for context.
@@ -33,4 +34,4 @@ Status: HTML proposal created for discussion; not accepted or implemented in the
 - Original source-of-truth file was already untracked at task start; preserve its contents.
 
 ## Next starting point
-Open the HTML with the user, discuss tree/task wording and filtering behaviour, and refine the proposal. Do not implement app changes until the user authorizes them. Scheduling behaviour and whether existing ancillary sections change remain undecided.
+Open `today-final-view.html` with the user to discuss the intended final Today appearance; use the first HTML for the broader data proposal. The user explicitly wants the timeline retained. Discuss tree/task wording and filtering behaviour and refine the proposal. Do not implement app changes until the user authorizes them. Scheduling behaviour and whether existing ancillary sections change remain undecided.
