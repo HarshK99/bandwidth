@@ -39,33 +39,50 @@
 </div>
 <nav class="bottom-nav" aria-label="App sections"><div class="bottom-inner"><button id="nav-today" aria-pressed="true">Direction</button><button id="nav-coverage" aria-pressed="false">Coverage</button><button disabled title="Unchanged; outside this Today-only preview">Time</button><button disabled title="Unchanged; outside this Today-only preview">Upgrades</button></div></nav>
 <script>
+// Reusable activities, not exhaustive procedural steps. An activity may fit
+// more than one effort without being stored as duplicate tasks.
+const task=(name,...efforts)=>({name,efforts});
 const areas = [
-{id:'wave',name:'Wave Link',role:'Strategic focus',stages:[
-['Customer understanding',[['Explore customer groups','deep'],['Understand customer problems','deep'],['Prepare discovery questions','deep'],['Have customer conversations','deep'],['Compare alternatives','deep']]],
-['Positioning',[['Clarify who the product serves','deep'],['Define the value proposition','deep'],['Refine messaging','deep']]],
-['Acquisition',[['Choose acquisition approaches','deep'],['Research prospects','low'],['Prepare outreach','deep'],['Send outreach and follow-ups','low']]],
-['Activation and retention',[['Understand first-use friction','deep'],['Understand reasons people return or leave','deep'],['Check routine usage information','low']]],
-['Product changes',[['Decide which product changes are necessary','deep'],['Implement defined changes','low'],['Resolve complex product problems','deep']]]]},
-{id:'freelance',name:'Freelance',role:'Income work',stages:[
-['Market understanding',[['Investigate potential niches','deep'],['Research businesses','low'],['Prepare discovery questions','deep'],['Have discovery conversations','deep']]],
-['Positioning and offer',[['Position the service','deep'],['Define the offer and scope','deep'],['Work through pricing','deep']]],
-['Client acquisition',[['Research leads and decision-makers','low'],['Prepare outreach messages','deep'],['Send outreach and follow-ups','low'],['Develop referral relationships','deep'],['Have sales conversations','deep']]],
-['Scoping and delivery',[['Understand client requirements','deep'],['Prepare proposals','deep'],['Plan website structure','deep'],['Build agreed website pages','low'],['Make routine revisions','low'],['Solve complex delivery problems','deep']]],
-['Payment and aftercare',[['Send invoices','low'],['Follow up on payments','low'],['Check in with past clients','low'],['Ask for referrals','low'],['Explore repeat work','deep']]]]},
-{id:'content',name:'Content',role:'Supports Wave Link and freelance',stages:[
-['Ideas and writing',[['Find useful insights from real work','deep'],['Develop an angle','deep'],['Write posts and scripts','deep'],['Prepare case studies','deep']]],
-['Production',[['Record or film','low'],['Edit video and images','low'],['Prepare website transformations','low']]],
-['Distribution',[['Publish content','low'],['Distribute relevant work','low'],['Reply and engage','low'],['Check content response','low']]]]},
-{id:'exploration',name:'Exploration',role:'Optional',stages:[
-['Ideas and small experiments',[['Explore an idea','deep'],['Define a small experiment','deep'],['Investigate demand and economics','deep'],['Make a small prototype','low'],['Decide whether to continue or park','deep']]]]},
-{id:'jobs',name:'Jobs',role:'Optional',stages:[
-['Selective opportunities',[['Browse relevant openings','low'],['Send a selective application','low'],['Prepare for an interview','deep'],['Attend an interview','deep']]]]},
-{id:'recovery',name:'Recovery and life',role:'Protected',stages:[
-['Physical recovery',[['Sleep','recovery'],['Exercise','recovery'],['Meals and breaks','recovery']]],
-['Rest and relationships',[['Hobbies and downtime','recovery'],['Evening wind-down','recovery'],['Time with family and friends','recovery']]],
-['Life admin',[['Handle bills and errands','low'],['Manage personal finances','low']]]]},
-{id:'tooling',name:'Tools and learning',role:'Only when needed',stages:[
-['Support the work',[['Identify a useful tool improvement','deep'],['Learn what a current problem requires','deep'],['Configure a tool or workflow','low']]]]}
+ {id:'wave',name:'Wave Link',children:[
+  task('Customer discovery','deep'),
+  task('Positioning','deep'),
+  task('Lead research','low'),
+  task('Outreach','deep','low'),
+  task('Activation and retention','deep','low'),
+  task('Product decisions','deep'),
+  task('Product development','deep','low')
+ ]},
+ {id:'freelance',name:'Freelance',children:[
+  task('Market and customer discovery','deep'),
+  task('Positioning and offer','deep'),
+  task('Lead research','low'),
+  task('Outreach','deep','low'),
+  task('Sales','deep'),
+  task('Scoping and proposals','deep'),
+  task('Website production','deep','low'),
+  task('Payments','low'),
+  task('Aftercare and referrals','deep','low')
+ ]},
+ {id:'content',name:'Content',children:[
+  task('Content writing','deep'),
+  task('Recording and editing','low'),
+  task('Publishing and engagement','low')
+ ]},
+ {id:'exploration',name:'Exploration',children:[
+  task('Ideas and validation','deep'),
+  task('Small experiments','deep','low')
+ ]},
+ {id:'jobs',name:'Jobs',children:[
+  task('Selective applications','low'),
+  task('Interview preparation and interviews','deep')
+ ]},
+ {id:'recovery',name:'Recovery and life',children:[
+  {name:'Physical recovery',children:[task('Sleep','recovery'),task('Exercise','recovery'),task('Meals and breaks','recovery')]},
+  {name:'Hobbies',children:[task('Painting','recovery'),task('Crossword','recovery'),task('Language','recovery')]},
+  task('Downtime and wind-down','recovery'),
+  task('Family and friends','recovery'),
+  task('Life admin and finances','low')
+ ]}
 ];
 const names={deep:'Deep work',low:'Low-energy work',recovery:'Recovery'};
 const activityGuides={deep:'Discovery · Positioning · Sales · Decisions',low:'Lead research · Production · Editing · Admin'};
@@ -124,23 +141,38 @@ function renderTimeline(now){
  if(focusedId?.startsWith('block-'))$(focusedId)?.focus({preventScroll:true});
 }
 $('focus-filter').add(new Option('All areas','all'));for(const a of areas)$('focus-filter').add(new Option(a.name,a.id));
-function renderTree(){const focus=$('focus-filter').value,effort=$('effort-filter').value;const area=areas.find(a=>a.id===focus);$('filter-summary').textContent=(area?area.name:'All areas')+' · '+(names[effort]||'All efforts');$('tree').replaceChildren();
- for(const a of areas.filter(a=>focus==='all'||a.id===focus)){
-  const stages=a.stages.map(([name,tasks])=>[name,tasks.filter(t=>effort==='all'||t[1]===effort)]).filter(s=>s[1].length);
-  if(!stages.length)continue;
-  const branch=document.createElement('details');branch.open=focus!=='all';
-  const heading=document.createElement('summary');heading.textContent=a.name;branch.append(heading);
-  const group=document.createElement('div');group.className='stages';
-  for(const [name,tasks] of stages){
-   const stage=document.createElement('details');
-   const title=document.createElement('summary');title.textContent=name;stage.append(title);
-   const list=document.createElement('ul');list.className='tasks';
-   for(const [text,type] of tasks){const item=document.createElement('li'),label=document.createElement('span');label.textContent=text;item.append(label);if(effort==='all'){const tag=document.createElement('small');tag.textContent=names[type];item.append(tag);}list.append(item);}
-   stage.append(list);group.append(stage);
+function matchingNodes(nodes,effort){
+ return nodes.flatMap(node=>{
+  if(node.children){const children=matchingNodes(node.children,effort);return children.length?[{...node,children}]:[];}
+  return effort==='all'||node.efforts.includes(effort)?[node]:[];
+ });
+}
+function appendNodes(container,nodes,effort,focus){
+ let list=null;
+ for(const node of nodes){
+  if(node.children){
+   list=null;
+   const branch=document.createElement('details');branch.open=Boolean(node.id&&focus!=='all');
+   const heading=document.createElement('summary');heading.textContent=node.name;branch.append(heading);
+   const group=document.createElement('div');group.className='stages';appendNodes(group,node.children,effort,focus);
+   branch.append(group);container.append(branch);
+  }else{
+   if(!list){list=document.createElement('ul');list.className='tasks';container.append(list);}
+   const item=document.createElement('li'),label=document.createElement('span');label.textContent=node.name;item.append(label);
+   if(effort==='all'){
+    const tag=document.createElement('small');tag.textContent=node.efforts.map(type=>({deep:'Deep',low:'Low',recovery:'Recovery'})[type]).join(' / ');
+    tag.setAttribute('aria-label',node.efforts.map(type=>names[type]).join(' or '));item.append(tag);
+   }
+   list.append(item);
   }
-  branch.append(group);$('tree').append(branch);
  }
- if(!$('tree').children.length){const p=document.createElement('p');p.className='empty';p.textContent='No matching tasks. Widen the effort filter to browse this focus.';$('tree').append(p);}}
+}
+function renderTree(){
+ const focus=$('focus-filter').value,effort=$('effort-filter').value,area=areas.find(a=>a.id===focus);
+ $('filter-summary').textContent=(area?area.name:'All areas')+' · '+(names[effort]||'All efforts');$('tree').replaceChildren();
+ appendNodes($('tree'),matchingNodes(areas.filter(a=>focus==='all'||a.id===focus),effort),effort,focus);
+ if(!$('tree').children.length){const p=document.createElement('p');p.className='empty';p.textContent='No matching tasks. Widen the effort filter to browse this area.';$('tree').append(p);}
+}
 function openCoverage(focus,effort,trigger){scrollPosition=window.scrollY;lastTrigger=trigger;$('focus-filter').value=focus;$('effort-filter').value=effort;renderTree();$('today-view').hidden=true;$('coverage-view').hidden=false;$('nav-today').setAttribute('aria-pressed','false');$('nav-coverage').setAttribute('aria-pressed','true');window.scrollTo(0,0);$('coverage-title').focus({preventScroll:true});}
 function back(){if(!$('today-view').hidden)return;$('today-view').hidden=false;$('coverage-view').hidden=true;$('nav-today').setAttribute('aria-pressed','true');$('nav-coverage').setAttribute('aria-pressed','false');window.scrollTo(0,scrollPosition);if(lastTrigger)$(lastTrigger)?.focus({preventScroll:true});}
 $('back').onclick=back;$('nav-today').onclick=back;$('nav-coverage').onclick=()=>{if($('coverage-view').hidden)openCoverage('all','all',null);};

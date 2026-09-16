@@ -18,10 +18,12 @@ Status: HTML proposal created for discussion; not accepted or implemented in the
 ## Proposed, not yet agreed
 - Compact area and effort dropdowns on one Coverage toolbar; no introductory text, extra action buttons, or repeated effort labels when effort is already filtered.
 - Direction cards show the block name and current/next state, with remaining time for the current block. Remove the in-card time range, browse-tasks caption, business names, and navigation arrows. The time ruler remains.
-- Coverage uses one compact nested list with area/stage/task backgrounds inspired by the existing app. Latest user feedback: opening every matching task is overwhelming. All-area browsing now starts with areas collapsed, including when filtering effort. Selecting an area opens its branch but keeps its stages collapsed; expand the desired stage to see matching tasks. Nothing is ranked or selected as current work.
+- Coverage uses one compact nested list with area/group/task backgrounds inspired by the existing app. All-area browsing starts with areas collapsed, including when filtering effort. Selecting an area opens its branch. After trimming, work areas contain short direct activity lists rather than extra stage layers; nested groups remain where useful, such as Physical recovery and Hobbies. Nothing is ranked or selected as current work.
 - Added short generic guides inside work cards: deep work shows “Discovery · Positioning · Sales · Decisions”; low-energy work shows “Lead research · Production · Editing · Admin”. Existing card size calculations and title sizes stay unchanged. Guides wrap naturally without truncation or line clamping. Browser fit remains unverified.
-- Tree: Wave Link, Freelance, Content, Exploration, Jobs, Recovery and life, Tools and learning.
-- Effort: deep work, low-energy work, recovery. Assignments are suggestions; actual work can require different effort.
+- Tree: Wave Link, Freelance, Content, Exploration, Jobs, Recovery and life. Removed the invented standalone Tools and learning branch: the source document permits useful tooling improvements but does not prescribe a recurring deep-work task for them.
+- Trimmed individual procedural steps into generic activities such as Customer discovery, Positioning, Outreach, Scoping and proposals, Content writing, and Payments. Kept sales, production, and payments distinct. Removed redundant stage wrappers as well as tasks, rather than relying only on collapsing the same long list.
+- Recovery and life → Hobbies → Painting / Crossword / Language, as explicitly requested by the user.
+- Effort: deep work, low-energy work, recovery. One activity may fit multiple effort filters without duplicate data; examples include Outreach and Website production. These are suitability suggestions, not statements that the source document assigns every activity to a fixed energy level.
 - Optional branches without scheduled time are not automatically gaps.
 - The sample day and all task classifications are illustrative, not an approved schedule.
 - Reuse existing visual colours and card structure; use system font fallback to keep HTML standalone.
