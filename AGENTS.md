@@ -1,5 +1,7 @@
 # Bandwidth rebuild instructions
 
+Read `learnings.md` for the project's approved process learnings before planning or implementation.
+
 ## Start or resume a phase
 
 Treat `start phase N` as the complete instruction to load and execute only that phase.
