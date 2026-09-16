@@ -6,7 +6,7 @@ Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/mont
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
-The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1–4 are implemented; Phase 5 exercised core browser journeys and fixed rapid Coverage filter changes. Phase 5 remains awaiting the connected Calendar walkthrough and remaining checks in [REBUILD_RESULTS.md](REBUILD_RESULTS.md). Resume that phase, not completed scenarios.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1–4 are implemented; Phase 5 completed its browser walkthrough with explicit limitations in [REBUILD_RESULTS.md](REBUILD_RESULTS.md), fixed rapid Coverage filter changes, and recorded user-reported Calendar sync success. No next phase; await the user's acceptance or separate request for further checks.
 
 New-chat reading order:
 
@@ -75,13 +75,13 @@ New-chat reading order:
 | 2 — Direction | Implemented; unverified | New schedule/storage, Today, and basic Week; next: Phase 3 |
 | 3 — Week | Implemented; unverified | Name/time/mode editing, add/remove/copy day, mobile selected-day view; next: Phase 4 |
 | 4 — Integration | Implemented; unverified | Calendar boundary/cache range, panel scroll return/Now, focus polish and cleanup; next: Phase 5 |
-| 5 — Walkthrough | In progress; awaiting remaining walkthrough | Core Chromium journeys observed; rapid-filter fix integrated; resume Calendar failure and omissions in REBUILD_RESULTS.md |
+| 5 — Walkthrough | Complete with documented limitations | Chromium journeys and Calendar fixtures observed; live sync user-reported; REBUILD_RESULTS.md records omissions |
 
 At each phase end update its row and one compact entry: status, changed files/areas, checks, open issues, next phase. Add only necessary decisions. Include it in the phase commit; no additional handoff-only/self-hash commits. Record a precise resume point if interrupted.
 
 ## Check authorization ledger
 
-Phase 5: user explicitly said “you can use chromium to test.” Used Edge/Chromium with temporary Playwright browser-control scripts for interactions, screenshots, clock controls, and isolated storage scenarios against the existing development server. Builds, repository test commands, lint/type checks, and code review not authorized or run. No real-account Calendar access or user acceptance recorded.
+Phase 5: user explicitly said “you can use chromium to test,” then “sync worked; proceed.” Used Edge/Chromium with temporary Playwright browser-control scripts for interactions, screenshots, clock controls, isolated storage/Calendar fixtures, and cross-tab scenarios against the existing development server. Builds, repository test commands, lint/type checks, and code review not authorized or run. Live sync success is user-reported; no agent real-account access or overall user acceptance recorded.
 
 Phase 4: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available. Calendar connection and live sync were not exercised.
 
@@ -128,8 +128,8 @@ Next: start phase 5 in a fresh chat for the manual walkthrough and REBUILD_RESUL
 
 ## Phase 5 handoff
 
-Phase 5: in progress, awaiting remaining walkthrough; partial results/fix on rebuild/phase-5-walkthrough → main_new.
-Changed: CoverageView preserves both rapid filter selections; REBUILD_RESULTS.md records scenarios/evidence/omissions; README and STATUS reflect actual browser progress.
-Checks: Chromium core Today/Coverage/Week journeys, clock boundaries, copy/cancel/reload, keyboard, light/dark layout, isolated reset/save failure, retained route rendering; no builds, repository test commands, or code review.
-Open: user's screenshot shows Calendar refresh failure; connected sync/event geometry/state preservation, live transitions/daylight-saving, actual zoom and remaining checks are unverified. User acceptance not given.
-Next: resume start phase 5 on its existing branch; begin with connected Calendar settings/status, then remaining REBUILD_RESULTS scenarios. Keep master/main, remotes, and deployment untouched.
+Phase 5: complete with documented limitations; rebuild/phase-5-walkthrough → main_new.
+Changed: CoverageView rapid-filter fix; REBUILD_RESULTS.md evidence/omissions; README and STATUS. Continuation added results only, with no further app changes.
+Checks: Chromium core journeys, live 07:00/autumn clock change, editing/copy/reload/validation, cross-tab updates, keyboard/layout, storage failures, Calendar overlap/overnight/empty-day/cache fixtures; user reports live sync worked. No builds, repository test commands, or code review.
+Open: live Calendar request races, actual zoom/text enlargement, screen reader, spring clock change, old header-height comparison, and direct prior-user-data inspection omitted; see REBUILD_RESULTS. Overall user acceptance not recorded.
+Next: user decides acceptance or separately requests further checks; no next phase, remote push, deployment, or master/main merge.

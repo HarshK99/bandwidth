@@ -12,7 +12,7 @@ The founder chooses the actual work from the current bottleneck outside the app.
 - [Accepted Today preview](docs/proposals/today-final-view.html) — standalone HTML with the timeline and compact Coverage.
 - [Prompts to update the founder operating system](docs/FOUNDER_SYSTEM_UPDATE_PROMPTS.md) — separate edits for the original business document.
 
-Phases 1–4 are implemented: Coverage, Today, the weekly editor, and Calendar integration. Phase 5 exercised core journeys in Chromium and fixed rapid Coverage filter changes. It remains awaiting the connected Calendar walkthrough and remaining checks in [Rebuild results](docs/REBUILD_RESULTS.md). Resume with `start phase 5`; builds, repository test commands, and code review have not been run.
+Phases 1–5 are complete with documented check limitations: Coverage, Today, the weekly editor, Calendar integration, and the browser walkthrough. Phase 5 exercised core journeys in Chromium and fixed rapid Coverage filter changes; the user reported successful Calendar sync. See [Rebuild results](docs/REBUILD_RESULTS.md) for evidence and omissions. Builds, repository test commands, and code review have not been run; overall user acceptance is not recorded.
 
 Calendar remains read-only, with its existing connection, selection, and cache. Events follow the visible local 07:00-to-next-07:00 day, including overnight and open time. Time and Upgrades retain their existing content. Calendar setup requires `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; without it, the schedule remains usable.
 
