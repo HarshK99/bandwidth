@@ -18,7 +18,7 @@ New-chat reading order:
 - master: existing app/main branch. No merge or push unless the user explicitly asks.
 - main_new: integration/main branch for the new version. User explicitly authorized each new split to merge back here.
 - proposal/direction-coverage: preview/specification branch, fast-forwarded into main_new during planning at commit 01722de.
-- plan/phased-rebuild: plan-authoring branch. Its completed documents are to be merged into main_new as the final step of this planning task; Git history records the merge. No implementation phase begins as part of that merge.
+- plan/phased-rebuild: plan-authoring branch. Plan commit f142c8c was fast-forwarded into main_new. This final handoff update follows the same branch/integration workflow. No implementation phase has started.
 - Each phase starts from current main_new, uses its named phase branch, and merges back before stopping. Read the master plan for resuming an existing branch safely.
 - User explicitly permits destructive replacement of outdated app docs and old app data on rebuild branches. Do not preserve redundant data or backward compatibility by default.
 - No remote push or merge to the original master/main branch is authorized or performed. Local integration into main_new is authorized.
@@ -42,7 +42,7 @@ New-chat reading order:
 - Rewrote README.md to point to the new specification and identify the rebuild as pending.
 - Removed obsolete PRD, DIRECTION, DATA_MODEL, PLAN_BLOCK_LINKS, PLAN_GOALS, PLAN_SCHEDULE, CALENDAR, and UPGRADES docs. Historical content remains in Git, not as rebuild requirements. Removing their docs does not itself decide the fate of Calendar, Time, or Upgrades features.
 - Removed the superseded direction-coverage.html prototype. today-final-view.html is the sole retained HTML reference.
-- Original founder_operating_system_latest.md was untracked at task start. It is being added unchanged to Git with the plan so future phase branches have the required reference; no source content was rewritten.
+- Original founder_operating_system_latest.md was untracked at task start. It was added unchanged to Git in f142c8c so future phase branches have the required reference; no source content was rewritten.
 - Added the five-phase master plan, shared contracts, and phase instructions. Updated AGENTS.md/README.md for `start phase N` discovery and the user-authorized main_new integration workflow.
 
 ## Checks and omissions
@@ -83,4 +83,4 @@ Planning task: builds not authorized; tests not authorized; code review not auth
 
 Next: in a fresh chat, say `start phase 1`. Load the Phase 1 instructions and execute only that phase. The numbering is 1–5; there is no Phase 0.
 
-This planning task stops after committing and integrating the plan into main_new. No phase implementation, build, test, code review, remote push, or original-main merge is included.
+The plan and original source reference are integrated into main_new. Stop here; start Phase 1 in a new chat. No phase implementation, build, test, code review, remote push, or original-main merge was performed.
