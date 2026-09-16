@@ -2,24 +2,26 @@
 
 ## Current state
 
-The user likes the current HTML and authorized recording it as the app's source of truth. This remains the specification stage. Application code and stored app data have not been replaced yet.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. The five-phase plan is written; no implementation phase has started. Application code and stored app data remain unchanged.
 
 New-chat reading order:
 
 1. AGENTS.md and the user's project instructions.
 2. [APP_SOURCE_OF_TRUTH.md](APP_SOURCE_OF_TRUTH.md).
 3. This document.
-4. [Accepted HTML](proposals/today-final-view.html).
-5. [Founder document update prompts](FOUNDER_SYSTEM_UPDATE_PROMPTS.md) and the original operating system when relevant.
+4. [Master plan](superpowers/plans/2026-09-16-bandwidth-rebuild.md), [shared contracts](phases/CONTRACTS.md), and the matching phase file.
+5. [Accepted HTML](proposals/today-final-view.html) and recorded prior phase outputs.
+6. [Founder document update prompts](FOUNDER_SYSTEM_UPDATE_PROMPTS.md) and the original operating system when relevant.
 
 ## Branches and authorization
 
 - master: existing app/main branch. No merge or push unless the user explicitly asks.
-- main_new: rebuild integration branch created from master.
-- proposal/direction-coverage: current working branch, created from main_new. The preview and specification live here; they are not yet integrated into main_new.
-- Future implementation changes branch from main_new after bringing the specification into it through the planned workflow. Do not start from a baseline missing these documents.
+- main_new: integration/main branch for the new version. User explicitly authorized each new split to merge back here.
+- proposal/direction-coverage: preview/specification branch, fast-forwarded into main_new during planning at commit 01722de.
+- plan/phased-rebuild: plan-authoring branch. Its completed documents are to be merged into main_new as the final step of this planning task; Git history records the merge. No implementation phase begins as part of that merge.
+- Each phase starts from current main_new, uses its named phase branch, and merges back before stopping. Read the master plan for resuming an existing branch safely.
 - User explicitly permits destructive replacement of outdated app docs and old app data on rebuild branches. Do not preserve redundant data or backward compatibility by default.
-- No remote push or main-branch merge is authorized or performed.
+- No remote push or merge to the original master/main branch is authorized or performed. Local integration into main_new is authorized.
 - Current work is documentation and cleanup. Application code/data replacement belongs to forthcoming implementation phases.
 
 ## Recorded decisions
@@ -40,26 +42,45 @@ New-chat reading order:
 - Rewrote README.md to point to the new specification and identify the rebuild as pending.
 - Removed obsolete PRD, DIRECTION, DATA_MODEL, PLAN_BLOCK_LINKS, PLAN_GOALS, PLAN_SCHEDULE, CALENDAR, and UPGRADES docs. Historical content remains in Git, not as rebuild requirements. Removing their docs does not itself decide the fate of Calendar, Time, or Upgrades features.
 - Removed the superseded direction-coverage.html prototype. today-final-view.html is the sole retained HTML reference.
-- Original founder_operating_system_latest.md was untracked at task start and remains unmodified. No source content was overwritten.
+- Original founder_operating_system_latest.md was untracked at task start. It is being added unchanged to Git with the plan so future phase branches have the required reference; no source content was rewritten.
+- Added the five-phase master plan, shared contracts, and phase instructions. Updated AGENTS.md/README.md for `start phase N` discovery and the user-authorized main_new integration workflow.
 
 ## Checks and omissions
 
 - Read the original system document, current HTML and task data, previous handoff, README, and old documentation inventory.
 - No build commands, test commands, or code review authorized or performed.
 - Browser appearance/behaviour has not been verified with browser tooling. The user viewed and iteratively approved the HTML; that is not an automated check.
-- No application implementation, browser-data reset, deployment, or main-branch change performed.
+- No application implementation, browser-data reset, deployment, or original-main change performed. Local main_new integration of the existing specification was performed.
+- Planning-only source reads mapped components and their dependencies; local Next.js navigation/search-parameter docs and relevant skills were read. UI/UX Pro Max returned keyboard navigation and visible-focus guidance, used in the phase requirements. No app command checks were run.
 
-## Open choices for phased planning
+## Planning defaults and outstanding preferences
 
-- Full Week editor behaviour and seven-day defaults; do not repeat the reference workday on all seven days by assumption.
-- Final timezone/day-boundary handling beyond the India-time preview.
-- Keep/change/remove decisions for Calendar, Time, and Upgrades. Prototype placeholders do not decide these.
-- Replacement data model and storage/reset strategy. Destructive replacement of old app data is authorized; compatibility is not a requirement.
-- Implementation boundaries and integration order into main_new, without a main-branch merge or push.
-- Explicit build/test/code-review authorization for each applicable task or phase; none exists yet.
+- Optional questions were presented about retained surfaces and weekly defaults. No answer has been recorded yet; do not describe the defaults as explicit user approval.
+- Default: keep Calendar, Time, and Upgrades. Preserve purpose/data and adapt Calendar boundaries without redesigning its connection UI.
+- Default: reference day Monday–Saturday; Sunday contains only the reference protected blocks, leaving work periods open. Change if the user selects weekdays only.
+- Week is a recurring editable template with independent day shapes, not a dated planner or history.
+- Browser-local timezone; operational day starts at 07:00. This matches the HTML for the user's India-local browser while respecting existing timezone behaviour.
+- CONTRACTS.md defines the destructive v2 plan replacement, scoped storage reset, and shared APIs. Old business-assignment compatibility is not required.
+- If a late answer changes a default, update the source of truth, master plan, contract, and relevant phase before dependent work.
+
+## Phase progress
+
+| Phase | Status | Output / next starting point |
+| --- | --- | --- |
+| 1 — Coverage | Not started | New work modes/catalogue and compact filtered Coverage |
+| 2 — Direction | Not started | Replace schedule/storage; update Today and coherent basic Week |
+| 3 — Week | Not started | Add time/name edits, add/remove/copy day, mobile editing |
+| 4 — Integration | Not started | Calendar boundary, retained navigation, polish, obsolete-code cleanup |
+| 5 — Walkthrough | Not started | Manual journeys, fixes, REBUILD_RESULTS.md, honest final handoff |
+
+At each phase end append: branch/commit, files changed, decisions, actual checks, omitted checks, unresolved issues, and next start. Record partial progress here before stopping unexpectedly.
+
+## Check authorization ledger
+
+Planning task: builds not authorized; tests not authorized; code review not authorized. None performed. Each Phase 1–5 starts with no command-based check or code-review authorization; record any explicit current-phase permission before using it. Manual browser walkthroughs are separate; phase instructions explain what to observe, and unavailable evidence must remain recorded as unavailable.
 
 ## Next starting point and stopping point
 
-Next: create the phased implementation plan from the new source of truth. One new chat per phase; each phase needs instructions, required inputs, deliverables, a stopping point, and updates to this shared status. No phase numbering exists yet; do not invent Phase 0 or declare a phase started before defining the plan.
+Next: in a fresh chat, say `start phase 1`. Load the Phase 1 instructions and execute only that phase. The numbering is 1–5; there is no Phase 0.
 
-This task stops after documentation and cleanup. No phased plan or app implementation has been created or executed yet.
+This planning task stops after committing and integrating the plan into main_new. No phase implementation, build, test, code review, remote push, or original-main merge is included.

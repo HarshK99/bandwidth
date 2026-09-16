@@ -59,7 +59,7 @@ Clicking a work card opens Coverage with its effort selected, All areas selected
 
 ## Reference day
 
-This is the current HTML's day shape, not an approved full seven-day timetable.
+This is the current HTML's day shape. The phased plan uses it Monday–Saturday, with Sunday work windows open, as an explicit planning default pending the user's weekly-schedule preference.
 
 | Time | Block |
 | --- | --- |
@@ -78,7 +78,7 @@ This is the current HTML's day shape, not an approved full seven-day timetable.
 
 The source document calls 14:00–15:30 sleepier and 15:30–17:00 improving. Light work followed by Production is the agreed app interpretation, not a universal energy rule.
 
-The preview uses Asia/Kolkata time and a 07:00-to-next-07:00 day. Before 07:00 it shows the preceding day's overnight block and marks the clock as next morning. Final timezone and Week-editor behaviour remain planning decisions.
+The preview uses Asia/Kolkata time and a 07:00-to-next-07:00 day. Before 07:00 it shows the preceding day's overnight block and marks the clock as next morning. The implementation plan uses browser-local time, preserving the existing app's timezone convention, and the same 07:00 boundary. Week edits a recurring seven-day template with independent day shapes, not dated task history. These implementation defaults remain subject to the user's corrections.
 
 Do not repeat this schedule indefinitely or across all seven days by assumption. The wider system protects at least seven hours of sleep, exercise, meals, downtime, and no serious work after the gym. Its working capacity is a ceiling, not a quota; spare capacity does not need filling.
 
@@ -186,13 +186,15 @@ Keep the restrained existing visual system: neutral backgrounds, subtle surfaces
 
 The HTML uses a system-font fallback to remain standalone. That is not a request to remove the app's font.
 
-Week, Calendar, Time, and Upgrades remain visible but disabled in the prototype because they were not prototyped. This is not a requirement to ship disabled controls or a final decision to keep those features. Their keep/change/remove decisions must be explicit in phased planning.
+Week, Calendar, Time, and Upgrades remain visible but disabled in the prototype because they were not prototyped. Never ship those disabled placeholders. The phased plan updates Week and retains Calendar, Time, and Upgrades as an explicit default pending the user's feature preference. Calendar's operational-day boundary may need adaptation; the retained surfaces are not being redesigned.
+
+Reuse and adapt the existing components instead of building the UI from scratch; the user explicitly requested this when authorizing the phased plan.
 
 ## Delivery rules
 
 - Work stays on rebuild branches; current state is recorded in STATUS.md.
-- No merge or push to master, main, or another main branch without the user's explicit instruction. Preview approval is not release approval.
-- Future implementation work branches from main_new after the specification has been integrated there through the planned workflow.
+- main_new is the integration/main branch for this new version. Phase branches split from it and merge back into it; the user explicitly authorized this workflow.
+- No merge or push to the original master/main branch without the user's explicit instruction. No remote pushes or deployments are authorized by this plan.
 - No build commands, test commands, or code review without explicit authorization for the current task/phase. Starting a phase does not grant it.
 - Read the relevant local Next.js guide before writing Next.js code, as AGENTS.md requires.
-- Next deliverable: a phased implementation plan, one fresh chat per phase, with explicit inputs, deliverables, stopping points, and a shared status document. No phase numbering exists yet.
+- Execute the [master plan](superpowers/plans/2026-09-16-bandwidth-rebuild.md), Phases 1–5, one fresh chat per phase. `start phase N` is sufficient; load the relevant instructions and prior outputs and stop after that phase. There is no Phase 0.
