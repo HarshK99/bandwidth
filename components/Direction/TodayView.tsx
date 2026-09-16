@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { eventsForOperationalDate, operationalBounds } from "@/lib/calendar/day-events";
 import {
@@ -36,8 +36,8 @@ export default function TodayView() {
   const date = useMemo(() => dateISO ? fromISODate(dateISO) : null, [dateISO]);
   const timelineRef = useRef<HTMLOListElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
-  const [jumpRequest, setJumpRequest] = useState(0);
-  const handledJump = useRef(0);
+  const timelineSpaceRef = useRef<HTMLDivElement>(null);
+  const positionedDate = useRef<string | null>(null);
 
   useEffect(() => { if (date) syncCalendar(date); }, [syncCalendar, date]);
 
@@ -64,11 +64,33 @@ export default function TodayView() {
   const ready = Boolean(schedule && now && date && ruler);
   const isToday = Boolean(date && now && isSameDate(date, getOperationalDate(now)));
 
-  useEffect(() => {
-    if (!ready || !dateISO) return;
-    if (window.location.hash !== "#restore-block" && window.history.state?.bandwidthTodayReturn !== dateISO) return;
-    const record = readTodayReturn(dateISO);
-    if (!record) return;
+  useLayoutEffect(() => {
+    if (!ready || !dateISO || positionedDate.current === dateISO) return;
+    const scroller = sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]");
+    const space = timelineSpaceRef.current;
+    const timeline = timelineRef.current;
+    if (!scroller || !space || !timeline) return;
+    positionedDate.current = dateISO;
+    const headerHeight = sectionRef.current?.querySelector("[data-day-bar]")?.getBoundingClientRect().height ?? 0;
+    const visibleHeight = Math.max(0, scroller.clientHeight - headerHeight);
+    const current = timeline.querySelector<HTMLElement>("[data-current] [data-timeline-box]");
+    // Leave room to center even the first/last block, without moving the header.
+    const firstHeight = timeline.firstElementChild?.getBoundingClientRect().height ?? 0;
+    const lastHeight = timeline.lastElementChild?.getBoundingClientRect().height ?? 0;
+    space.style.paddingTop = isToday && current ? `${Math.max(0, (visibleHeight - firstHeight) / 2)}px` : "";
+    space.style.paddingBottom = isToday && current ? `${Math.max(0, (visibleHeight - lastHeight) / 2)}px` : "";
+
+    const returning = window.location.hash === "#restore-block" || window.history.state?.bandwidthTodayReturn === dateISO;
+    const record = returning ? readTodayReturn(dateISO) : null;
+    if (!record) {
+      const block = current?.getBoundingClientRect();
+      const top = isToday && block
+        ? scroller.scrollTop + block.top - scroller.getBoundingClientRect().top - headerHeight - (visibleHeight - block.height) / 2
+        : 0;
+      // Position before paint; opening Today never animates or moves keyboard focus.
+      scroller.scrollTo({ top, behavior: "instant" });
+      return;
+    }
     let cancelled = false;
     const restore = () => {
       if (cancelled) return;
@@ -76,29 +98,13 @@ export default function TodayView() {
       delete historyState.bandwidthTodayReturn;
       window.history.replaceState(historyState, "", `/direction?date=${dateISO}`);
       document.getElementById(`direction-block-${record.blockId}`)?.focus({ preventScroll: true });
-      sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]")?.scrollTo({ top: record.scrollY, behavior: "instant" });
+      scroller.scrollTo({ top: record.scrollY, behavior: "instant" });
     };
-    const frame = requestAnimationFrame(restore);
+    restore();
     // Font layout can settle after the timeline first appears.
     void document.fonts.ready.then(restore);
-    return () => { cancelled = true; cancelAnimationFrame(frame); };
-  }, [ready, dateISO]);
-
-  useEffect(() => {
-    if (!ready || !isToday || jumpRequest === handledJump.current) return;
-    const frame = requestAnimationFrame(() => {
-      handledJump.current = jumpRequest;
-      const target = timelineRef.current?.querySelector<HTMLElement>("[data-current], [data-next]");
-      const block = target?.querySelector<HTMLElement>("[data-timeline-box]");
-      const headerHeight = sectionRef.current?.querySelector("[data-day-bar]")?.getBoundingClientRect().height ?? 0;
-      block?.focus({ preventScroll: true });
-      const scroller = sectionRef.current?.closest<HTMLElement>("[data-direction-scroll]");
-      if (!scroller) return;
-      const top = target ? target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - headerHeight - 16 : 0;
-      scroller.scrollTo({ top, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [ready, isToday, dateISO, jumpRequest]);
+    return () => { cancelled = true; };
+  }, [ready, dateISO, isToday]);
 
   if (!schedule || !now || !date || !dateISO || !ruler) return <div className="h-40" aria-hidden />;
   const { entries, current, next, minutesUntilNext } = schedule;
@@ -121,10 +127,6 @@ export default function TodayView() {
     <section ref={sectionRef} className="mx-auto w-full max-w-2xl pb-16">
       <DayBar date={date} now={now} isToday={isToday}
         onChangeDate={(nextDate) => router.replace(`/direction?date=${toISODate(nextDate)}`, { scroll: false })}
-        onNow={() => {
-          router.replace("/direction", { scroll: false });
-          setJumpRequest((request) => request + 1);
-        }}
       />
       {calendarMessage && <p role="status" className={cx("mt-3 text-[12px]", MUTED)}>{calendarMessage}</p>}
       {entries.length === 0 && (
@@ -132,6 +134,7 @@ export default function TodayView() {
       )}
         <>
           {entries.length > 0 && isToday && !current && <p role="status" className={cx("mt-4 text-[13px]", MUTED)}>{gapMessage}</p>}
+          <div ref={timelineSpaceRef}>
           <div className={cx("relative mt-6 sm:mt-8", dayEvents.length > 0 && "pr-20")}>
             <ol ref={timelineRef} aria-label="Day timeline">
               {firstStart > 0 && <OpenTime start={0} end={firstStart} />}
@@ -148,6 +151,7 @@ export default function TodayView() {
               {lastEnd < 1440 && <OpenTime start={lastEnd} end={1440} />}
             </ol>
             {dayEvents.length > 0 && <EventsLane key={dateISO} events={dayEvents} timelineRef={timelineRef} entries={entries} date={date} nowMs={now.getTime()} />}
+          </div>
           </div>
         </>
     </section>

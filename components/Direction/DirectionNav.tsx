@@ -25,6 +25,7 @@ export default function DirectionNav() {
           <Link
             key={link.href}
             href={link.href}
+            scroll={link.href === "/direction" ? false : undefined}
             aria-current={active ? "page" : undefined}
             className={cx(
               LABEL_XS,

@@ -9,7 +9,7 @@ interface DayBarProps {
   now: Date;
   isToday: boolean;
   onChangeDate: (date: Date) => void;
-  onNow: () => void;
+  onNow?: () => void;
 }
 export default function DayBar({ date, now, isToday, onChangeDate, onNow }: DayBarProps) {
   const nextMorning = isToday && !isSameDate(date, now);

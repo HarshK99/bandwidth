@@ -122,6 +122,8 @@ Block form fields: name, start, end, mode (including Break). Work-mode names def
 
 ## Navigation and return behaviour
 
+Post-rebuild UI decision: Today opens with the current card centered between DayBar and the bottom navigation, without animation or automatic keyboard focus. Position before paint, once for the viewed date; leave gaps/empty days at the top. Boundary space permits first/last-card centering. Coverage return markers take precedence over centering. Links into Today disable framework scrolling so it cannot overwrite that position. DayNav retains an optional Now action but Today does not supply it, so no Now button is rendered.
+
 Phase 2 owns the Today-to-Coverage return. Add `lib/direction/navigation.ts` only if needed to isolate this responsibility. Carry a validated `date=YYYY-MM-DD` on Today and a `fromDate=YYYY-MM-DD` on card links to Coverage. Accept only a valid local date, never an arbitrary return URL.
 
 Keep one small sessionStorage entry `bandwidth.direction.return.v2` with `{ date: string, scrollY: number, blockId: string }` when entering Coverage from a card. On explicit back-to-Today, restore the matching date, scroll position, and focus after the timeline is ready. Prefer normal browser back behaviour for browser Back. Direct Coverage entry without a return record falls back to Today and does not navigate away from the app. Session state is navigation state, not task history. The explicit back link uses the internal #restore-block marker; Today removes it after restoring the matching record. Browser Back uses the normal date-bearing history entry. A small in-memory fallback retains return position if sessionStorage is unavailable.

@@ -2,7 +2,7 @@
 
 ## Current state
 
-Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. No goal tracking/model. Phase 5 observed readable fit at 360px and measured a 122px header; comparison with the pre-rebuild height remains unavailable.
+Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/day navigation share one row; Now is now hidden. Today opens with the current block centered within the visible timeline, while Coverage return preserves position. Current-block progress stays. No goal tracking/model. Browser fit observed at 360px; comparison with the pre-rebuild height remains unavailable.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
@@ -133,3 +133,11 @@ Changed: CoverageView rapid-filter fix; REBUILD_RESULTS.md evidence/omissions; R
 Checks: Chromium core journeys, live 07:00/autumn clock change, editing/copy/reload/validation, cross-tab updates, keyboard/layout, storage failures, Calendar overlap/overnight/empty-day/cache fixtures; user reports live sync worked. No builds, repository test commands, or code review.
 Open: live Calendar request races, actual zoom/text enlargement, screen reader, spring clock change, old header-height comparison, and direct prior-user-data inspection omitted; see REBUILD_RESULTS. Overall user acceptance not recorded.
 Next: user decides acceptance or separately requests further checks; no next phase, remote push, deployment, or master/main merge.
+
+## Follow-up: Today opening position
+
+Status: implemented; fix/today-opening-position → main_new. User approved centered opening within the timeline, preserved Coverage return, and hiding Now while retaining its optional component.
+Changed: TodayView positioning/boundary space; DayBar/DayNav optional Now; DirectionNav/AppTabs/CoverageView navigation scroll handling; source of truth and contracts.
+Checks: Chromium at 360×800 and 1280×900; middle/first/last blocks centered within 0.5px, gap stays at top, explicit and browser Back restore exact scroll/focus, Week → Today recenters, Now absent, no captured page errors. Builds, repository tests, and code review not authorized or run for this follow-up.
+Open: existing REBUILD_RESULTS limitations remain; no new issue observed in these browser scenarios.
+Next: user's visual acceptance or separately requested build/review; no remote push or deployment.

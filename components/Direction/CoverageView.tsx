@@ -84,7 +84,7 @@ export default function CoverageView() {
           onNavigate={(event) => {
             event.preventDefault();
             const record = readTodayReturn(fromDate);
-            router.push(record ? `/direction?date=${record.date}#restore-block` : "/direction", { scroll: !record });
+            router.push(record ? `/direction?date=${record.date}#restore-block` : "/direction", { scroll: false });
           }}
           aria-label="Back to Today" title="Back to Today" className={cx(BUTTON, "coverage-back")}>
           <span aria-hidden>←</span>

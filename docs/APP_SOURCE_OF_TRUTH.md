@@ -46,7 +46,8 @@ Production is a refinement adopted during the app discussion. The original docum
 
 Retain the existing timeline-based structure, not a separate dashboard.
 
-- One compact row for weekday/date, clock, and Now (accessible label: Jump to the current block).
+- One compact row for weekday/date, clock, and previous/next-day controls. The Now button is hidden; its optional component remains available.
+- Each fresh opening of Today places the current block in the middle of the visible timeline area between the header and bottom navigation, immediately without a scrolling animation. Returning from Coverage preserves the prior position and focus. Do not repeatedly recenter while the user browses. With no current block, keep the open-time/empty-day message visible.
 - Vertical time ruler and a continuous sequence of blocks. Real gaps should read as open time.
 - Quiet past/future blocks, next-block indication, and one green current-block card.
 - Current-block remaining time and the rail's subtle time progress. These measure passing time, not work completion. Remove the whole-day progress bar from the header.
@@ -72,7 +73,7 @@ These are standing reminders, not measured results. Do not imply growth was achi
 
 The line applies to work. Recovery, hobbies, and relationships remain protected rather than having to justify themselves against either number.
 
-Fit within the existing top header footprint: combine weekday/date/clock/Now, remove the separate weekday row and whole-day progress bar, and use compact side-by-side goal columns. Keep the timeline and current-block progress. No extra card, unreadably small text, or clipped words. Browser height/fit remains to be checked during a manual walkthrough. The reminder does not assign a business to a block.
+Fit within the existing top header footprint: combine weekday/date/clock and day navigation, remove the separate weekday row and whole-day progress bar, and use compact side-by-side goal columns. Keep the timeline and current-block progress. No extra card, unreadably small text, or clipped words. Browser observations and limitations are in REBUILD_RESULTS.md and STATUS.md. The reminder does not assign a business to a block. The post-rebuild opening-position decision above supersedes the Now button in the accepted HTML.
 
 ## Reference day
 
