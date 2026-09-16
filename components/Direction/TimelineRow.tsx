@@ -3,198 +3,45 @@
 import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 import { BLOCK_TYPE_META } from "@/lib/direction/block-types";
+import { rememberToday } from "@/lib/direction/navigation";
 import { blockDurationMinutes, formatDuration } from "@/lib/direction/schedule";
-import type { DayEntry, RulerTick } from "@/lib/direction/schedule";
-import type { BlockType } from "@/lib/direction/types";
-import { cx, FAINT, LABEL_XS, MUTED, NUM } from "./ui";
+import type { RulerTick } from "@/lib/direction/schedule";
+import type { BlockType, DayEntry } from "@/lib/direction/types";
+import { WORK_MODES } from "@/lib/work/modes";
+import { cx, MUTED, NUM } from "./ui";
 
 interface TimelineRowProps {
   entry: DayEntry;
+  date: string;
   isNext: boolean;
   isLast: boolean;
-  /** The block before this one ends exactly when it starts. */
   attachedAbove: boolean;
-  /** The block after this one starts exactly when it ends. */
   attachedBelow: boolean;
-  /** Real minutes of nothing before the next block, when there isn't one
-   * right after this — 0 when attachedBelow, or when this is the last
-   * block. Sizes the gap so it reads as "this much is open," not a
-   * one-size sliver. */
   openMinutesAfter: number;
-  /** Hour marks falling inside this block, from `getDayRuler`. */
   ticks: RulerTick[];
 }
-
-/**
- * A block's box height, in px, from its duration.
- *
- * Linear enough to actually feel — 3h is roughly double 1h — but capped, so
- * the 8-hour sleep block doesn't turn the page into a scroll marathon.
- *
- * This is the *only* thing that may set a non-current card's height: a two-
- * line note used to be able to push a 1-hour block visibly taller than a
- * 1.5-hour block sitting next to it with a one-line note, which quietly broke
- * the one promise this number makes — that height tracks duration. The card
- * now shrinks its own text, and if needed drops its caption, to fit this
- * instead of growing past it; see `fitLead` below. The live block is the
- * deliberate exception: it's a min-height there, so the block you're
- * actually in takes whatever room its content needs at display size.
- */
 function boxHeight(minutes: number): number {
   return Math.round(Math.min(190, 62 + 0.62 * Math.max(0, minutes)));
 }
-
-/**
- * Pick the smallest lead size that plausibly fits a resting card's text in
- * its fixed box (see boxHeight above). Clamping to a fixed number of lines
- * used to hide the overflow instead of solving it — a bulleted note would
- * cut off mid-word with no ellipsis, because `-webkit-line-clamp` on a list
- * of block-level `<li>`s doesn't reliably clip at a line boundary the way it
- * does on plain text. Shrinking the type is what the box actually has room
- * to offer: every word stays visible.
- *
- * There's no live DOM measurement here, only an estimate — chars-per-line
- * and line-height are guesses at this card's typical width, not a real
- * layout pass. That's a deliberate trade, not an oversight: the constants
- * below are the only thing to retune if real rendering disagrees.
- */
-const LEAD_TIERS = [
-  { cls: "text-[17px] leading-snug", lineHeight: 23, charsPerLine: 24 },
-  { cls: "text-[15px] leading-snug", lineHeight: 21, charsPerLine: 27 },
-  { cls: "text-[13px] leading-snug", lineHeight: 18, charsPerLine: 32 },
-] as const;
-
-const CARD_PAD = 24; // py-3, top + bottom
-const EYEBROW_ROW = 16; // the block-name row above the lead
-const LEAD_GAP = 6; // mt-1.5 above the lead
-const CAPTION_GAP = 6; // mt-1.5 above the caption
-const CAPTION_LINE = 16; // the caption's own single line
-const BULLET_GAP = 4; // space-y-1 between bullets
-
-function linesFor(text: string, charsPerLine: number): number {
-  return Math.max(1, Math.ceil(text.length / charsPerLine));
-}
-
-function leadHeight(lead: string[], tier: (typeof LEAD_TIERS)[number]): number {
-  if (lead.length <= 1) {
-    return linesFor(lead[0] ?? "", tier.charsPerLine) * tier.lineHeight;
-  }
-  const perLine = lead.reduce(
-    (sum, line) => sum + linesFor(line, tier.charsPerLine) * tier.lineHeight,
-    0
-  );
-  return perLine + (lead.length - 1) * BULLET_GAP;
-}
-
-interface LeadFit {
-  tier: (typeof LEAD_TIERS)[number];
-  /** False when even the caption's ~22px cost is what stood between the
-   * lead and fitting — the block's own name and area are the recoverable
-   * ones; two tasks the block is actually *for* are not. */
-  showCaption: boolean;
-}
-
-/**
- * The lead is the one thing on this card that can't be guessed from
- * elsewhere, so it's what gets to keep its size. The caption goes first —
- * dropped whole rather than shrunk, since a half-legible area name reads as
- * a bug and a missing one just reads as "the card didn't need it" (which is
- * already how a caption-less card looks everywhere else). Only once losing
- * the caption still doesn't buy a fit does the lead itself start shrinking.
- */
-function fitLead(lead: string[], hasCaption: boolean, boxHeightPx: number): LeadFit {
-  for (const showCaption of hasCaption ? [true, false] : [false]) {
-    const budget =
-      boxHeightPx -
-      CARD_PAD -
-      EYEBROW_ROW -
-      LEAD_GAP -
-      (showCaption ? CAPTION_GAP + CAPTION_LINE : 0);
-    const tier = LEAD_TIERS.find((candidate) => leadHeight(lead, candidate) <= budget);
-    if (tier) return { tier, showCaption };
-  }
-  // Last resort: smallest type, caption gone. overflow-hidden on the card
-  // is the final backstop if even this doesn't quite fit.
-  return { tier: LEAD_TIERS[LEAD_TIERS.length - 1], showCaption: false };
-}
-
-/**
- * How much extra space a real gap gets, beyond the standard ~12px between
- * any two non-touching blocks. Compressed like `boxHeight` — a 90-minute
- * hole shouldn't cost 90 minutes of scrolling — but big enough that a
- * genuinely empty Tuesday morning doesn't read as the same thin seam a
- * 15-minute gap gets.
- */
 function gapHeight(minutes: number): number {
-  if (minutes <= 0) return 12;
-  return Math.round(Math.min(56, 12 + 0.28 * minutes));
+  return minutes <= 0 ? 12 : Math.round(Math.min(56, 12 + 0.28 * minutes));
 }
-
-/** Corners are rounded only where a run of touching blocks begins and ends. */
-function radiusClass(attachedAbove: boolean, attachedBelow: boolean): string {
-  if (attachedAbove && attachedBelow) return "rounded-none";
-  if (attachedAbove) return "rounded-b-2xl";
-  if (attachedBelow) return "rounded-t-2xl";
-  return "rounded-2xl";
+function radiusClass(above: boolean, below: boolean): string {
+  return above && below ? "rounded-none" : above ? "rounded-b-2xl" : below ? "rounded-t-2xl" : "rounded-2xl";
 }
-
 export default function TimelineRow({
-  entry,
-  isNext,
-  isLast,
-  attachedAbove,
-  attachedBelow,
-  openMinutesAfter,
-  ticks,
+  entry, date, isNext, isLast, attachedAbove, attachedBelow, openMinutesAfter, ticks,
 }: TimelineRowProps) {
-  const { block, name, focus, notes, serves, status, minutesRemaining, progress, isOverride } =
-    entry;
+  const { block, name, status, minutesRemaining, progress } = entry;
   const meta = BLOCK_TYPE_META[block.type];
+  const guide = block.type === "break" ? undefined : WORK_MODES[block.type].guide;
   const isCurrent = status === "current";
   const isPast = status === "past";
-  const relaxed = meta.tone === "relaxed";
-
-  // What the block is *for* leads; the area explains it underneath; the
-  // block's own name is the quiet eyebrow above both. A block with neither
-  // (sleep, lunch) promotes its name into the lead so the card is never
-  // headed by nothing.
-  const lead = notes.length > 0 ? notes : focus ? [focus] : [];
-  const caption = notes.length > 0 ? focus : "";
-  const nameIsLead = lead.length === 0;
-  const multi = lead.length > 1;
-
-  // Only a resting card's size is content-driven — the live block always
-  // reads at its own display size, unconstrained, caption included.
-  const fit = fitLead(lead, Boolean(caption), boxHeight(blockDurationMinutes(block)));
-  const showCaption = isCurrent || fit.showCaption;
-
-  const leadClass = cx(
-    isCurrent
-      ? multi
-        ? "text-[1.1rem] leading-[1.3] sm:text-[1.25rem]"
-        : "text-[1.4rem] leading-[1.15] tracking-[-0.02em] text-balance sm:text-[1.7rem]"
-      : fit.tier.cls,
-    // Relaxed blocks never take extra weight — thinking and hobby time
-    // shouldn't shout, even when it's the live block.
-    relaxed ? "font-medium" : isCurrent ? "font-extrabold" : "font-semibold",
-    isCurrent
-      ? "text-white"
-      : isPast
-        ? MUTED
-        : "text-zinc-800 dark:text-zinc-100"
-  );
-
-  const captionClass = cx(
-    "font-medium",
-    isCurrent ? "text-[13px] text-white/70 sm:text-[14px]" : "text-[12px]",
-    !isCurrent && (isPast ? FAINT : MUTED)
-  );
-
   return (
     <li
+      data-current={isCurrent ? "" : undefined}
+      data-next={isNext ? "" : undefined}
       className="grid grid-cols-[2.5rem_0.75rem_minmax(0,1fr)] sm:grid-cols-[2.75rem_1rem_minmax(0,1fr)]"
-      // A real gap gets real room: see gapHeight above. Touching blocks
-      // still get exactly 0 — that's what makes a run read as continuous.
       style={{ paddingBottom: attachedBelow ? 0 : gapHeight(openMinutesAfter) }}
     >
       {/* Time — a continuous hour ruler rather than this block's own range.
@@ -250,150 +97,60 @@ export default function TimelineRow({
         )}
       </div>
 
-      {/* The block itself. Touching blocks overlap by a pixel so their
-          borders collapse into one hairline and the run reads as continuous
-          time — a visible gap then means there really is one. */}
       <BlockBox
         type={block.type}
+        blockId={block.id}
+        date={date}
         className={cx(
-          "relative flex flex-col border transition-colors",
-          // The live block is lifted out of the run — fully rounded and
-          // raised — so it reads as a card sitting on the stack rather than
-          // a mid-run segment with square corners.
+          "relative flex flex-col justify-center border transition-colors",
           isCurrent ? "rounded-2xl" : radiusClass(attachedAbove, attachedBelow),
           attachedAbove && "-mt-px",
           isCurrent
-            ? // The block you're in: the one saturated surface in the app.
-              "grain z-10 overflow-hidden border-transparent bg-linear-to-br " +
-              "from-hero-from to-hero-to px-4 py-4 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]"
-            : "overflow-hidden px-3.5 py-3"
+            ? "grain z-10 border-transparent bg-linear-to-br from-hero-from to-hero-to px-4 py-4 text-white shadow-[0_10px_30px_-12px_rgba(0,0,0,0.35)]"
+            : "px-3.5 py-3"
         )}
-        style={
-          // Fixed height for a resting card — its text clamps instead of
-          // growing past this, so height stays a true reading of duration.
-          // The live block keeps it as a floor: it's the one card whose
-          // content should win. The type also colours the whole box (fill is
-          // read before edge; telling a day's blocks apart at a glance is the
-          // job) — except the live block, which has its own surface.
-          isCurrent
-            ? { minHeight: boxHeight(blockDurationMinutes(block)) }
-            : {
-                height: boxHeight(blockDurationMinutes(block)),
-                backgroundColor: meta.fill,
-                borderColor: meta.border,
-              }
-        }
+        style={{
+          minHeight: boxHeight(blockDurationMinutes(block)),
+          ...(!isCurrent ? { backgroundColor: meta.fill, borderColor: meta.border } : {}),
+        }}
       >
-        <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-          <h3
-            className={cx(
-              nameIsLead
-                ? leadClass
-                : cx(
-                    LABEL_XS,
-                    isCurrent
-                      ? "text-white/60"
-                      : isPast
-                        ? FAINT
-                        : MUTED
-                  )
-            )}
-          >
-            {name}
-          </h3>
-          {isCurrent && (
-            <>
-              <span className={cx(LABEL_XS, "text-white")}>Now</span>
-              <span className={cx(NUM, "text-[11px] font-medium text-white/60")}>
-                {formatDuration(minutesRemaining)} left
-              </span>
-            </>
-          )}
-          {isNext && <span className={cx(LABEL_XS, FAINT)}>Next</span>}
-          {isOverride && (
-            <span
-              title="Overrides the weekly template for this date"
-              className={cx(LABEL_XS, FAINT)}
-            >
-              Override
-            </span>
-          )}
-        </div>
-
-        {/* Sized rather than clipped: a resting card's type shrinks (and its
-            caption may drop) to what fitLead estimates will fit, so a wordy
-            note stays fully readable instead of being cut off mid-word. The
-            live block is never resized — its box grows to fit instead. */}
-        {!nameIsLead &&
-          (multi ? (
-            <ul className={cx(leadClass, "mt-1.5 space-y-1")}>
-              {lead.map((line) => (
-                <li key={line} className="flex gap-2">
-                  <span aria-hidden className="opacity-40">
-                    &bull;
-                  </span>
-                  <span>{line}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className={cx(leadClass, "mt-1.5")}>{lead[0]}</p>
-          ))}
-
-        {caption && showCaption && (
-          <p className={cx(captionClass, "mt-1.5", !isCurrent && "line-clamp-1")}>
-            {caption}
-            {/* Where this session's output is aimed, when that isn't where
-                the work sits in the tree. */}
-            {serves && <span className="opacity-60"> → {serves}</span>}
-          </p>
+        {(isCurrent || isNext) && (
+          <div className="mb-1.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1 text-[11px]">
+            <span className={cx("font-semibold uppercase tracking-[0.09em]", !isCurrent && MUTED)}>{isCurrent ? "Now" : "Next"}</span>
+            {isCurrent && <span className={cx(NUM, "text-white/80")}>{formatDuration(minutesRemaining)} left</span>}
+          </div>
         )}
+        <h3 className={cx(
+          "break-words font-semibold leading-snug",
+          isCurrent ? "text-[1.4rem] tracking-[-0.02em] sm:text-[1.7rem]" : "text-[17px]",
+          !isCurrent && (isPast ? MUTED : "text-zinc-800 dark:text-zinc-100"),
+        )}>{name}</h3>
+        {guide && <p className={cx("mt-1.5 break-words text-pretty text-[12px] leading-normal", isCurrent ? "text-white/85" : MUTED)}>{guide}</p>}
       </BlockBox>
     </li>
   );
 }
 
-/**
- * The card surface. Every block is a quiet link into Coverage filtered to its
- * own type — "I'm in this kind of time, what else is scheduled for it" — the
- * one move Today can't otherwise answer without a tab switch and a manual
- * filter. A hover ring is the only tell: no caret, no button, the whole card
- * is the target.
- *
- * Buffer blocks (lunch, breaks) are the exception: nothing in the plan is
- * scheduled in a buffer-type slot, so the link would only ever land on an
- * empty Coverage page. They render as a plain box.
- */
-function BlockBox({
-  type,
-  className,
-  style,
-  children,
-}: {
+function BlockBox({ type, blockId, date, className, style, children }: {
   type: BlockType;
+  blockId: string;
+  date: string;
   className: string;
   style: CSSProperties;
   children: ReactNode;
 }) {
-  if (type === "buffer") {
-    return (
-      <div data-timeline-box="" className={className} style={style}>
-        {children}
-      </div>
-    );
+  const id = `direction-block-${blockId}`;
+  if (type === "break") {
+    return <div id={id} tabIndex={-1} data-timeline-box="" className={className} style={style}>{children}</div>;
   }
   return (
     <Link
-      href={`/coverage?type=${type}`}
+      id={id}
+      href={`/coverage?effort=${type}&fromDate=${date}`}
+      onNavigate={() => rememberToday(date, blockId)}
       data-timeline-box=""
-      className={cx(
-        className,
-        "cursor-pointer hover:ring-1 hover:ring-black/10 dark:hover:ring-white/15",
-        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
-      )}
+      className={cx(className, "cursor-pointer hover:ring-1 hover:ring-black/10 dark:hover:ring-white/15 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none")}
       style={style}
-    >
-      {children}
-    </Link>
+    >{children}</Link>
   );
 }

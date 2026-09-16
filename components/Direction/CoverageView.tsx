@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { filterActivities, parseCoverageFilter } from "@/lib/direction/coverage";
+import { readTodayReturn, validDate } from "@/lib/direction/navigation";
 import { ACTIVITY_AREAS } from "@/lib/work/catalog";
 import { WORK_MODES } from "@/lib/work/modes";
 import type { ActivityArea, ActivityNode, CoverageFilter, Effort } from "@/lib/work/types";
@@ -64,6 +65,7 @@ export default function CoverageView() {
   const searchParams = useSearchParams();
   const filter = parseCoverageFilter(new URLSearchParams(searchParams.toString()));
   const areas = filterActivities(ACTIVITY_AREAS, filter);
+  const fromDate = validDate(searchParams.get("fromDate"));
 
   const setFilter = (key: keyof CoverageFilter, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -77,7 +79,13 @@ export default function CoverageView() {
   return (
     <section className="coverage-view mx-auto w-full max-w-3xl px-3 pb-20 sm:px-6" aria-labelledby="coverage-title">
       <header className="coverage-toolbar">
-        <Link href="/direction" aria-label="Back to Today" title="Back to Today" className={cx(BUTTON, "coverage-back")}>
+        <Link href={fromDate ? `/direction?date=${fromDate}` : "/direction"}
+          onNavigate={(event) => {
+            event.preventDefault();
+            const record = readTodayReturn(fromDate);
+            router.push(record ? `/direction?date=${record.date}#restore-block` : "/direction", { scroll: !record });
+          }}
+          aria-label="Back to Today" title="Back to Today" className={cx(BUTTON, "coverage-back")}>
           <span aria-hidden>←</span>
         </Link>
         <h1 id="coverage-title" className={cx(LABEL, MUTED, "mr-auto")}>Coverage</h1>

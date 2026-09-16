@@ -24,27 +24,23 @@
      and a wash for the block's own surface. Deliberately no green anywhere
      in this ramp — the accent stays the one colour that means "now". Cool
      for structured work, warm for the rest, near-neutral for open time so
-     buffer reads as the quietest. */
-  --type-focus: rgba(99, 102, 241, 0.30);
-  --type-execution: rgba(13, 148, 160, 0.30);
-  --type-thinking: rgba(139, 92, 246, 0.30);
-  --type-admin: rgba(100, 116, 139, 0.30);
-  --type-hobby: rgba(219, 39, 119, 0.24);
-  --type-buffer: rgba(120, 113, 108, 0.26);
-  --type-custom: rgba(113, 113, 122, 0.28);
+     breaks read as the quietest. */
+  --type-deep: rgba(99, 102, 241, 0.30);
+  --type-production: rgba(13, 148, 160, 0.30);
+  --type-light: rgba(100, 116, 139, 0.30);
+  --type-recovery: rgba(219, 39, 119, 0.24);
+  --type-break: rgba(120, 113, 108, 0.26);
 
   /* The washes. Barely there — around the weight of the plain --surface grey
      they replace, so a day reads as one calm column that happens to be
      colour-coded, never as a set of coloured cards. Tuned per hue rather
      than one shared alpha: at equal alpha the warm ones shout and slate
      disappears. */
-  --type-focus-fill: rgba(99, 102, 241, 0.055);
-  --type-execution-fill: rgba(13, 148, 160, 0.06);
-  --type-thinking-fill: rgba(139, 92, 246, 0.05);
-  --type-admin-fill: rgba(100, 116, 139, 0.07);
-  --type-hobby-fill: rgba(219, 39, 119, 0.045);
-  --type-buffer-fill: rgba(120, 113, 108, 0.055);
-  --type-custom-fill: rgba(113, 113, 122, 0.055);
+  --type-deep-fill: rgba(99, 102, 241, 0.055);
+  --type-production-fill: rgba(13, 148, 160, 0.06);
+  --type-light-fill: rgba(100, 116, 139, 0.07);
+  --type-recovery-fill: rgba(219, 39, 119, 0.045);
+  --type-break-fill: rgba(120, 113, 108, 0.055);
 
   /* Coverage row washes, one per node kind — a separate ramp from the block
      types above (different page, different vocabulary: this is *what a row
@@ -67,13 +63,11 @@
   --color-hero-to: var(--hero-to);
   --color-upgrade-from: var(--upgrade-from);
   --color-upgrade-to: var(--upgrade-to);
-  --color-type-focus: var(--type-focus);
-  --color-type-execution: var(--type-execution);
-  --color-type-thinking: var(--type-thinking);
-  --color-type-admin: var(--type-admin);
-  --color-type-hobby: var(--type-hobby);
-  --color-type-buffer: var(--type-buffer);
-  --color-type-custom: var(--type-custom);
+  --color-type-deep: var(--type-deep);
+  --color-type-production: var(--type-production);
+  --color-type-light: var(--type-light);
+  --color-type-recovery: var(--type-recovery);
+  --color-type-break: var(--type-break);
   --font-sans: var(--font-manrope);
   /* No second webfont: columns of digits use tabular-nums on the sans face.
      This exists only so a stray `font-mono` lands somewhere sensible. */
@@ -90,21 +84,17 @@
     --hero-to: #2b8478;
 
     /* Lighter hues and more alpha: the light-mode values vanish on near-black. */
-    --type-focus: rgba(129, 140, 248, 0.38);
-    --type-execution: rgba(45, 212, 191, 0.34);
-    --type-thinking: rgba(167, 139, 250, 0.38);
-    --type-admin: rgba(148, 163, 184, 0.30);
-    --type-hobby: rgba(244, 114, 182, 0.32);
-    --type-buffer: rgba(168, 162, 158, 0.24);
-    --type-custom: rgba(161, 161, 170, 0.26);
+    --type-deep: rgba(129, 140, 248, 0.38);
+    --type-production: rgba(45, 212, 191, 0.34);
+    --type-light: rgba(148, 163, 184, 0.30);
+    --type-recovery: rgba(244, 114, 182, 0.32);
+    --type-break: rgba(168, 162, 158, 0.24);
 
-    --type-focus-fill: rgba(129, 140, 248, 0.10);
-    --type-execution-fill: rgba(45, 212, 191, 0.085);
-    --type-thinking-fill: rgba(167, 139, 250, 0.10);
-    --type-admin-fill: rgba(148, 163, 184, 0.085);
-    --type-hobby-fill: rgba(244, 114, 182, 0.085);
-    --type-buffer-fill: rgba(168, 162, 158, 0.07);
-    --type-custom-fill: rgba(161, 161, 170, 0.07);
+    --type-deep-fill: rgba(129, 140, 248, 0.10);
+    --type-production-fill: rgba(45, 212, 191, 0.085);
+    --type-light-fill: rgba(148, 163, 184, 0.085);
+    --type-recovery-fill: rgba(244, 114, 182, 0.085);
+    --type-break-fill: rgba(168, 162, 158, 0.07);
 
     --kind-area-fill: rgba(96, 165, 250, 0.06);
     --kind-stage-fill: rgba(251, 191, 36, 0.06);

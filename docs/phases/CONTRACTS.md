@@ -82,7 +82,8 @@ export function getOperationalDate(now: Date): Date;
 export function getDaySchedule(plan: DirectionPlan, date: Date, now: Date): DaySchedule;
 export function sortBlocks(blocks: readonly TimeBlock[]): TimeBlock[];
 export function blockDurationMinutes(block: TimeBlock): number;
-export function toMinutes(value: string): number;
+export function toMinutes(value: string): number; // NaN for invalid HH:MM
+export function operationalMinute(value: string): number; // 0 at 07:00
 export function toISODate(date: Date): string;
 export function fromISODate(value: string): Date;
 export function addDays(date: Date, count: number): Date;
@@ -101,7 +102,7 @@ The operating day is 07:00 to the next 07:00 in browser-local time. Default sele
 
 For block validation map clock minutes into the operational day: `(clockMinutes - 420 + 1440) % 1440`; an end at 07:00 maps to 1440. Require start < end, no zero duration, no crossing the 07:00 boundary, and no overlaps within a day. A block may cross midnight. Display time remains HH:MM; do not use a fixed milliseconds-per-day increment to step dates across timezone changes.
 
-New storage key: `bandwidth.direction.plan.v2`. Old key: `bandwidth.direction.plan.v1`. Initialize from the new defaults if the new record is missing, invalid, or unsupported. Do not migrate the old business schedule. Remove only the old plan key after successful new initialization/save; leave Calendar and unrelated storage alone. Keep the existing external store and stable snapshots. If saving fails, retain the in-memory change and expose a small honest not-saved message in Week; do not report success silently. Reset to defaults removes/replaces only v2 plan data.
+New storage key: `bandwidth.direction.plan.v2`. Old key: `bandwidth.direction.plan.v1`. Initialize from the new defaults if the new record is missing, invalid, or unsupported. Do not migrate the old business schedule. Remove only the old plan key after successful new initialization/save; leave Calendar and unrelated storage alone. Keep the existing external store and stable snapshots. If saving fails, retain the in-memory change and expose a small honest not-saved message in Week; do not report success silently. Reset to defaults removes/replaces only v2 plan data. useDirectionPlan exposes notSaved alongside plan/update; storage getSaveFailed and the store boolean snapshot keep this message in sync. Storage validates the complete v2 week, IDs, clock values, and non-overlapping intervals before accepting a record.
 
 Maintain calendar lane inputs `DayEntry.block` and `[data-timeline-box]` attributes. Do necessary compile-facing adjustments in Phase 2; complete operational-day calendar filtering in Phase 4.
 
@@ -121,7 +122,7 @@ Block form fields: name, start, end, mode (including Break). Work-mode names def
 
 Phase 2 owns the Today-to-Coverage return. Add `lib/direction/navigation.ts` only if needed to isolate this responsibility. Carry a validated `date=YYYY-MM-DD` on Today and a `fromDate=YYYY-MM-DD` on card links to Coverage. Accept only a valid local date, never an arbitrary return URL.
 
-Keep one small sessionStorage entry `bandwidth.direction.return.v2` with `{ date: string, scrollY: number, blockId: string }` when entering Coverage from a card. On explicit back-to-Today, restore the matching date, scroll position, and focus after the timeline is ready. Prefer normal browser back behaviour for browser Back. Direct Coverage entry without a return record falls back to Today and does not navigate away from the app. Session state is navigation state, not task history.
+Keep one small sessionStorage entry `bandwidth.direction.return.v2` with `{ date: string, scrollY: number, blockId: string }` when entering Coverage from a card. On explicit back-to-Today, restore the matching date, scroll position, and focus after the timeline is ready. Prefer normal browser back behaviour for browser Back. Direct Coverage entry without a return record falls back to Today and does not navigate away from the app. Session state is navigation state, not task history. The explicit back link uses the internal #restore-block marker; Today removes it after restoring the matching record. Browser Back uses the normal date-bearing history entry. A small in-memory fallback retains return position if sessionStorage is unavailable.
 
 ## Phase 4: Calendar boundary adapter
 

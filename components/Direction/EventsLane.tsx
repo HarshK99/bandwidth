@@ -14,7 +14,7 @@ import {
 } from "@/lib/calendar/day-events";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { blockDurationMinutes, toMinutes } from "@/lib/direction/schedule";
-import type { DayEntry } from "@/lib/direction/schedule";
+import type { DayEntry } from "@/lib/direction/types";
 import { cx, LABEL_XS, SURFACE } from "./ui";
 
 interface EventsLaneProps {
@@ -200,7 +200,7 @@ export default function EventsLane({
                   // laid on top of the block it overlaps, while the planned
                   // block's text stays faintly legible behind it.
                   "flex h-full w-full flex-col gap-0.5 overflow-hidden rounded-md border border-dashed px-1.5 py-1 text-left backdrop-blur-[2px]",
-                  "border-[var(--type-admin)] bg-surface/85",
+                  "border-[var(--type-light)] bg-surface/85",
                   open && "ring-1 ring-black/15 dark:ring-white/20"
                 )}
               >

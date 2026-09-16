@@ -1,22 +1,13 @@
-"use client";
+﻿"use client";
 
 import { useSyncExternalStore } from "react";
 import {
-  getServerSnapshot,
-  getSnapshot,
-  subscribe,
-  updatePlan,
+  getServerSnapshot, getSnapshot, subscribe, updatePlan,
+  getNotSavedSnapshot, getServerNotSavedSnapshot,
 } from "@/lib/direction/plan-store";
-import type { DirectionPlan } from "@/lib/direction/types";
 
-interface DirectionPlanStore {
-  /** null on the server and during hydration; the stored plan afterwards. */
-  plan: DirectionPlan | null;
-  /** Takes the pure helper from lib/direction/plan-ops.ts. */
-  update: (fn: (plan: DirectionPlan) => DirectionPlan) => void;
-}
-
-export function useDirectionPlan(): DirectionPlanStore {
+export function useDirectionPlan() {
   const plan = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return { plan, update: updatePlan };
+  const notSaved = useSyncExternalStore(subscribe, getNotSavedSnapshot, getServerNotSavedSnapshot);
+  return { plan, notSaved, update: updatePlan };
 }

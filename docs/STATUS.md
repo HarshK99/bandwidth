@@ -2,11 +2,11 @@
 
 ## Current state
 
-Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Browser height/fit remains unmeasured; header implementation belongs to Phase 2.
+Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/Now share one row; separate weekday row and whole-day progress bar removed. Current-block progress stays. Source of truth, contracts, and Phases 2/4/5 now include it. No goal tracking/model. Phase 2 implements the header; browser height/fit remains unmeasured.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
 
-The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phase 1 Coverage is implemented. Today and Week still use the old schedule; stored app data remains unchanged.
+The user approved the HTML direction and authorized a phased rebuild plan that reuses existing components. Phases 1 Coverage and 2 Direction are implemented, unverified. Today and basic Week now share the v2 schedule; browser initialization replaces the old schedule with the reference week.
 
 New-chat reading order:
 
@@ -26,7 +26,7 @@ New-chat reading order:
 - Each phase starts from current main_new, uses its named phase branch, and merges back before stopping. Read the master plan for resuming an existing branch safely.
 - User explicitly permits destructive replacement of outdated app docs and old app data on rebuild branches. Do not preserve redundant data or backward compatibility by default.
 - No remote push or merge to the original master/main branch is authorized or performed. Local integration into main_new is authorized.
-- Phase 1 replaces Coverage only. Schedule/data replacement begins in Phase 2.
+- Phase 2 implements schedule/data replacement: v2 initializes from new defaults; the v1 plan is removed only after successful v2 initialization/save. Calendar and unrelated storage remain outside that reset.
 
 ## Recorded decisions
 
@@ -81,6 +81,8 @@ At each phase end update its row and one compact entry: status, changed files/ar
 
 ## Check authorization ledger
 
+Phase 2: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available.
+
 Phase 1: builds, tests, and code review not authorized or performed. Manual browser walkthrough not performed; no browser tool was available in this session.
 
 Planning task: builds not authorized; tests not authorized; code review not authorized. None performed. Each Phase 1–5 starts with no command-based check or code-review authorization; record any explicit current-phase permission before using it. Manual browser walkthroughs are separate; phase instructions explain what to observe, and unavailable evidence must remain recorded as unavailable.
@@ -92,3 +94,12 @@ Changed: lib/work/{types,modes,catalog}.ts, lib/direction/coverage.ts, CoverageV
 Checks: source/dependency and installed Next.js guide reads only; builds, tests, code review, and browser walkthrough not performed.
 Open: browser appearance, keyboard interaction, and runtime behaviour unverified. Today/Week retain the old schedule; old type= links intentionally do not select the new effort filter. Back uses /direction until Phase 2.
 Next: in a fresh chat, say start phase 2; replace schedule/storage and update Today/basic Week. Stop after Phase 1 integration; no remote push or master/main merge.
+
+## Phase 2 handoff
+
+Phase 2: implementation complete, unverified; rebuild/phase-2-direction ? main_new.
+Changed: lib/direction schedule/types/storage/store/operations/navigation, lib/life defaults; Today/TimelineRow/DayBar/DayNav, Coverage return, WeekGrid/BlockEditor, clock/store hooks, mode CSS, Today page, Calendar import/comment updates; obsolete hierarchy and FocusEditor removed; CONTRACTS updated.
+Checks: implementation dependency searches and installed Next.js guide reads only; builds, tests, code review, and browser walkthrough not performed. No remote push or master/main merge.
+Open: header/card fit, date boundaries, return scroll/focus, persistence failures, cross-tab updates, and basic Week interactions unverified in browser; Calendar overnight filtering remains Phase 4.
+Next: start phase 3 in a fresh chat; extend the existing per-day grid and BlockEditor with name/time/add/remove/copy controls. Keep build/test/review permission separate.
+Decisions: reference week is Monday?Saturday with Sunday work gaps; local day starts at 07:00. Missing/invalid v2 loads fresh defaults, never migrates v1; successful v2 storage removes only the old plan key. Formatting/ruler signatures retained; operationalMinute added for shared time positioning.

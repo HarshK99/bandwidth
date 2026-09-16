@@ -1,51 +1,41 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useSyncExternalStore } from "react";
 
-const TICK_MS = 30_000;
-
-type Listener = () => void;
-
-const listeners = new Set<Listener>();
+const listeners = new Set<() => void>();
 let timer: number | undefined;
-/** Epoch ms, only advanced on a tick so the snapshot stays stable. */
 let snapshot = 0;
-
-function subscribe(listener: Listener): () => void {
+function tick(): void {
+  snapshot = Date.now();
+  for (const listener of listeners) listener();
+  window.clearTimeout(timer);
+  // Align updates with clock minutes so 07:00 and mode boundaries switch on time.
+  timer = window.setTimeout(tick, 60_000 - (Date.now() % 60_000));
+}
+function onVisibility(): void { if (!document.hidden) tick(); }
+function subscribe(listener: () => void): () => void {
   listeners.add(listener);
-  if (timer === undefined && typeof window !== "undefined") {
-    snapshot = Date.now();
-    timer = window.setInterval(() => {
-      snapshot = Date.now();
-      for (const current of listeners) current();
-    }, TICK_MS);
+  if (listeners.size === 1) {
+    tick();
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", tick);
   }
   return () => {
     listeners.delete(listener);
-    if (listeners.size === 0 && timer !== undefined) {
-      window.clearInterval(timer);
+    if (!listeners.size) {
+      window.clearTimeout(timer);
       timer = undefined;
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", tick);
     }
   };
 }
-
 function getSnapshot(): number {
-  if (snapshot === 0) snapshot = Date.now();
+  if (!snapshot) snapshot = Date.now();
   return snapshot;
 }
-
-function getServerSnapshot(): null {
-  return null;
-}
-
-/**
- * The current time on a slow tick. Null on the server and during hydration
- * so nothing time-dependent can mismatch; callers hold quiet space until it
- * arrives. A minute of drift on "which block am I in" is invisible, so this
- * deliberately doesn't tick per second.
- */
+function getServerSnapshot(): null { return null; }
 export function useNow(): Date | null {
   const epoch = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // Kept stable between ticks so callers can memoise on it.
-  return useMemo(() => (epoch === null ? null : new Date(epoch)), [epoch]);
+  return useMemo(() => epoch === null ? null : new Date(epoch), [epoch]);
 }

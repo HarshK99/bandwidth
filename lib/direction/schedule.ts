@@ -1,341 +1,83 @@
-// lib/direction/schedule.ts
-// Pure derivation for the Direction feature — no React, no storage.
-// Everything the views show about "what am I in / what's next" is computed
-// here from a DirectionPlan plus a Date.
+// Pure schedule derivation. Dates denote the local 07:00-to-next-07:00 day.
+import type { DayEntry, DayOfWeek, DaySchedule, DirectionPlan, TimeBlock } from "./types";
 
-import { BLOCK_TYPE_META } from "./block-types";
-import { getAreaLabel, getNode, getTasks } from "./nodes";
-import type {
-  DateOverride,
-  DayOfWeek,
-  DirectionPlan,
-  TimeBlock,
-  WeekAssignment,
-} from "./types";
-
-const MINUTES_PER_DAY = 1440;
-
-/** Above this, a stage's tasks read as a list rather than as direction. */
-const MAX_IMPLIED_TASKS = 3;
-
-/** Week starts Monday — the template is read as a working week. */
 export const WEEK_DAYS: DayOfWeek[] = [1, 2, 3, 4, 5, 6, 0];
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MINUTES_PER_DAY = 1440;
+export function dayName(day: DayOfWeek): string { return DAY_NAMES[day]; }
+export function shortDayName(day: DayOfWeek): string { return DAY_NAMES[day].slice(0, 3); }
 
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-] as const;
-
-export function dayName(day: DayOfWeek): string {
-  return DAY_NAMES[day];
-}
-
-export function shortDayName(day: DayOfWeek): string {
-  return DAY_NAMES[day].slice(0, 3);
-}
-
-/** "HH:MM" → minutes from midnight. Invalid input reads as 0. */
-export function toMinutes(time: string): number {
-  const [hours, minutes] = time.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return 0;
+export function toMinutes(value: string): number {
+  if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) return NaN;
+  const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
 }
-
-/**
- * A block's end in minutes from *this day's* midnight, so a block that runs
- * past midnight returns more than 1440. An end at or before the start means
- * it wraps into the next day: 23:00–07:00 is 1380 → 1860 (8h), and the
- * common 20:00–00:00 case still lands exactly on 1440.
- */
-function blockEndMinutes(block: TimeBlock): number {
-  const start = toMinutes(block.start);
-  const end = toMinutes(block.end);
-  return end <= start ? end + MINUTES_PER_DAY : end;
+export function operationalMinute(value: string): number {
+  return (toMinutes(value) - 420 + MINUTES_PER_DAY) % MINUTES_PER_DAY;
 }
-
-/** True for a block that runs past midnight (sleep, typically). */
-export function blockWraps(block: TimeBlock): boolean {
-  return blockEndMinutes(block) > MINUTES_PER_DAY;
-}
-
-function blockStartMinutes(block: TimeBlock): number {
-  return toMinutes(block.start);
-}
-
 export function blockDurationMinutes(block: TimeBlock): number {
-  return blockEndMinutes(block) - blockStartMinutes(block);
+  const end = block.end === "07:00" ? 1440 : operationalMinute(block.end);
+  return end - operationalMinute(block.start);
 }
-
-/**
- * The day is modelled as running from this clock time to the same time the
- * next morning (see docs) — not from midnight. A block whose own start falls
- * before this (in practice, only sleep, whenever it starts after midnight)
- * still belongs at the *end* of the day's reading order, as the thing that
- * closes it out, not the thing that opens it.
- */
-const DAY_STARTS_AT_MINUTES = 7 * 60;
-
-/** Where a block sits in the day's reading order, 0 at the day's own start. */
-function readingOrderMinutes(block: TimeBlock): number {
-  const start = blockStartMinutes(block);
-  return (start - DAY_STARTS_AT_MINUTES + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+function blockStartMinutes(block: TimeBlock): number {
+  return operationalMinute(block.start) + 420;
 }
-
-/** Chronological order, with `order` as the tiebreaker for equal starts. */
-export function sortBlocks(blocks: TimeBlock[]): TimeBlock[] {
-  return [...blocks].sort(
-    (a, b) => readingOrderMinutes(a) - readingOrderMinutes(b) || a.order - b.order
-  );
+function blockEndMinutes(block: TimeBlock): number {
+  return blockStartMinutes(block) + blockDurationMinutes(block);
 }
-
-/** No `days` means every day — the normal case, and the cheaper check. */
-export function blockRunsOn(block: TimeBlock, day: DayOfWeek): boolean {
-  return !block.days || block.days.includes(day);
+export function sortBlocks(blocks: readonly TimeBlock[]): TimeBlock[] {
+  return [...blocks].sort((a, b) => operationalMinute(a.start) - operationalMinute(b.start));
 }
+function minutesOfDay(date: Date): number { return date.getHours() * 60 + date.getMinutes(); }
 
-/** How many days a week this block occupies — what weekly totals multiply by. */
-export function blockDaysPerWeek(block: TimeBlock): number {
-  return block.days?.length ?? 7;
-}
-
-/** The blocks a given weekday is actually made of, in clock order. */
-export function blocksForDay(blocks: TimeBlock[], day: DayOfWeek): TimeBlock[] {
-  return sortBlocks(blocks).filter((block) => blockRunsOn(block, day));
-}
-
-function minutesOfDay(date: Date): number {
-  return date.getHours() * 60 + date.getMinutes();
-}
-
-/** Local calendar date as "YYYY-MM-DD" (never UTC — days are local here). */
 export function toISODate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return [String(date.getFullYear()).padStart(4, "0"), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
 }
-
-export function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
+export function fromISODate(value: string): Date {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return new Date(NaN);
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(0);
+  date.setFullYear(year, month - 1, day);
+  date.setHours(0, 0, 0, 0);
+  return toISODate(date) === value ? date : new Date(NaN);
 }
-
-export function isSameDate(a: Date, b: Date): boolean {
-  return toISODate(a) === toISODate(b);
+export function addDays(date: Date, count: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + count);
+  return result;
 }
-
-// ---------- focus resolution ----------
-
-/** Key for the maps built by indexAssignments/indexOverrides. */
-export function assignmentKey(day: DayOfWeek, blockId: string): string {
-  return `${day}:${blockId}`;
+export function isSameDate(a: Date, b: Date): boolean { return toISODate(a) === toISODate(b); }
+export function getOperationalDate(now: Date): Date {
+  const date = new Date(now);
+  if (now.getHours() < 7) date.setDate(date.getDate() - 1);
+  date.setHours(0, 0, 0, 0);
+  return date;
 }
-
-function overrideKey(date: string, blockId: string): string {
-  return `${date}:${blockId}`;
+// Construct local instants rather than assuming every date contains 24 elapsed hours.
+function blockInstant(date: Date, value: string, end = false): number {
+  const minutes = toMinutes(value);
+  const instant = addDays(date, minutes < 420 || (end && minutes === 420) ? 1 : 0);
+  instant.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+  return instant.getTime();
 }
-
-export function indexAssignments(
-  assignments: WeekAssignment[]
-): Map<string, WeekAssignment> {
-  return new Map(assignments.map((a) => [assignmentKey(a.day, a.blockId), a]));
-}
-
-function indexOverrides(overrides: DateOverride[]): Map<string, string> {
-  return new Map(overrides.map((o) => [overrideKey(o.date, o.blockId), o.nodeId]));
-}
-
-export type BlockStatus = "past" | "current" | "upcoming";
-
-export interface DayEntry {
-  block: TimeBlock;
-  /** The block's name on this day — an assignment may rename it. */
-  name: string;
-  focus: string;
-  /** What the block is for today, as lines. Empty when there is nothing. */
-  notes: string[];
-  /** The hierarchy node in play, for rollups. Empty when unassigned. */
-  nodeId: string;
-  /** Label of what this slot's output serves, when it serves something else. */
-  serves: string;
-  /** True when a date override supplied this focus (including a blank one). */
-  isOverride: boolean;
-  status: BlockStatus;
-  /** Minutes left in the block — only meaningful when status is "current". */
-  minutesRemaining: number;
-  /** 0–1 through the block. Only meaningful when status is "current". */
-  progress: number;
-}
-
-interface DaySchedule {
-  date: Date;
-  iso: string;
-  day: DayOfWeek;
-  /**
-   * The blocks this day is made of — `plan.blocks` minus the ones that don't
-   * run today. Returned so the ruler and the day-progress bar measure the
-   * same day the entries describe.
-   */
-  blocks: TimeBlock[];
-  entries: DayEntry[];
-  current: DayEntry | null;
-  next: DayEntry | null;
-  /** Minutes until `next` starts, when there is no current block. */
-  minutesUntilNext: number | null;
-}
-
-/**
- * Resolve one day: every block in chronological order, its focus (override
- * beats template), and — when `now` falls on that date — which block is
- * live. Pass `now` as null (or a date other than `date`) to get a plain,
- * status-free view of the day, which is what the week view wants.
- */
-export function getDaySchedule(
-  plan: DirectionPlan,
-  date: Date,
-  now: Date | null = null
-): DaySchedule {
-  const iso = toISODate(date);
-  const day = date.getDay() as DayOfWeek;
-  const blocks = blocksForDay(plan.blocks, day);
-  const assignments = indexAssignments(plan.assignments);
-  const overrides = indexOverrides(plan.overrides);
-
-  const isToday = now !== null && isSameDate(date, now);
-  const nowMinutes = isToday && now ? minutesOfDay(now) : null;
-
+export function getDaySchedule(plan: DirectionPlan, date: Date, now: Date): DaySchedule {
+  const blocks = sortBlocks(plan.week[date.getDay() as DayOfWeek]);
+  const clock = now.getTime();
   const entries: DayEntry[] = blocks.map((block) => {
-    const assignment = assignments.get(assignmentKey(day, block.id));
-    const override = overrides.get(overrideKey(iso, block.id));
-
-    const nodeId = override ?? assignment?.nodeId ?? "";
-    const node = nodeId ? getNode(nodeId) : null;
-    // The area is the *context* line: the domain a stage belongs to. Dropped
-    // when it would only repeat the lead.
-    const area = nodeId ? getAreaLabel(nodeId) : "";
-    // The note belongs to the area: overriding the area makes the template's
-    // note wrong, so it doesn't survive. The label is the opposite — it
-    // describes how the day uses the slot, which an override doesn't change.
-    const rawNote = override !== undefined ? undefined : assignment?.note;
-    const written =
-      rawNote === undefined ? [] : Array.isArray(rawNote) ? rawNote : [rawNote];
-    // Named tasks, then the node's own — stop retyping what the tree already
-    // says. A written note still wins: it describes today specifically, which
-    // is always more than a standing task can.
-    const listed =
-      override !== undefined
-        ? []
-        : (assignment?.tasks ?? [])
-            .map((task) => getNode(task)?.label)
-            .filter((label): label is string => Boolean(label));
-    // Falling back to every task only reads as direction while the list is
-    // short. Past that it's a menu, and the stage's own name says more.
-    const own = nodeId ? getTasks(nodeId) : [];
-    const implied = own.length > 0 && own.length <= MAX_IMPLIED_TASKS
-      ? own.map((task) => task.label)
-      : [];
-    const notes =
-      written.length > 0
-        ? written
-        : listed.length > 0
-          ? listed
-          : implied.length > 0
-            ? implied
-            : node
-              ? [node.label]
-              : [];
-    const name = assignment?.label ?? block.name;
-    // An override replaces the area, so the template's purpose goes with it.
-    const servesId = override !== undefined ? undefined : assignment?.serves;
-    const serves = servesId ? (getNode(servesId)?.label ?? "") : "";
-    // Dropped when it would only repeat the lead or the block's own name.
-    const focus = area && area !== notes[0] && area !== name ? area : "";
-
-    const start = blockStartMinutes(block);
-    const end = blockEndMinutes(block);
-
-    let status: BlockStatus = "upcoming";
-    let minutesRemaining = 0;
-    let progress = 0;
-    if (nowMinutes !== null) {
-      // A wrapping block owns both ends of the clock, so the small hours are
-      // measured against the previous evening: 03:00 reads as 1620, inside
-      // 23:00–07:00.
-      const clock =
-        end > MINUTES_PER_DAY && nowMinutes < start
-          ? nowMinutes + MINUTES_PER_DAY
-          : nowMinutes;
-
-      if (clock >= end) status = "past";
-      else if (clock >= start) {
-        status = "current";
-        minutesRemaining = end - clock;
-        progress = end > start ? (clock - start) / (end - start) : 0;
-      }
-    }
-
+    const start = blockInstant(date, block.start);
+    const end = blockInstant(date, block.end, true);
+    const status = clock >= end ? "past" : clock >= start ? "current" : "upcoming";
     return {
-      block,
-      name,
-      focus,
-      notes,
-      nodeId,
-      serves,
-      isOverride: override !== undefined,
-      status,
-      minutesRemaining,
-      progress,
+      block, name: block.name, status,
+      minutesRemaining: status === "current" ? Math.ceil((end - clock) / 60000) : 0,
+      progress: status === "current" ? (clock - start) / (end - start) : 0,
     };
   });
-
-  // Adjacent blocks that touch and say the exact same thing - a Sunday
-  // evening where Dinner and the block after it both resolve to
-  // "Relationships / Protected family/friends time" - read as an error
-  // repeated, not as two facts. Blank every repeat, so TimelineRow's own
-  // fallback promotes each block's name into the lead: the run says what it
-  // is once, at its head, and just names itself after that.
-  //
-  // Content is compared against the head of the run (not blanked, even
-  // across several repeats), but adjacency is checked against the immediate
-  // neighbour: a blanked entry is still physically touching the one after
-  // it, so the chain must not break just because its own content was
-  // cleared.
-  let head: DayEntry | null = null;
-  entries.forEach((entry, index) => {
-    const prevEntry = index > 0 ? entries[index - 1] : null;
-    const touchesPrev = prevEntry !== null && prevEntry.block.end === entry.block.start;
-    const sameAsHead =
-      touchesPrev &&
-      head !== null &&
-      Boolean(entry.nodeId) &&
-      entry.nodeId === head.nodeId &&
-      entry.notes.join("|") === head.notes.join("|") &&
-      entry.focus === head.focus &&
-      entry.serves === head.serves;
-
-    if (sameAsHead) {
-      entry.notes = [];
-      entry.focus = "";
-      entry.serves = "";
-    } else {
-      head = entry;
-    }
-  });
-
   const current = entries.find((entry) => entry.status === "current") ?? null;
   const next = entries.find((entry) => entry.status === "upcoming") ?? null;
-  const minutesUntilNext =
-    !current && next && nowMinutes !== null
-      ? blockStartMinutes(next.block) - nowMinutes
-      : null;
-
-  return { date, iso, day, blocks, entries, current, next, minutesUntilNext };
+  const minutesUntilNext = !current && next
+    ? Math.ceil((blockInstant(date, next.block.start) - clock) / 60000) : null;
+  return { blocks, entries, current, next, minutesUntilNext };
 }
 
 // ---------- formatting ----------
@@ -449,68 +191,6 @@ export function formatRange(block: TimeBlock): string {
   return `${start}–${end}`;
 }
 
-/**
- * How far `now` is through the day's blocked span (first start → last end),
- * 0–1, or null when there is nothing to measure. Deliberately not
- * midnight-to-midnight: a day that starts at 07:00 and ends in the small
- * hours is one span, not two.
- */
-export function getDayProgress(blocks: TimeBlock[], now: Date): number | null {
-  const ordered = sortBlocks(blocks);
-  if (ordered.length === 0) return null;
-  const start = blockStartMinutes(ordered[0]);
-  const end = blockEndMinutes(ordered[ordered.length - 1]);
-  if (end <= start) return null;
-
-  const nowMinutes = minutesOfDay(now);
-  // Before the first block but inside a wrapping last block: still last night.
-  const clock =
-    end > MINUTES_PER_DAY && nowMinutes < start
-      ? nowMinutes + MINUTES_PER_DAY
-      : nowMinutes;
-
-  if (clock <= start) return 0;
-  if (clock >= end) return 1;
-  return (clock - start) / (end - start);
-}
-
-/**
- * The area the day mostly goes to, by minutes — "today is a freelance day".
- *
- * Counts the blocks the day is *built* around (focus, execution, thinking)
- * rather than every assigned minute. Admin, buffer and evening hours are
- * real, but a day isn't themed by its errands, and sleep and meals — which
- * carry no area at all — never enter it. Falls back to every assigned block
- * if nothing structural is assigned, and to null if nothing is.
- */
-export function getDayTheme(entries: DayEntry[]): string | null {
-  const total = (only: (entry: DayEntry) => boolean) => {
-    const minutes = new Map<string, number>();
-    for (const entry of entries) {
-      if (!entry.focus || !only(entry)) continue;
-      minutes.set(
-        entry.focus,
-        (minutes.get(entry.focus) ?? 0) + blockDurationMinutes(entry.block)
-      );
-    }
-    // Ties go to the earlier block: entries are chronological, and a tied
-    // morning reads as the day's theme more than a tied evening.
-    let theme: string | null = null;
-    let best = 0;
-    for (const [focus, sum] of minutes) {
-      if (sum > best) {
-        best = sum;
-        theme = focus;
-      }
-    }
-    return theme;
-  };
-
-  const structural = (entry: DayEntry) =>
-    BLOCK_TYPE_META[entry.block.type].emphasis === "strong";
-  return total(structural) ?? total(() => true);
-}
-
 /** "1h 12m" / "45m" — used for "time left in this block". */
 export function formatDuration(minutes: number): string {
   const total = Math.max(0, Math.round(minutes));
@@ -540,11 +220,6 @@ export function formatShortDate(date: Date): string {
     day: "numeric",
     month: "short",
   });
-}
-
-export function fromISODate(iso: string): Date {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day);
 }
 
 export function formatClock(date: Date): string {
