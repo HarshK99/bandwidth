@@ -1,6 +1,6 @@
 # Bandwidth — app source of truth
 
-Status: agreed direction for the rebuild. The existing application has not yet been updated to match it.
+Status: agreed direction for the rebuild. See STATUS.md for implementation progress and outstanding checks.
 
 ## Authority
 

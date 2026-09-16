@@ -48,10 +48,8 @@
      washes on purpose: many rows sit adjacent in one scrolling list, so the
      tint only needs to say "container" vs "leaf" at a glance. */
   --kind-area-fill: rgba(59, 130, 246, 0.035);
-  --kind-stage-fill: rgba(217, 119, 6, 0.035);
-  --kind-task-fill: rgba(219, 39, 119, 0.022);
-  --kind-group-fill: var(--kind-stage-fill);
-  --kind-activity-fill: var(--kind-task-fill);
+  --kind-group-fill: rgba(217, 119, 6, 0.035);
+  --kind-activity-fill: rgba(219, 39, 119, 0.022);
 }
 
 @theme inline {
@@ -97,8 +95,8 @@
     --type-break-fill: rgba(168, 162, 158, 0.07);
 
     --kind-area-fill: rgba(96, 165, 250, 0.06);
-    --kind-stage-fill: rgba(251, 191, 36, 0.06);
-    --kind-task-fill: rgba(244, 114, 182, 0.04);
+    --kind-group-fill: rgba(251, 191, 36, 0.06);
+    --kind-activity-fill: rgba(244, 114, 182, 0.04);
   }
 }
 
@@ -187,6 +185,14 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
 }
 
 /**

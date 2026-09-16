@@ -19,7 +19,7 @@ interface CalendarStore {
   state: CalendarSnapshot | null;
   connect: () => Promise<void>;
   disconnect: () => void;
-  sync: () => void;
+  sync: (date?: Date) => void;
   forceSync: () => void;
   refreshCalendars: () => Promise<void>;
   setCalendarId: (id: string) => void;

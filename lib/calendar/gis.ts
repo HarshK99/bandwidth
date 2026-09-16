@@ -1,7 +1,7 @@
 // lib/calendar/gis.ts
 // Google Identity Services — the token half only. No client secret, no
 // server, no refresh token. The access token lives here in a module
-// variable and is never persisted (see docs/CALENDAR.md).
+// variable and is never persisted (see docs/APP_SOURCE_OF_TRUTH.md).
 
 const GIS_SRC = "https://accounts.google.com/gsi/client";
 const SCOPE = "https://www.googleapis.com/auth/calendar.readonly";

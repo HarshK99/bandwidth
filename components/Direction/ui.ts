@@ -30,19 +30,20 @@ export const FAINT = "text-zinc-400 dark:text-zinc-500";
 export const FIELD =
   "min-h-8 w-full rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm " +
   "transition-colors hover:border-black/10 focus:border-black/20 focus:bg-black/[0.02] " +
-  "focus:outline-none dark:hover:border-white/15 dark:focus:border-white/25 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 dark:hover:border-white/15 dark:focus:border-white/25 " +
   "dark:focus:bg-white/[0.04]";
 
 /** Quiet action — the default for everything. */
 export const BUTTON =
   "inline-flex min-h-8 items-center justify-center gap-1.5 rounded-full px-2.5 text-[13px] " +
   "text-zinc-600 transition-colors hover:bg-black/[0.05] hover:text-zinc-900 " +
-  "disabled:pointer-events-none disabled:opacity-30 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 disabled:pointer-events-none disabled:opacity-30 " +
   "dark:text-zinc-400 dark:hover:bg-white/[0.07] dark:hover:text-zinc-100";
 
 /** Text-only action that sits in body copy. */
 export const BUTTON_INLINE =
-  "text-[13px] text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-900 " +
+  "inline-flex min-h-11 items-center text-[13px] text-zinc-500 underline-offset-4 transition-colors hover:text-zinc-900 " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 " +
   "hover:underline dark:text-zinc-400 dark:hover:text-zinc-100";
 
 /** Raised panel (popover). Softer corners and a deeper, wider shadow than

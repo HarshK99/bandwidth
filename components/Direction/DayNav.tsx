@@ -8,7 +8,7 @@ interface DayNavProps {
   onChange: (date: Date) => void;
   onNow: () => void;
 }
-const STEP = "flex min-h-11 min-w-6 items-center justify-center rounded-full text-lg hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2";
+const STEP = "flex min-h-11 min-w-11 items-center justify-center rounded-full text-lg hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-2 focus-visible:outline-offset-2";
 
 export default function DayNav({ date, onChange, onNow }: DayNavProps) {
   return (

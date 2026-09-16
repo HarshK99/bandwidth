@@ -12,7 +12,9 @@ The founder chooses the actual work from the current bottleneck outside the app.
 - [Accepted Today preview](docs/proposals/today-final-view.html) — standalone HTML with the timeline and compact Coverage.
 - [Prompts to update the founder operating system](docs/FOUNDER_SYSTEM_UPDATE_PROMPTS.md) — separate edits for the original business document.
 
-The existing application has not yet been rebuilt to match this specification. The plan is ready; the next step is `start phase 1` in a new chat.
+Phases 1–4 are implemented: Coverage, Today, the weekly editor, and Calendar integration. They remain unverified in the browser; builds, tests, and code review have not been run. The next step is `start phase 5` in a new chat for the manual walkthrough.
+
+Calendar remains read-only, with its existing connection, selection, and cache. Events follow the visible local 07:00-to-next-07:00 day, including overnight and open time. Time and Upgrades retain their existing content. Calendar setup requires `NEXT_PUBLIC_GOOGLE_CLIENT_ID`; without it, the schedule remains usable.
 
 `main_new` is the new version's integration branch. Each phase branches from it and merges back into it. Do not merge or push to the original `master`/`main` branch without the user's explicit instruction. No remote pushes are authorized. Outdated docs and app data may be replaced; obsolete product constraints need not be preserved.
 

@@ -128,11 +128,18 @@ Keep one small sessionStorage entry `bandwidth.direction.return.v2` with `{ date
 
 ## Phase 4: Calendar boundary adapter
 
+Phase 4 navigation correction: `scrollY` in the return record is the Direction panel's `scrollTop`, identified by `[data-direction-scroll]`; the outer window is locked by the app shell. Now and restoration target that same panel. Browser Back uses a `bandwidthTodayReturn` marker on the date-bearing history entry, cleared after restoration. The measured DayBar height supplies the panel's keyboard scroll padding.
+
 Retain the read-only calendar connection and cache. Add/replace a helper in `lib/calendar/day-events.ts`:
 
 ```ts
 export function eventsForOperationalDate(events: CalendarEvent[], date: Date): CalendarEvent[];
 export function operationalMinutesInto(date: Date, instantMs: number): number;
+export function operationalBounds(date: Date): { startMs: number; endMs: number };
 ```
 
 Use the visible date's 07:00 through next date's 07:00 interval. Include events intersecting the interval; clamp geometry to the visible range. Display original event times honestly. Do not double-shift operational minutes in EventsLane, which currently rotates clock minutes internally. Changing the helper requires updating its callers together. Do not send calendar messages, create events, or request write permissions.
+
+Phase 4 implementation: EventsLane uses operational minutes directly. Leading/trailing open-time rows (including an empty day) provide geometry; existing block measurement attributes remain. Events reserve a narrow side lane, with colliding cards sharing columns and full original details in the existing native Popover dialog. Clock positions follow the local wall-clock ruler across daylight-saving changes; event filtering uses absolute instants. Cross-date event ranges include their dates.
+
+`useCalendar.sync(date?: Date)` follows the visible day. The existing `bandwidth.calendar.v1` cache adds nullable `timeMinMs`/`timeMaxMs` without discarding old connection, selection, or events. Fetching spans eight local operational days from the requested date; throttling applies only when that full day is covered. A date change during a request queues the latest day; calendar changes/disconnect invalidate stale event responses. Failed refreshes preserve cached events and show an honest status on Today. No Calendar scopes or write APIs changed.

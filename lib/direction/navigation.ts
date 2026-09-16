@@ -8,11 +8,12 @@ export function validDate(value: string | null): string | null {
   return value && Number.isFinite(fromISODate(value).getTime()) ? value : null;
 }
 export function rememberToday(date: string, blockId: string): void {
-  const record = { date, scrollY: window.scrollY, blockId };
+  const scroller = document.querySelector<HTMLElement>("[data-direction-scroll]");
+  const record = { date, scrollY: scroller?.scrollTop ?? window.scrollY, blockId };
   memoryReturn = record;
   try { window.sessionStorage.setItem(RETURN_KEY, JSON.stringify(record)); } catch { /* In-memory return still works. */ }
   // Preserve this date in the history entry that browser Back will return to.
-  window.history.replaceState(window.history.state, "", `/direction?date=${date}`);
+  window.history.replaceState({ ...window.history.state, bandwidthTodayReturn: date }, "", `/direction?date=${date}`);
 }
 export function readTodayReturn(date: string | null): ReturnPosition | null {
   if (!validDate(date)) return null;
