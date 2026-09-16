@@ -48,8 +48,8 @@ const areas = [
   task('Positioning','deep'),
   task('Lead research','low'),
   task('Outreach','deep','low'),
-  task('Activation and retention','deep','low'),
-  task('Product decisions','deep'),
+  task('Review usage and user feedback','deep','low'),
+  task('Decide product changes','deep'),
   task('Product development','deep','low')
  ]},
  {id:'freelance',name:'Freelance',children:[
@@ -60,8 +60,8 @@ const areas = [
   task('Sales','deep'),
   task('Scoping and proposals','deep'),
   task('Website production','deep','low'),
-  task('Payments','low'),
-  task('Aftercare and referrals','deep','low')
+  task('Invoice and follow up on payments','low'),
+  task('Check in with clients and ask for referrals','deep','low')
  ]},
  {id:'content',name:'Content',children:[
   task('Content writing','deep'),
@@ -69,19 +69,17 @@ const areas = [
   task('Publishing and engagement','low')
  ]},
  {id:'exploration',name:'Exploration',children:[
-  task('Ideas and validation','deep'),
-  task('Small experiments','deep','low')
+  task('Explore and test an idea','deep','low')
  ]},
  {id:'jobs',name:'Jobs',children:[
-  task('Selective applications','low'),
-  task('Interview preparation and interviews','deep')
+  task('Find and apply for suitable roles','low'),
+  task('Prepare for or attend interviews','deep')
  ]},
  {id:'recovery',name:'Recovery and life',children:[
-  {name:'Physical recovery',children:[task('Sleep','recovery'),task('Exercise','recovery'),task('Meals and breaks','recovery')]},
+  task('Exercise','recovery'),
   {name:'Hobbies',children:[task('Painting','recovery'),task('Crossword','recovery'),task('Language','recovery')]},
-  task('Downtime and wind-down','recovery'),
-  task('Family and friends','recovery'),
-  task('Life admin and finances','low')
+  {name:'Family and friends',children:[task('Call','recovery'),task('Meet','recovery')]},
+  {name:'Life admin and finances',children:[task('Pay bills and review finances','low'),task('Run errands','low')]}
  ]}
 ];
 const names={deep:'Deep work',low:'Low-energy work',recovery:'Recovery'};
