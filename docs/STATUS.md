@@ -4,6 +4,8 @@
 
 Release authorization: user requested a final build and push to the main branch. Remote HEAD identifies `master` as the actual main branch (no remote `main` exists). `npm run build` passed on the final app changes, including TypeScript and all 10 static pages. This merge promotes main_new into master for the authorized push to origin/master; no force push or separate deployment command. Historical no-push restrictions below describe earlier tasks and are superseded for this release only. Review findings 2–3 remain recorded and unfixed.
 
+Second release: user explicitly said "push to main" for the Week load summary follow-up (see below). Confirmed target (master, no remote `main`) and build-check-first before merging main_new into master and pushing origin/master.
+
 Approved header: fixed Wave Link +5% active users/week and Income ≥₹60k/month reminders, with “Work: advance a goal or tackle its blocker.” Date/clock/day navigation share one row; Now is now hidden. Today opens with the current block centered within the visible timeline, while Coverage return preserves position. Current-block progress stays. No goal tracking/model. Browser fit observed at 360px; comparison with the pre-rebuild height remains unavailable.
 
 Latest workflow preference: keep phase completion/handoffs compact (status, changed areas/files, actual checks, open issues, next phase), recorded once before the phase commit. Do not rewrite history or make additional handoff-only commits. User will request builds/tests/code review at the end if desired; none is authorized automatically. Existing no-build/test/review rules remain in effect.
@@ -175,6 +177,14 @@ Open: three findings need browser confirmation: missed cross-tab plan updates ca
 Next: user authorizes confirmation/fixes or additional review budget; no commit, push, or deployment performed for this review.
 
 Review finding 1 follow-up: user explicitly requested confirmation only (“yeah check 1”). Reproduced in two isolated Chromium tabs: A missed B's Monday edit while on Coverage, then A's unrelated Wednesday save erased B's saved Monday name; reloading B confirmed the loss. Updated CODE_REVIEW.md; no app code, real-user data, builds, or repository tests changed/run. Findings 2–3 remain source-level only. Next: authorize a fix for confirmed finding 1.
+
+## Follow-up: Week load summary
+
+Status: implemented; feature/week-load-summary → main_new. User approved an HTML preview (hours/% by block type) before implementation and asked for closed-by-default week total, positioned below the grid/day view, and one shared component (no duplicated logic).
+Changed: `summarizeLoad`/`MINUTES_PER_DAY` added to lib/direction/schedule.ts; new components/Direction/LoadSummary.tsx (shared by both uses); WeekView renders it per selected day (always visible, in the existing mobile-only day card) and for the whole week (collapsible `<details>`, closed by default, below the grid/day view).
+Checks: `npx tsc --noEmit` passed. No build, repository tests, code review, or browser walkthrough run/authorized.
+Open: not visually verified in a browser; desktop grid has no per-day figure (day summary stays in the `lg:hidden` day card, matching the approved preview).
+Next: user's browser check; no remote push, deployment, or master merge.
 
 ## Fix: cross-tab Week saves
 

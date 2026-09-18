@@ -3,9 +3,10 @@
 import { useRef, useState } from "react";
 import { BLOCK_TYPE_META } from "@/lib/direction/block-types";
 import { copyDay, removeBlock, upsertBlock } from "@/lib/direction/plan-ops";
-import { blockDurationMinutes, dayName, formatRange, getOperationalDate, operationalMinute, sortBlocks, WEEK_DAYS } from "@/lib/direction/schedule";
+import { blockDurationMinutes, dayName, formatRange, getOperationalDate, MINUTES_PER_DAY, operationalMinute, sortBlocks, WEEK_DAYS } from "@/lib/direction/schedule";
 import type { DayOfWeek, DirectionPlan, PlanChange, PlanIssue, TimeBlock } from "@/lib/direction/types";
 import BlockEditor from "./BlockEditor";
+import LoadSummary from "./LoadSummary";
 import Popover from "./Popover";
 import WeekGrid, { type EditingCell } from "./WeekGrid";
 import { useDirectionPlan } from "./useDirectionPlan";
@@ -81,6 +82,7 @@ export default function WeekView() {
     cursor = start + blockDurationMinutes(block);
   }
   if (cursor < 1440) items.push({ kind: "gap", start: cursor, end: 1440 });
+  const weekBlocks = WEEK_DAYS.flatMap((value) => plan.week[value]);
 
   return (
     <section className="mx-auto w-full min-w-0 max-w-6xl pt-9 pb-16 sm:pt-12">
@@ -131,7 +133,9 @@ export default function WeekView() {
             </li>;
           })}
         </ol>
+        <LoadSummary blocks={blocks} totalMinutes={MINUTES_PER_DAY} context="Load" />
       </div>
+      <LoadSummary blocks={weekBlocks} totalMinutes={MINUTES_PER_DAY * 7} context="scheduled this week" collapsible />
       <Popover anchor={editing?.anchor ?? copying?.anchor ?? null} label={editing ? `${dayName(editing.day)} block` : "Copy day"} onDismiss={dismiss}>
         {editing && <BlockEditor key={`${editing.day}:${editing.blockId}`} block={editing.block}
           title={`${dayName(editing.day)} · ${editing.isNew ? "Add block" : "Edit block"}`} onCancel={dismiss}
