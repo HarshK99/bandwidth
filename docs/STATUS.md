@@ -172,6 +172,14 @@ Next: user authorizes confirmation/fixes or additional review budget; no commit,
 
 Review finding 1 follow-up: user explicitly requested confirmation only (“yeah check 1”). Reproduced in two isolated Chromium tabs: A missed B's Monday edit while on Coverage, then A's unrelated Wednesday save erased B's saved Monday name; reloading B confirmed the loss. Updated CODE_REVIEW.md; no app code, real-user data, builds, or repository tests changed/run. Findings 2–3 remain source-level only. Next: authorize a fix for confirmed finding 1.
 
+## Follow-up: Week load summary
+
+Status: implemented; feature/week-load-summary → main_new. User approved an HTML preview (hours/% by block type) before implementation and asked for closed-by-default week total, positioned below the grid/day view, and one shared component (no duplicated logic).
+Changed: `summarizeLoad`/`MINUTES_PER_DAY` added to lib/direction/schedule.ts; new components/Direction/LoadSummary.tsx (shared by both uses); WeekView renders it per selected day (always visible, in the existing mobile-only day card) and for the whole week (collapsible `<details>`, closed by default, below the grid/day view).
+Checks: `npx tsc --noEmit` passed. No build, repository tests, code review, or browser walkthrough run/authorized.
+Open: not visually verified in a browser; desktop grid has no per-day figure (day summary stays in the `lg:hidden` day card, matching the approved preview).
+Next: user's browser check; no remote push, deployment, or master merge.
+
 ## Fix: cross-tab Week saves
 
 Status: finding 1 fixed after “nice; fix it”; fix/week-cross-tab-saves → main_new.
