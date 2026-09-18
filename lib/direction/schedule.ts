@@ -1,9 +1,10 @@
 // Pure schedule derivation. Dates denote the local 07:00-to-next-07:00 day.
-import type { DayEntry, DayOfWeek, DaySchedule, DirectionPlan, TimeBlock } from "./types";
+import { BLOCK_TYPES } from "./block-types";
+import type { BlockType, DayEntry, DayOfWeek, DaySchedule, DirectionPlan, TimeBlock } from "./types";
 
 export const WEEK_DAYS: DayOfWeek[] = [1, 2, 3, 4, 5, 6, 0];
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const MINUTES_PER_DAY = 1440;
+export const MINUTES_PER_DAY = 1440;
 export function dayName(day: DayOfWeek): string { return DAY_NAMES[day]; }
 export function shortDayName(day: DayOfWeek): string { return DAY_NAMES[day].slice(0, 3); }
 
@@ -27,6 +28,23 @@ function blockEndMinutes(block: TimeBlock): number {
 }
 export function sortBlocks(blocks: readonly TimeBlock[]): TimeBlock[] {
   return [...blocks].sort((a, b) => operationalMinute(a.start) - operationalMinute(b.start));
+}
+
+export interface BlockTypeLoad { type: BlockType; minutes: number; percent: number }
+export interface LoadSummary { rows: BlockTypeLoad[]; scheduledMinutes: number; openMinutes: number; openPercent: number }
+
+/** Hours and % of `totalMinutes` covered by each block type, plus what's left open. */
+export function summarizeLoad(blocks: readonly TimeBlock[], totalMinutes: number): LoadSummary {
+  const minutesByType: Partial<Record<BlockType, number>> = {};
+  for (const block of blocks) {
+    minutesByType[block.type] = (minutesByType[block.type] ?? 0) + blockDurationMinutes(block);
+  }
+  const scheduledMinutes = BLOCK_TYPES.reduce((sum, type) => sum + (minutesByType[type] ?? 0), 0);
+  const openMinutes = Math.max(0, totalMinutes - scheduledMinutes);
+  const rows = BLOCK_TYPES
+    .filter((type) => (minutesByType[type] ?? 0) > 0)
+    .map((type) => ({ type, minutes: minutesByType[type]!, percent: (minutesByType[type]! / totalMinutes) * 100 }));
+  return { rows, scheduledMinutes, openMinutes, openPercent: (openMinutes / totalMinutes) * 100 };
 }
 function minutesOfDay(date: Date): number { return date.getHours() * 60 + date.getMinutes(); }
 
